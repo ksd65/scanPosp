@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.SysOfficeExtendMapper" >
+  
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.SysOffice" extends="com.epay.scanposp.dao.SysOfficeMapper.BaseResultMap">
+  
+  </resultMap>
+  
+  <select id="getSysOfficeByOrderCode" parameterType="java.util.Map" resultMap="BaseResultMap">
+  	select soff.id, soff.parent_id, soff.parent_ids, soff.name, soff.sort, soff.area_id, soff.code, soff.type, soff.grade, 
+		  	soff.agt_type, soff.agt_grade, soff.address, soff.zip_code, soff.master, soff.phone, soff.fax, soff.email, soff.USEABLE,
+		  	soff.PRIMARY_PERSON, soff.DEPUTY_PERSON, soff.create_by, soff.create_date, soff.update_by, soff.update_date, soff.remarks,
+		  	soff.del_flag, soff.private_key_rsa, soff.public_key_rsa 
+    from sys_office soff,bu_debit_note dnote ,bu_epay_code ecode 
+	WHERE soff.id = ecode.office_id 
+		AND ecode.member_id = dnote.member_id 
+		AND dnote.order_code = #{orderCode,jdbcType=VARCHAR} 
+      <if test="agtType != null and agtType != ''" >
+        and agt_type = #{agtType,jdbcType=CHAR} 
+      </if>
+  </select>
+  
+    <select id="getSysOfficeByMemberCode" parameterType="java.util.Map" resultMap="BaseResultMap">
+  	select soff.id, soff.parent_id, soff.parent_ids, soff.name, soff.sort, soff.area_id, soff.code, soff.type, soff.grade, 
+		  	soff.agt_type, soff.agt_grade, soff.address, soff.zip_code, soff.master, soff.phone, soff.fax, soff.email, soff.USEABLE,
+		  	soff.PRIMARY_PERSON, soff.DEPUTY_PERSON, soff.create_by, soff.create_date, soff.update_by, soff.update_date, soff.remarks,
+		  	soff.del_flag, soff.private_key_rsa, soff.public_key_rsa 
+    from sys_office soff,	bu_member_info info,	bu_epay_code ecode 
+	WHERE info.id = ecode.member_id
+		AND soff.id = ecode.office_id 
+		AND info.code = #{memberCode,jdbcType=VARCHAR} 
+      <if test="agtType != null and agtType != ''" >
+        and agt_type = #{agtType,jdbcType=CHAR} 
+      </if>
+  </select>
+  
+</mapper>

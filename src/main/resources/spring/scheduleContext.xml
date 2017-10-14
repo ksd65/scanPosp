@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd"
+	default-lazy-init="false">
+
+	<bean id="chessSchedulerFactory"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean"
+		lazy-init="false">
+		<!-- 添加触发器 -->
+		<property name="triggers">
+			<list>
+			<!-- 
+				<ref local="drawCashTriggerBean" />
+				<ref local="tradeHisTriggerBean" />
+				<ref local="queryPayResultTiggerBean" />
+			-->
+				 <ref local="updateExamTriggerBean" />			 
+				 <ref local="updateExamTriggerBean2" />			 
+				 <ref local="updateExamTriggerBean3" />			 
+				 <ref local="drawResultNoticeTiggerBean" />			 
+				 <ref local="PayResultNoticeTriggerBean" />
+				 <ref local="mlPayResultNoticeTiggerBean" />
+			 </list>
+		</property>
+		<property name="quartzProperties">
+			<props>
+				<prop key="org.quartz.scheduler.skipUpdateCheck">true</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- 触发器时间设置 -->
+	<bean id="drawCashTriggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.DrawCashBeanTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>drawCash</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 1/3 * * * ? </value>
+			<!-- 
+				<value>0 0/15 9-21 * * ? </value>
+			 -->
+		</property>
+	</bean>
+	
+	<!-- 触发器时间设置 -->
+	<bean id="PayResultNoticeTriggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.PayResultNoticeTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>dealPayResultNotice</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 0/5 * * * ?</value>
+		</property>
+	</bean>
+	
+	<!-- 触发器时间设置 -->
+	<bean id="tradeHisTriggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.TradeHisTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>moveToHis</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 0 3 1 * ? </value>
+			<!-- 
+				每月1号 凌晨3点 触发
+			 -->
+		</property>
+	</bean>
+	
+	<!-- 触发器时间设置 -->
+	<bean id="drawResultNoticeTiggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.DrawResultNoticeTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>dealDrawResultNotice</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 0/5 * * * ?</value>
+		</property>
+	</bean>
+	
+	<!-- 触发器时间设置 -->
+	<bean id="updateExamTriggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.UpdateExamTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>updateExam</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 30 23 * * ?</value>
+		</property>
+	</bean>
+	<bean id="updateExamTriggerBean3" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.UpdateExamTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>updateExam</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 30 17 * * ?</value>
+		</property>
+	</bean>
+	<bean id="updateExamTriggerBean2" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.UpdateExamTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>updateExam</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 0 12 * * ?</value>
+		</property>
+	</bean>
+	<!-- 触发器时间设置 -->
+	<bean id="mlPayResultNoticeTiggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.MlPayResultNoticeTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>mlPayResultNotice</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 0/10 * * * ?</value>
+		</property>
+	</bean>
+	<!-- 触发器时间设置 -->
+	<bean id="queryPayResultTiggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.QueryPayResultTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>queryPayResult</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 0/5 * * * ?</value>
+		</property>
+	</bean>
+</beans>
+

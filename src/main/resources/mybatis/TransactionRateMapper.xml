@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.TransactionRateMapper" >
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.TransactionRate" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="t0_draw_fee" property="t0DrawFee" jdbcType="DECIMAL" />
+    <result column="t0_trade_rate" property="t0TradeRate" jdbcType="DECIMAL" />
+    <result column="t1_draw_fee" property="t1DrawFee" jdbcType="DECIMAL" />
+    <result column="t1_trade_rate" property="t1TradeRate" jdbcType="DECIMAL" />
+    <result column="ml_jf_fee" property="mlJfFee" jdbcType="DECIMAL" />
+    <result column="ml_jf_rate" property="mlJfRate" jdbcType="DECIMAL" />
+    <result column="ml_wjf_fee" property="mlWjfFee" jdbcType="DECIMAL" />
+    <result column="ml_wjf_rate" property="mlWjfRate" jdbcType="DECIMAL" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="remarks" property="remarks" jdbcType="VARCHAR" />
+    <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+   id, type, t0_draw_fee, t0_trade_rate, t1_draw_fee, t1_trade_rate, ml_jf_fee, ml_jf_rate, 
+    ml_wjf_fee, ml_wjf_rate, create_by, create_date, update_by, update_date, remarks, 
+    del_flag
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.TransactionRateExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_transaction_rate
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart>=0" >
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from bu_transaction_rate
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from bu_transaction_rate
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.TransactionRateExample" >
+    delete from bu_transaction_rate
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.TransactionRate" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_transaction_rate (type, t0_draw_fee, t0_trade_rate, 
+      t1_draw_fee, t1_trade_rate,  ml_jf_fee, ml_jf_rate, ml_wjf_fee, 
+      ml_wjf_rate,create_by, create_date, update_by, update_date, remarks, del_flag)
+    values (#{type,jdbcType=VARCHAR}, #{t0DrawFee,jdbcType=DECIMAL}, #{t0TradeRate,jdbcType=DECIMAL}, 
+      #{t1DrawFee,jdbcType=DECIMAL}, #{t1TradeRate,jdbcType=DECIMAL}, 
+      #{mlJfFee,jdbcType=DECIMAL}, #{mlJfRate,jdbcType=DECIMAL}, #{mlWjfFee,jdbcType=DECIMAL}, 
+      #{mlWjfRate,jdbcType=DECIMAL}, #{createBy,jdbcType=VARCHAR}, 
+      #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
+      #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.TransactionRate" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_transaction_rate
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="t0DrawFee != null" >
+        t0_draw_fee,
+      </if>
+      <if test="t0TradeRate != null" >
+        t0_trade_rate,
+      </if>
+      <if test="t1DrawFee != null" >
+        t1_draw_fee,
+      </if>
+      <if test="t1TradeRate != null" >
+        t1_trade_rate,
+      </if>
+      <if test="mlJfFee != null" >
+        ml_jf_fee,
+      </if>
+      <if test="mlJfRate != null" >
+        ml_jf_rate,
+      </if>
+      <if test="mlWjfFee != null" >
+        ml_wjf_fee,
+      </if>
+      <if test="mlWjfRate != null" >
+        ml_wjf_rate,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="remarks != null" >
+        remarks,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="type != null" >
+        #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="t0DrawFee != null" >
+        #{t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t0TradeRate != null" >
+        #{t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawFee != null" >
+        #{t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1TradeRate != null" >
+        #{t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mlJfFee != null" >
+        #{mlJfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mlJfRate != null" >
+        #{mlJfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mlWjfFee != null" >
+        #{mlWjfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mlWjfRate != null" >
+        #{mlWjfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.TransactionRateExample" resultType="java.lang.Integer" >
+    select count(*) from bu_transaction_rate
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update bu_transaction_rate
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.type != null" >
+        type = #{record.type,jdbcType=VARCHAR},
+      </if>
+      <if test="record.t0DrawFee != null" >
+        t0_draw_fee = #{record.t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t0TradeRate != null" >
+        t0_trade_rate = #{record.t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1DrawFee != null" >
+        t1_draw_fee = #{record.t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1TradeRate != null" >
+        t1_trade_rate = #{record.t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mlJfFee != null" >
+        ml_jf_fee = #{record.mlJfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mlJfRate != null" >
+        ml_jf_rate = #{record.mlJfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mlWjfFee != null" >
+        ml_wjf_fee = #{record.mlWjfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mlWjfRate != null" >
+        ml_wjf_rate = #{record.mlWjfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.createBy != null" >
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null" >
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null" >
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null" >
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null" >
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null" >
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update bu_transaction_rate
+    set id = #{record.id,jdbcType=INTEGER},
+      type = #{record.type,jdbcType=VARCHAR},
+      t0_draw_fee = #{record.t0DrawFee,jdbcType=DECIMAL},
+      t0_trade_rate = #{record.t0TradeRate,jdbcType=DECIMAL},
+      t1_draw_fee = #{record.t1DrawFee,jdbcType=DECIMAL},
+      t1_trade_rate = #{record.t1TradeRate,jdbcType=DECIMAL},
+      ml_jf_fee = #{record.mlJfFee,jdbcType=DECIMAL},
+      ml_jf_rate = #{record.mlJfRate,jdbcType=DECIMAL},
+      ml_wjf_fee = #{record.mlWjfFee,jdbcType=DECIMAL},
+      ml_wjf_rate = #{record.mlWjfRate,jdbcType=DECIMAL},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.TransactionRate" >
+    update bu_transaction_rate
+    <set >
+      <if test="type != null" >
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="t0DrawFee != null" >
+        t0_draw_fee = #{t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t0TradeRate != null" >
+        t0_trade_rate = #{t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawFee != null" >
+        t1_draw_fee = #{t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1TradeRate != null" >
+        t1_trade_rate = #{t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mlJfFee != null" >
+        ml_jf_fee = #{mlJfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mlJfRate != null" >
+        ml_jf_rate = #{mlJfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mlWjfFee != null" >
+        ml_wjf_fee = #{mlWjfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mlWjfRate != null" >
+        ml_wjf_rate = #{mlWjfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.TransactionRate" >
+    update bu_transaction_rate
+    set type = #{type,jdbcType=VARCHAR},
+      t0_draw_fee = #{t0DrawFee,jdbcType=DECIMAL},
+      t0_trade_rate = #{t0TradeRate,jdbcType=DECIMAL},
+      t1_draw_fee = #{t1DrawFee,jdbcType=DECIMAL},
+      t1_trade_rate = #{t1TradeRate,jdbcType=DECIMAL},
+      ml_jf_fee = #{mlJfFee,jdbcType=DECIMAL},
+      ml_jf_rate = #{mlJfRate,jdbcType=DECIMAL},
+      ml_wjf_fee = #{mlWjfFee,jdbcType=DECIMAL},
+      ml_wjf_rate = #{mlWjfRate,jdbcType=DECIMAL},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR},
+      del_flag = #{delFlag,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

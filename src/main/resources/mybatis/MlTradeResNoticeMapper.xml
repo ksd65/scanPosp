@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.MlTradeResNoticeMapper" >
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.MlTradeResNotice" >
+    <result column="ORDER_ID" property="orderId" jdbcType="VARCHAR" />
+    <result column="ORDER_AMT" property="orderAmt" jdbcType="VARCHAR" />
+    <result column="RESP_CODE" property="respCode" jdbcType="VARCHAR" />
+    <result column="RESP_DESC" property="respDesc" jdbcType="VARCHAR" />
+    <result column="USER_ID" property="userId" jdbcType="VARCHAR" />
+    <result column="SIGN_TYPE" property="signType" jdbcType="VARCHAR" />
+    <result column="BUS_CODE" property="busCode" jdbcType="VARCHAR" />
+    <result column="CNY" property="cny" jdbcType="VARCHAR" />
+    <result column="ADD1" property="add1" jdbcType="VARCHAR" />
+    <result column="ADD2" property="add2" jdbcType="VARCHAR" />
+    <result column="ADD3" property="add3" jdbcType="VARCHAR" />
+    <result column="ADD4" property="add4" jdbcType="VARCHAR" />
+    <result column="ADD5" property="add5" jdbcType="VARCHAR" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="remarks" property="remarks" jdbcType="VARCHAR" />
+    <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ORDER_ID, ORDER_AMT, RESP_CODE, RESP_DESC, USER_ID, SIGN_TYPE, BUS_CODE, CNY, ADD1, 
+    ADD2, ADD3, ADD4, ADD5, create_by, create_date, update_by, update_date, remarks, 
+    del_flag
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.MlTradeResNoticeExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from ml_trade_result_notice
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.MlTradeResNoticeExample" >
+    delete from ml_trade_result_notice
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.MlTradeResNotice" >
+    insert into ml_trade_result_notice (ORDER_ID, ORDER_AMT, RESP_CODE, 
+      RESP_DESC, USER_ID, SIGN_TYPE, 
+      BUS_CODE, CNY, ADD1, 
+      ADD2, ADD3, ADD4, ADD5, 
+      create_by, create_date, update_by, 
+      update_date, remarks, del_flag
+      )
+    values (#{orderId,jdbcType=VARCHAR}, #{orderAmt,jdbcType=VARCHAR}, #{respCode,jdbcType=VARCHAR}, 
+      #{respDesc,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR}, #{signType,jdbcType=VARCHAR}, 
+      #{busCode,jdbcType=VARCHAR}, #{cny,jdbcType=VARCHAR}, #{add1,jdbcType=VARCHAR}, 
+      #{add2,jdbcType=VARCHAR}, #{add3,jdbcType=VARCHAR}, #{add4,jdbcType=VARCHAR}, #{add5,jdbcType=VARCHAR}, 
+      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, 
+      #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.MlTradeResNotice" >
+    insert into ml_trade_result_notice
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="orderId != null" >
+        ORDER_ID,
+      </if>
+      <if test="orderAmt != null" >
+        ORDER_AMT,
+      </if>
+      <if test="respCode != null" >
+        RESP_CODE,
+      </if>
+      <if test="respDesc != null" >
+        RESP_DESC,
+      </if>
+      <if test="userId != null" >
+        USER_ID,
+      </if>
+      <if test="signType != null" >
+        SIGN_TYPE,
+      </if>
+      <if test="busCode != null" >
+        BUS_CODE,
+      </if>
+      <if test="cny != null" >
+        CNY,
+      </if>
+      <if test="add1 != null" >
+        ADD1,
+      </if>
+      <if test="add2 != null" >
+        ADD2,
+      </if>
+      <if test="add3 != null" >
+        ADD3,
+      </if>
+      <if test="add4 != null" >
+        ADD4,
+      </if>
+      <if test="add5 != null" >
+        ADD5,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="remarks != null" >
+        remarks,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="orderId != null" >
+        #{orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="orderAmt != null" >
+        #{orderAmt,jdbcType=VARCHAR},
+      </if>
+      <if test="respCode != null" >
+        #{respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="respDesc != null" >
+        #{respDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="signType != null" >
+        #{signType,jdbcType=VARCHAR},
+      </if>
+      <if test="busCode != null" >
+        #{busCode,jdbcType=VARCHAR},
+      </if>
+      <if test="cny != null" >
+        #{cny,jdbcType=VARCHAR},
+      </if>
+      <if test="add1 != null" >
+        #{add1,jdbcType=VARCHAR},
+      </if>
+      <if test="add2 != null" >
+        #{add2,jdbcType=VARCHAR},
+      </if>
+      <if test="add3 != null" >
+        #{add3,jdbcType=VARCHAR},
+      </if>
+      <if test="add4 != null" >
+        #{add4,jdbcType=VARCHAR},
+      </if>
+      <if test="add5 != null" >
+        #{add5,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.MlTradeResNoticeExample" resultType="java.lang.Integer" >
+    select count(*) from ml_trade_result_notice
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update ml_trade_result_notice
+    <set >
+      <if test="record.orderId != null" >
+        ORDER_ID = #{record.orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderAmt != null" >
+        ORDER_AMT = #{record.orderAmt,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respCode != null" >
+        RESP_CODE = #{record.respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respDesc != null" >
+        RESP_DESC = #{record.respDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="record.userId != null" >
+        USER_ID = #{record.userId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.signType != null" >
+        SIGN_TYPE = #{record.signType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.busCode != null" >
+        BUS_CODE = #{record.busCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cny != null" >
+        CNY = #{record.cny,jdbcType=VARCHAR},
+      </if>
+      <if test="record.add1 != null" >
+        ADD1 = #{record.add1,jdbcType=VARCHAR},
+      </if>
+      <if test="record.add2 != null" >
+        ADD2 = #{record.add2,jdbcType=VARCHAR},
+      </if>
+      <if test="record.add3 != null" >
+        ADD3 = #{record.add3,jdbcType=VARCHAR},
+      </if>
+      <if test="record.add4 != null" >
+        ADD4 = #{record.add4,jdbcType=VARCHAR},
+      </if>
+      <if test="record.add5 != null" >
+        ADD5 = #{record.add5,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null" >
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null" >
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null" >
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null" >
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null" >
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null" >
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update ml_trade_result_notice
+    set ORDER_ID = #{record.orderId,jdbcType=VARCHAR},
+      ORDER_AMT = #{record.orderAmt,jdbcType=VARCHAR},
+      RESP_CODE = #{record.respCode,jdbcType=VARCHAR},
+      RESP_DESC = #{record.respDesc,jdbcType=VARCHAR},
+      USER_ID = #{record.userId,jdbcType=VARCHAR},
+      SIGN_TYPE = #{record.signType,jdbcType=VARCHAR},
+      BUS_CODE = #{record.busCode,jdbcType=VARCHAR},
+      CNY = #{record.cny,jdbcType=VARCHAR},
+      ADD1 = #{record.add1,jdbcType=VARCHAR},
+      ADD2 = #{record.add2,jdbcType=VARCHAR},
+      ADD3 = #{record.add3,jdbcType=VARCHAR},
+      ADD4 = #{record.add4,jdbcType=VARCHAR},
+      ADD5 = #{record.add5,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+</mapper>

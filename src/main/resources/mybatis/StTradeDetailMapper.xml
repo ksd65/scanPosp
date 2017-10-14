@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.StTradeDetailMapper" >
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.StTradeDetail" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="member_id" property="memberId" jdbcType="INTEGER" />
+    <result column="member_code" property="memberCode" jdbcType="VARCHAR" />
+    <result column="order_num" property="orderNum" jdbcType="VARCHAR" />
+    <result column="order_amt" property="orderAmt" jdbcType="DECIMAL" />
+    <result column="pay_type" property="payType" jdbcType="CHAR" />
+    <result column="bg_url" property="bgUrl" jdbcType="VARCHAR" />
+    <result column="page_url" property="pageUrl" jdbcType="VARCHAR" />
+    <result column="goods_name" property="goodsName" jdbcType="VARCHAR" />
+    <result column="goods_desc" property="goodsDesc" jdbcType="VARCHAR" />
+    <result column="acc_no" property="accNo" jdbcType="VARCHAR" />
+    <result column="sett_amt" property="settAmt" jdbcType="DECIMAL" />
+    <result column="cb_res" property="cbRes" jdbcType="CHAR" />
+    <result column="add1" property="add1" jdbcType="VARCHAR" />
+    <result column="add2" property="add2" jdbcType="VARCHAR" />
+    <result column="add3" property="add3" jdbcType="VARCHAR" />
+    <result column="add4" property="add4" jdbcType="VARCHAR" />
+    <result column="trade_code" property="tradeCode" jdbcType="VARCHAR" />
+    <result column="trade_desc" property="tradeDesc" jdbcType="VARCHAR" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+    <result column="pay_time" property="payTime" jdbcType="VARCHAR" />
+    <result column="counts" property="counts" jdbcType="INTEGER" /> 
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, member_id, member_code, order_num, order_amt, pay_type, bg_url, page_url, goods_name, 
+    goods_desc, acc_no, sett_amt, cb_res, add1, add2, add3, add4, trade_code, trade_desc, 
+    create_by, create_date, update_by, update_date, del_flag, pay_time, counts
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.StTradeDetailExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from st_trade_detail
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from st_trade_detail
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from st_trade_detail
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.StTradeDetailExample" >
+    delete from st_trade_detail
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.StTradeDetail" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into st_trade_detail (member_id, member_code, 
+      order_num, order_amt, pay_type, 
+      bg_url, page_url, goods_name, 
+      goods_desc, acc_no, sett_amt, 
+      cb_res, add1, add2, add3, 
+      add4, trade_code, trade_desc, 
+      create_by, create_date, update_by, 
+      update_date, del_flag, pay_time, 
+      counts)
+    values (#{memberId,jdbcType=INTEGER}, #{memberCode,jdbcType=VARCHAR}, 
+      #{orderNum,jdbcType=VARCHAR}, #{orderAmt,jdbcType=DECIMAL}, #{payType,jdbcType=CHAR}, 
+      #{bgUrl,jdbcType=VARCHAR}, #{pageUrl,jdbcType=VARCHAR}, #{goodsName,jdbcType=VARCHAR}, 
+      #{goodsDesc,jdbcType=VARCHAR}, #{accNo,jdbcType=VARCHAR}, #{settAmt,jdbcType=DECIMAL}, 
+      #{cbRes,jdbcType=CHAR}, #{add1,jdbcType=VARCHAR}, #{add2,jdbcType=VARCHAR}, #{add3,jdbcType=VARCHAR}, 
+      #{add4,jdbcType=VARCHAR}, #{tradeCode,jdbcType=VARCHAR}, #{tradeDesc,jdbcType=VARCHAR}, 
+      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, 
+      #{updateDate,jdbcType=TIMESTAMP}, #{delFlag,jdbcType=CHAR}, #{payTime,jdbcType=VARCHAR}, 
+      #{counts,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.StTradeDetail" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into st_trade_detail
+    <trim prefix="(" suffix=")" suffixOverrides="," > 
+      <if test="memberId != null" >
+        member_id,
+      </if>
+      <if test="memberCode != null" >
+        member_code,
+      </if>
+      <if test="orderNum != null" >
+        order_num,
+      </if>
+      <if test="orderAmt != null" >
+        order_amt,
+      </if>
+      <if test="payType != null" >
+        pay_type,
+      </if>
+      <if test="bgUrl != null" >
+        bg_url,
+      </if>
+      <if test="pageUrl != null" >
+        page_url,
+      </if>
+      <if test="goodsName != null" >
+        goods_name,
+      </if>
+      <if test="goodsDesc != null" >
+        goods_desc,
+      </if>
+      <if test="accNo != null" >
+        acc_no,
+      </if>
+      <if test="settAmt != null" >
+        sett_amt,
+      </if>
+      <if test="cbRes != null" >
+        cb_res,
+      </if>
+      <if test="add1 != null" >
+        add1,
+      </if>
+      <if test="add2 != null" >
+        add2,
+      </if>
+      <if test="add3 != null" >
+        add3,
+      </if>
+      <if test="add4 != null" >
+        add4,
+      </if>
+      <if test="tradeCode != null" >
+        trade_code,
+      </if>
+      <if test="tradeDesc != null" >
+        trade_desc,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+      <if test="payTime != null" >
+        pay_time,
+      </if>
+      <if test="counts != null" >
+        counts,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="memberId != null" >
+        #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="memberCode != null" >
+        #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNum != null" >
+        #{orderNum,jdbcType=VARCHAR},
+      </if>
+      <if test="orderAmt != null" >
+        #{orderAmt,jdbcType=DECIMAL},
+      </if>
+      <if test="payType != null" >
+        #{payType,jdbcType=CHAR},
+      </if>
+      <if test="bgUrl != null" >
+        #{bgUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="pageUrl != null" >
+        #{pageUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsName != null" >
+        #{goodsName,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsDesc != null" >
+        #{goodsDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="accNo != null" >
+        #{accNo,jdbcType=VARCHAR},
+      </if>
+      <if test="settAmt != null" >
+        #{settAmt,jdbcType=DECIMAL},
+      </if>
+      <if test="cbRes != null" >
+        #{cbRes,jdbcType=CHAR},
+      </if>
+      <if test="add1 != null" >
+        #{add1,jdbcType=VARCHAR},
+      </if>
+      <if test="add2 != null" >
+        #{add2,jdbcType=VARCHAR},
+      </if>
+      <if test="add3 != null" >
+        #{add3,jdbcType=VARCHAR},
+      </if>
+      <if test="add4 != null" >
+        #{add4,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeCode != null" >
+        #{tradeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeDesc != null" >
+        #{tradeDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="payTime != null" >
+        #{payTime,jdbcType=VARCHAR},
+      </if>
+      <if test="counts != null" >
+        #{counts,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.StTradeDetailExample" resultType="java.lang.Integer" >
+    select count(*) from st_trade_detail
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update st_trade_detail
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.memberId != null" >
+        member_id = #{record.memberId,jdbcType=INTEGER},
+      </if>
+      <if test="record.memberCode != null" >
+        member_code = #{record.memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderNum != null" >
+        order_num = #{record.orderNum,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderAmt != null" >
+        order_amt = #{record.orderAmt,jdbcType=DECIMAL},
+      </if>
+      <if test="record.payType != null" >
+        pay_type = #{record.payType,jdbcType=CHAR},
+      </if>
+      <if test="record.bgUrl != null" >
+        bg_url = #{record.bgUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pageUrl != null" >
+        page_url = #{record.pageUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsName != null" >
+        goods_name = #{record.goodsName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsDesc != null" >
+        goods_desc = #{record.goodsDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="record.accNo != null" >
+        acc_no = #{record.accNo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.settAmt != null" >
+        sett_amt = #{record.settAmt,jdbcType=DECIMAL},
+      </if>
+      <if test="record.cbRes != null" >
+        cb_res = #{record.cbRes,jdbcType=CHAR},
+      </if>
+      <if test="record.add1 != null" >
+        add1 = #{record.add1,jdbcType=VARCHAR},
+      </if>
+      <if test="record.add2 != null" >
+        add2 = #{record.add2,jdbcType=VARCHAR},
+      </if>
+      <if test="record.add3 != null" >
+        add3 = #{record.add3,jdbcType=VARCHAR},
+      </if>
+      <if test="record.add4 != null" >
+        add4 = #{record.add4,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tradeCode != null" >
+        trade_code = #{record.tradeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tradeDesc != null" >
+        trade_desc = #{record.tradeDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null" >
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null" >
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null" >
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null" >
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.delFlag != null" >
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+      <if test="record.payTime != null" >
+        pay_time = #{record.payTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.counts != null" >
+        counts = #{record.counts,jdbcType=INTEGER},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update st_trade_detail
+    set id = #{record.id,jdbcType=INTEGER},
+      member_id = #{record.memberId,jdbcType=INTEGER},
+      member_code = #{record.memberCode,jdbcType=VARCHAR},
+      order_num = #{record.orderNum,jdbcType=VARCHAR},
+      order_amt = #{record.orderAmt,jdbcType=DECIMAL},
+      pay_type = #{record.payType,jdbcType=CHAR},
+      bg_url = #{record.bgUrl,jdbcType=VARCHAR},
+      page_url = #{record.pageUrl,jdbcType=VARCHAR},
+      goods_name = #{record.goodsName,jdbcType=VARCHAR},
+      goods_desc = #{record.goodsDesc,jdbcType=VARCHAR},
+      acc_no = #{record.accNo,jdbcType=VARCHAR},
+      sett_amt = #{record.settAmt,jdbcType=DECIMAL},
+      cb_res = #{record.cbRes,jdbcType=CHAR},
+      add1 = #{record.add1,jdbcType=VARCHAR},
+      add2 = #{record.add2,jdbcType=VARCHAR},
+      add3 = #{record.add3,jdbcType=VARCHAR},
+      add4 = #{record.add4,jdbcType=VARCHAR},
+      trade_code = #{record.tradeCode,jdbcType=VARCHAR},
+      trade_desc = #{record.tradeDesc,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      del_flag = #{record.delFlag,jdbcType=CHAR,
+      pay_time = #{record.payTime,jdbcType=VARCHAR},
+      counts = #{record.counts,jdbcType=INTEGER}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.StTradeDetail" >
+    update st_trade_detail
+    <set >
+      <if test="memberId != null" >
+        member_id = #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="memberCode != null" >
+        member_code = #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNum != null" >
+        order_num = #{orderNum,jdbcType=VARCHAR},
+      </if>
+      <if test="orderAmt != null" >
+        order_amt = #{orderAmt,jdbcType=DECIMAL},
+      </if>
+      <if test="payType != null" >
+        pay_type = #{payType,jdbcType=CHAR},
+      </if>
+      <if test="bgUrl != null" >
+        bg_url = #{bgUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="pageUrl != null" >
+        page_url = #{pageUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsName != null" >
+        goods_name = #{goodsName,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsDesc != null" >
+        goods_desc = #{goodsDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="accNo != null" >
+        acc_no = #{accNo,jdbcType=VARCHAR},
+      </if>
+      <if test="settAmt != null" >
+        sett_amt = #{settAmt,jdbcType=DECIMAL},
+      </if>
+      <if test="cbRes != null" >
+        cb_res = #{cbRes,jdbcType=CHAR},
+      </if>
+      <if test="add1 != null" >
+        add1 = #{add1,jdbcType=VARCHAR},
+      </if>
+      <if test="add2 != null" >
+        add2 = #{add2,jdbcType=VARCHAR},
+      </if>
+      <if test="add3 != null" >
+        add3 = #{add3,jdbcType=VARCHAR},
+      </if>
+      <if test="add4 != null" >
+        add4 = #{add4,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeCode != null" >
+        trade_code = #{tradeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeDesc != null" >
+        trade_desc = #{tradeDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null" >
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="payTime != null" >
+        pay_time = #{payTime,jdbcType=VARCHAR},
+      </if>
+      <if test="counts != null" >
+        counts = #{counts,jdbcType=INTEGER},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.StTradeDetail" >
+    update st_trade_detail
+    set member_id = #{memberId,jdbcType=INTEGER},
+      member_code = #{memberCode,jdbcType=VARCHAR},
+      order_num = #{orderNum,jdbcType=VARCHAR},
+      order_amt = #{orderAmt,jdbcType=DECIMAL},
+      pay_type = #{payType,jdbcType=CHAR},
+      bg_url = #{bgUrl,jdbcType=VARCHAR},
+      page_url = #{pageUrl,jdbcType=VARCHAR},
+      goods_name = #{goodsName,jdbcType=VARCHAR},
+      goods_desc = #{goodsDesc,jdbcType=VARCHAR},
+      acc_no = #{accNo,jdbcType=VARCHAR},
+      sett_amt = #{settAmt,jdbcType=DECIMAL},
+      cb_res = #{cbRes,jdbcType=CHAR},
+      add1 = #{add1,jdbcType=VARCHAR},
+      add2 = #{add2,jdbcType=VARCHAR},
+      add3 = #{add3,jdbcType=VARCHAR},
+      add4 = #{add4,jdbcType=VARCHAR},
+      trade_code = #{tradeCode,jdbcType=VARCHAR},
+      trade_desc = #{tradeDesc,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      del_flag = #{delFlag,jdbcType=CHAR},
+      pay_time = #{payTime,jdbcType=VARCHAR},
+      counts = #{counts,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

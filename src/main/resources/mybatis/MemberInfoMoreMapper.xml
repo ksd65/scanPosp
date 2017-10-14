@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.MemberInfoMoreMapper">
+ 	<resultMap id="BaseResultMap" type="com.epay.scanposp.entity.MemberInfoMore" extends="com.epay.scanposp.dao.MemberInfoMapper.BaseResultMap">
+	    <result column="member_Bank_Id" property="memberBankId" jdbcType="INTEGER" />
+	    <result column="bank_id" property="bankId" jdbcType="VARCHAR" />
+	    <result column="sub_id" property="subId" jdbcType="VARCHAR" />
+	    <result column="bank_open" property="bankOpen" jdbcType="VARCHAR" />
+	    <result column="account_name" property="accountName" jdbcType="VARCHAR" />
+	    <result column="account_number" property="accountNumber" jdbcType="VARCHAR" />
+  	</resultMap>
+ 
+ 	<select id="selectMemberInfoMoreByMember" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+	    SELECT 
+			mem.id, mem.code, mem.type, mem.login_code, mem.login_pass, mem.parent_id, mem.email, mem.mobile_phone, mem.name, mem.contact, 
+		    mem.status, mem.sex_type, mem.birthday, mem.home_phone, mem.cert_nbr, mem.cert_pic1, mem.cert_pic2, mem.memCert_pic, 
+		    mem.card_nbr, mem.card_pic1, mem.card_pic2, mem.addr, mem.province, mem.city, mem.county, mem.verify_flag, mem.wx_route_id, 
+		    mem.zfb_route_id, mem.create_by, mem.create_date, mem.update_by, mem.update_date, mem.remarks, mem.del_flag,
+			membank.id member_Bank_Id,membank.bank_id,membank.bank_open,membank.account_name,membank.account_number,membank.sub_id 
+		FROM bu_member_info mem,bu_member_bank membank 
+		WHERE mem.id = membank.member_id AND mem.id = #{id,jdbcType=INTEGER} 
+  </select>
+</mapper>

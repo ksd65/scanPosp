@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<portable-config>
+	
+	<config-file path="WEB-INF/classes/config.properties">
+		<replace key="currentEnv">online</replace>
+		<!-- database -->
+		<replace key="jdbc.url"><![CDATA[]]></replace>
+		<replace key="jdbc.username"></replace>
+		<replace key="jdbc.password"></replace>
+	</config-file>
+</portable-config>

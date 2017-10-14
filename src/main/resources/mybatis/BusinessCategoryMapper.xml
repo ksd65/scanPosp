@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.BusinessCategoryMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.BusinessCategory">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="wx_category_name" jdbcType="VARCHAR" property="wxCategoryName" />
+    <result column="wx_category_id" jdbcType="VARCHAR" property="wxCategoryId" />
+    <result column="zfb_category_name" jdbcType="VARCHAR" property="zfbCategoryName" />
+    <result column="zfb_category_id" jdbcType="VARCHAR" property="zfbCategoryId" />
+    <result column="qq_category_name" jdbcType="VARCHAR" property="qqCategoryName" />
+    <result column="qq_category_id" jdbcType="VARCHAR" property="qqCategoryId" />
+    <result column="bd_category_name" jdbcType="VARCHAR" property="bdCategoryName" />
+    <result column="bd_category_id" jdbcType="VARCHAR" property="bdCategoryId" />
+    <result column="jd_category_name" jdbcType="VARCHAR" property="jdCategoryName" />
+    <result column="jd_category_id" jdbcType="VARCHAR" property="jdCategoryId" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="remarks" jdbcType="VARCHAR" property="remarks" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, wx_category_name, wx_category_id, zfb_category_name, zfb_category_id, qq_category_name, 
+    qq_category_id, bd_category_name, bd_category_id, jd_category_name, jd_category_id, 
+    create_by, create_date, update_by, update_date, remarks, del_flag
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.BusinessCategoryExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_business_category
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from bu_business_category
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from bu_business_category
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.BusinessCategoryExample">
+    delete from bu_business_category
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.BusinessCategory">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_business_category (wx_category_name, wx_category_id, zfb_category_name, 
+      zfb_category_id, qq_category_name, qq_category_id, 
+      bd_category_name, bd_category_id, jd_category_name, 
+      jd_category_id, create_by, create_date, 
+      update_by, update_date, remarks, 
+      del_flag)
+    values (#{wxCategoryName,jdbcType=VARCHAR}, #{wxCategoryId,jdbcType=VARCHAR}, #{zfbCategoryName,jdbcType=VARCHAR}, 
+      #{zfbCategoryId,jdbcType=VARCHAR}, #{qqCategoryName,jdbcType=VARCHAR}, #{qqCategoryId,jdbcType=VARCHAR}, 
+      #{bdCategoryName,jdbcType=VARCHAR}, #{bdCategoryId,jdbcType=VARCHAR}, #{jdCategoryName,jdbcType=VARCHAR}, 
+      #{jdCategoryId,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, 
+      #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, 
+      #{delFlag,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.BusinessCategory">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_business_category
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="wxCategoryName != null">
+        wx_category_name,
+      </if>
+      <if test="wxCategoryId != null">
+        wx_category_id,
+      </if>
+      <if test="zfbCategoryName != null">
+        zfb_category_name,
+      </if>
+      <if test="zfbCategoryId != null">
+        zfb_category_id,
+      </if>
+      <if test="qqCategoryName != null">
+        qq_category_name,
+      </if>
+      <if test="qqCategoryId != null">
+        qq_category_id,
+      </if>
+      <if test="bdCategoryName != null">
+        bd_category_name,
+      </if>
+      <if test="bdCategoryId != null">
+        bd_category_id,
+      </if>
+      <if test="jdCategoryName != null">
+        jd_category_name,
+      </if>
+      <if test="jdCategoryId != null">
+        jd_category_id,
+      </if>
+      <if test="createBy != null">
+        create_by,
+      </if>
+      <if test="createDate != null">
+        create_date,
+      </if>
+      <if test="updateBy != null">
+        update_by,
+      </if>
+      <if test="updateDate != null">
+        update_date,
+      </if>
+      <if test="remarks != null">
+        remarks,
+      </if>
+      <if test="delFlag != null">
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="wxCategoryName != null">
+        #{wxCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="wxCategoryId != null">
+        #{wxCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbCategoryName != null">
+        #{zfbCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbCategoryId != null">
+        #{zfbCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="qqCategoryName != null">
+        #{qqCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="qqCategoryId != null">
+        #{qqCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="bdCategoryName != null">
+        #{bdCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="bdCategoryId != null">
+        #{bdCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="jdCategoryName != null">
+        #{jdCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="jdCategoryId != null">
+        #{jdCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.BusinessCategoryExample" resultType="java.lang.Integer">
+    select count(*) from bu_business_category
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update bu_business_category
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.wxCategoryName != null">
+        wx_category_name = #{record.wxCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wxCategoryId != null">
+        wx_category_id = #{record.wxCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zfbCategoryName != null">
+        zfb_category_name = #{record.zfbCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zfbCategoryId != null">
+        zfb_category_id = #{record.zfbCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.qqCategoryName != null">
+        qq_category_name = #{record.qqCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.qqCategoryId != null">
+        qq_category_id = #{record.qqCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bdCategoryName != null">
+        bd_category_name = #{record.bdCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bdCategoryId != null">
+        bd_category_id = #{record.bdCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.jdCategoryName != null">
+        jd_category_name = #{record.jdCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.jdCategoryId != null">
+        jd_category_id = #{record.jdCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null">
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null">
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null">
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null">
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null">
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null">
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update bu_business_category
+    set id = #{record.id,jdbcType=INTEGER},
+      wx_category_name = #{record.wxCategoryName,jdbcType=VARCHAR},
+      wx_category_id = #{record.wxCategoryId,jdbcType=VARCHAR},
+      zfb_category_name = #{record.zfbCategoryName,jdbcType=VARCHAR},
+      zfb_category_id = #{record.zfbCategoryId,jdbcType=VARCHAR},
+      qq_category_name = #{record.qqCategoryName,jdbcType=VARCHAR},
+      qq_category_id = #{record.qqCategoryId,jdbcType=VARCHAR},
+      bd_category_name = #{record.bdCategoryName,jdbcType=VARCHAR},
+      bd_category_id = #{record.bdCategoryId,jdbcType=VARCHAR},
+      jd_category_name = #{record.jdCategoryName,jdbcType=VARCHAR},
+      jd_category_id = #{record.jdCategoryId,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.BusinessCategory">
+    update bu_business_category
+    <set>
+      <if test="wxCategoryName != null">
+        wx_category_name = #{wxCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="wxCategoryId != null">
+        wx_category_id = #{wxCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbCategoryName != null">
+        zfb_category_name = #{zfbCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbCategoryId != null">
+        zfb_category_id = #{zfbCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="qqCategoryName != null">
+        qq_category_name = #{qqCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="qqCategoryId != null">
+        qq_category_id = #{qqCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="bdCategoryName != null">
+        bd_category_name = #{bdCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="bdCategoryId != null">
+        bd_category_id = #{bdCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="jdCategoryName != null">
+        jd_category_name = #{jdCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="jdCategoryId != null">
+        jd_category_id = #{jdCategoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.BusinessCategory">
+    update bu_business_category
+    set wx_category_name = #{wxCategoryName,jdbcType=VARCHAR},
+      wx_category_id = #{wxCategoryId,jdbcType=VARCHAR},
+      zfb_category_name = #{zfbCategoryName,jdbcType=VARCHAR},
+      zfb_category_id = #{zfbCategoryId,jdbcType=VARCHAR},
+      qq_category_name = #{qqCategoryName,jdbcType=VARCHAR},
+      qq_category_id = #{qqCategoryId,jdbcType=VARCHAR},
+      bd_category_name = #{bdCategoryName,jdbcType=VARCHAR},
+      bd_category_id = #{bdCategoryId,jdbcType=VARCHAR},
+      jd_category_name = #{jdCategoryName,jdbcType=VARCHAR},
+      jd_category_id = #{jdCategoryId,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR},
+      del_flag = #{delFlag,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+</mapper>

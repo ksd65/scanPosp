@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.RouteWayMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.RouteWay">
+    <result column="route_id" jdbcType="VARCHAR" property="routeId" />
+    <result column="route_name" jdbcType="VARCHAR" property="routeName" />
+    <result column="txn_type" jdbcType="VARCHAR" property="txnType" />
+    <result column="txn_cost_t0" jdbcType="VARCHAR" property="txnCostT0" />
+    <result column="txn_cost_t1" jdbcType="VARCHAR" property="txnCostT1" />
+    <result column="is_usable" jdbcType="CHAR" property="isUsable" />
+    <result column="contact" jdbcType="VARCHAR" property="contact" />
+    <result column="contact_tel" jdbcType="VARCHAR" property="contactTel" />
+    <result column="contact_addr" jdbcType="VARCHAR" property="contactAddr" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="remarks" jdbcType="VARCHAR" property="remarks" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    route_id, route_name, txn_type, txn_cost_t0, txn_cost_t1, is_usable, contact, contact_tel, 
+    contact_addr, create_by, create_date, update_by, update_date, remarks, del_flag
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.RouteWayExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_routeway
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.RouteWayExample">
+    delete from bu_routeway
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.RouteWay">
+    insert into bu_routeway (route_id, route_name, txn_type, 
+      txn_cost_t0, txn_cost_t1, is_usable, 
+      contact, contact_tel, contact_addr, 
+      create_by, create_date, update_by, 
+      update_date, remarks, del_flag
+      )
+    values (#{routeId,jdbcType=VARCHAR}, #{routeName,jdbcType=VARCHAR}, #{txnType,jdbcType=VARCHAR}, 
+      #{txnCostT0,jdbcType=VARCHAR}, #{txnCostT1,jdbcType=VARCHAR}, #{isUsable,jdbcType=CHAR}, 
+      #{contact,jdbcType=VARCHAR}, #{contactTel,jdbcType=VARCHAR}, #{contactAddr,jdbcType=VARCHAR}, 
+      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, 
+      #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.RouteWay">
+    insert into bu_routeway
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="routeId != null">
+        route_id,
+      </if>
+      <if test="routeName != null">
+        route_name,
+      </if>
+      <if test="txnType != null">
+        txn_type,
+      </if>
+      <if test="txnCostT0 != null">
+        txn_cost_t0,
+      </if>
+      <if test="txnCostT1 != null">
+        txn_cost_t1,
+      </if>
+      <if test="isUsable != null">
+        is_usable,
+      </if>
+      <if test="contact != null">
+        contact,
+      </if>
+      <if test="contactTel != null">
+        contact_tel,
+      </if>
+      <if test="contactAddr != null">
+        contact_addr,
+      </if>
+      <if test="createBy != null">
+        create_by,
+      </if>
+      <if test="createDate != null">
+        create_date,
+      </if>
+      <if test="updateBy != null">
+        update_by,
+      </if>
+      <if test="updateDate != null">
+        update_date,
+      </if>
+      <if test="remarks != null">
+        remarks,
+      </if>
+      <if test="delFlag != null">
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="routeId != null">
+        #{routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="routeName != null">
+        #{routeName,jdbcType=VARCHAR},
+      </if>
+      <if test="txnType != null">
+        #{txnType,jdbcType=VARCHAR},
+      </if>
+      <if test="txnCostT0 != null">
+        #{txnCostT0,jdbcType=VARCHAR},
+      </if>
+      <if test="txnCostT1 != null">
+        #{txnCostT1,jdbcType=VARCHAR},
+      </if>
+      <if test="isUsable != null">
+        #{isUsable,jdbcType=CHAR},
+      </if>
+      <if test="contact != null">
+        #{contact,jdbcType=VARCHAR},
+      </if>
+      <if test="contactTel != null">
+        #{contactTel,jdbcType=VARCHAR},
+      </if>
+      <if test="contactAddr != null">
+        #{contactAddr,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.RouteWayExample" resultType="java.lang.Integer">
+    select count(*) from bu_routeway
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update bu_routeway
+    <set>
+      <if test="record.routeId != null">
+        route_id = #{record.routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.routeName != null">
+        route_name = #{record.routeName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.txnType != null">
+        txn_type = #{record.txnType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.txnCostT0 != null">
+        txn_cost_t0 = #{record.txnCostT0,jdbcType=VARCHAR},
+      </if>
+      <if test="record.txnCostT1 != null">
+        txn_cost_t1 = #{record.txnCostT1,jdbcType=VARCHAR},
+      </if>
+      <if test="record.isUsable != null">
+        is_usable = #{record.isUsable,jdbcType=CHAR},
+      </if>
+      <if test="record.contact != null">
+        contact = #{record.contact,jdbcType=VARCHAR},
+      </if>
+      <if test="record.contactTel != null">
+        contact_tel = #{record.contactTel,jdbcType=VARCHAR},
+      </if>
+      <if test="record.contactAddr != null">
+        contact_addr = #{record.contactAddr,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null">
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null">
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null">
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null">
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null">
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null">
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update bu_routeway
+    set route_id = #{record.routeId,jdbcType=VARCHAR},
+      route_name = #{record.routeName,jdbcType=VARCHAR},
+      txn_type = #{record.txnType,jdbcType=VARCHAR},
+      txn_cost_t0 = #{record.txnCostT0,jdbcType=VARCHAR},
+      txn_cost_t1 = #{record.txnCostT1,jdbcType=VARCHAR},
+      is_usable = #{record.isUsable,jdbcType=CHAR},
+      contact = #{record.contact,jdbcType=VARCHAR},
+      contact_tel = #{record.contactTel,jdbcType=VARCHAR},
+      contact_addr = #{record.contactAddr,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  
+</mapper>

@@ -1,0 +1,656 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.RegisterResultNoticeMapper" >
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.RegisterResultNotice" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="member_code" property="memberCode" jdbcType="VARCHAR" />
+    <result column="merchant_code" property="merchantCode" jdbcType="VARCHAR" />
+    <result column="pay_way" property="payWay" jdbcType="VARCHAR" />
+    <result column="merchant_name" property="merchantName" jdbcType="VARCHAR" />
+    <result column="short_name" property="shortName" jdbcType="VARCHAR" />
+    <result column="merchant_address" property="merchantAddress" jdbcType="VARCHAR" />
+    <result column="service_phone" property="servicePhone" jdbcType="VARCHAR" />
+    <result column="category" property="category" jdbcType="VARCHAR" />
+    <result column="org_code" property="orgCode" jdbcType="VARCHAR" />
+    <result column="contact_name" property="contactName" jdbcType="CHAR" />
+    <result column="contact_phone" property="contactPhone" jdbcType="CHAR" />
+    <result column="contact_mobile" property="contactMobile" jdbcType="CHAR" />
+    <result column="contact_email" property="contactEmail" jdbcType="CHAR" />
+    <result column="id_card" property="idCard" jdbcType="VARCHAR" />
+    <result column="merchant_license" property="merchantLicense" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="acc_no" property="accNo" jdbcType="VARCHAR" />
+    <result column="acc_name" property="accName" jdbcType="VARCHAR" />
+    <result column="bank_type" property="bankType" jdbcType="VARCHAR" />
+    <result column="bank_name" property="bankName" jdbcType="VARCHAR" />
+    <result column="t0draw_fee" property="t0drawFee" jdbcType="INTEGER" />
+    <result column="t0trade_rate" property="t0tradeRate" jdbcType="INTEGER" />
+    <result column="t1draw_fee" property="t1drawFee" jdbcType="INTEGER" />
+    <result column="t1trade_rate" property="t1tradeRate" jdbcType="INTEGER" />
+    <result column="channel_merchant_code" property="channelMerchantCode" jdbcType="VARCHAR" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="remarks" property="remarks" jdbcType="VARCHAR" />
+    <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, member_code, merchant_code, pay_way, merchant_name, short_name, merchant_address, 
+    service_phone, category, org_code, contact_name, contact_phone, contact_mobile, contact_email, 
+    id_card, merchant_license, remark, status, acc_no, acc_name, bank_type, bank_name, 
+    t0draw_fee, t0trade_rate, t1draw_fee, t1trade_rate, channel_merchant_code, create_by, 
+    create_date, update_by, update_date, remarks, del_flag
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.RegisterResultNoticeExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_register_result_notice
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart>=0" >
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from bu_register_result_notice
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from bu_register_result_notice
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.RegisterResultNoticeExample" >
+    delete from bu_register_result_notice
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.RegisterResultNotice" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_register_result_notice (member_code, merchant_code, pay_way, 
+      merchant_name, short_name, merchant_address, 
+      service_phone, category, org_code, 
+      contact_name, contact_phone, contact_mobile, 
+      contact_email, id_card, merchant_license, 
+      remark, status, acc_no, 
+      acc_name, bank_type, bank_name, 
+      t0draw_fee, t0trade_rate, t1draw_fee, 
+      t1trade_rate, channel_merchant_code, create_by, 
+      create_date, update_by, update_date, 
+      remarks, del_flag)
+    values (#{memberCode,jdbcType=VARCHAR}, #{merchantCode,jdbcType=VARCHAR}, #{payWay,jdbcType=VARCHAR}, 
+      #{merchantName,jdbcType=VARCHAR}, #{shortName,jdbcType=VARCHAR}, #{merchantAddress,jdbcType=VARCHAR}, 
+      #{servicePhone,jdbcType=VARCHAR}, #{category,jdbcType=VARCHAR}, #{orgCode,jdbcType=VARCHAR}, 
+      #{contactName,jdbcType=CHAR}, #{contactPhone,jdbcType=CHAR}, #{contactMobile,jdbcType=CHAR}, 
+      #{contactEmail,jdbcType=CHAR}, #{idCard,jdbcType=VARCHAR}, #{merchantLicense,jdbcType=VARCHAR}, 
+      #{remark,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, #{accNo,jdbcType=VARCHAR}, 
+      #{accName,jdbcType=VARCHAR}, #{bankType,jdbcType=VARCHAR}, #{bankName,jdbcType=VARCHAR}, 
+      #{t0drawFee,jdbcType=INTEGER}, #{t0tradeRate,jdbcType=INTEGER}, #{t1drawFee,jdbcType=INTEGER}, 
+      #{t1tradeRate,jdbcType=INTEGER}, #{channelMerchantCode,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, 
+      #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
+      #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.RegisterResultNotice" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_register_result_notice
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="memberCode != null" >
+        member_code,
+      </if>
+      <if test="merchantCode != null" >
+        merchant_code,
+      </if>
+      <if test="payWay != null" >
+        pay_way,
+      </if>
+      <if test="merchantName != null" >
+        merchant_name,
+      </if>
+      <if test="shortName != null" >
+        short_name,
+      </if>
+      <if test="merchantAddress != null" >
+        merchant_address,
+      </if>
+      <if test="servicePhone != null" >
+        service_phone,
+      </if>
+      <if test="category != null" >
+        category,
+      </if>
+      <if test="orgCode != null" >
+        org_code,
+      </if>
+      <if test="contactName != null" >
+        contact_name,
+      </if>
+      <if test="contactPhone != null" >
+        contact_phone,
+      </if>
+      <if test="contactMobile != null" >
+        contact_mobile,
+      </if>
+      <if test="contactEmail != null" >
+        contact_email,
+      </if>
+      <if test="idCard != null" >
+        id_card,
+      </if>
+      <if test="merchantLicense != null" >
+        merchant_license,
+      </if>
+      <if test="remark != null" >
+        remark,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="accNo != null" >
+        acc_no,
+      </if>
+      <if test="accName != null" >
+        acc_name,
+      </if>
+      <if test="bankType != null" >
+        bank_type,
+      </if>
+      <if test="bankName != null" >
+        bank_name,
+      </if>
+      <if test="t0drawFee != null" >
+        t0draw_fee,
+      </if>
+      <if test="t0tradeRate != null" >
+        t0trade_rate,
+      </if>
+      <if test="t1drawFee != null" >
+        t1draw_fee,
+      </if>
+      <if test="t1tradeRate != null" >
+        t1trade_rate,
+      </if>
+      <if test="channelMerchantCode != null" >
+        channel_merchant_code,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="remarks != null" >
+        remarks,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="memberCode != null" >
+        #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantCode != null" >
+        #{merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="payWay != null" >
+        #{payWay,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantName != null" >
+        #{merchantName,jdbcType=VARCHAR},
+      </if>
+      <if test="shortName != null" >
+        #{shortName,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantAddress != null" >
+        #{merchantAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="servicePhone != null" >
+        #{servicePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="orgCode != null" >
+        #{orgCode,jdbcType=VARCHAR},
+      </if>
+      <if test="contactName != null" >
+        #{contactName,jdbcType=CHAR},
+      </if>
+      <if test="contactPhone != null" >
+        #{contactPhone,jdbcType=CHAR},
+      </if>
+      <if test="contactMobile != null" >
+        #{contactMobile,jdbcType=CHAR},
+      </if>
+      <if test="contactEmail != null" >
+        #{contactEmail,jdbcType=CHAR},
+      </if>
+      <if test="idCard != null" >
+        #{idCard,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantLicense != null" >
+        #{merchantLicense,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="accNo != null" >
+        #{accNo,jdbcType=VARCHAR},
+      </if>
+      <if test="accName != null" >
+        #{accName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankType != null" >
+        #{bankType,jdbcType=VARCHAR},
+      </if>
+      <if test="bankName != null" >
+        #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="t0drawFee != null" >
+        #{t0drawFee,jdbcType=INTEGER},
+      </if>
+      <if test="t0tradeRate != null" >
+        #{t0tradeRate,jdbcType=INTEGER},
+      </if>
+      <if test="t1drawFee != null" >
+        #{t1drawFee,jdbcType=INTEGER},
+      </if>
+      <if test="t1tradeRate != null" >
+        #{t1tradeRate,jdbcType=INTEGER},
+      </if>
+      <if test="channelMerchantCode != null" >
+        #{channelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.RegisterResultNoticeExample" resultType="java.lang.Integer" >
+    select count(*) from bu_register_result_notice
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update bu_register_result_notice
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.memberCode != null" >
+        member_code = #{record.memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.merchantCode != null" >
+        merchant_code = #{record.merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.payWay != null" >
+        pay_way = #{record.payWay,jdbcType=VARCHAR},
+      </if>
+      <if test="record.merchantName != null" >
+        merchant_name = #{record.merchantName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.shortName != null" >
+        short_name = #{record.shortName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.merchantAddress != null" >
+        merchant_address = #{record.merchantAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="record.servicePhone != null" >
+        service_phone = #{record.servicePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.category != null" >
+        category = #{record.category,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orgCode != null" >
+        org_code = #{record.orgCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.contactName != null" >
+        contact_name = #{record.contactName,jdbcType=CHAR},
+      </if>
+      <if test="record.contactPhone != null" >
+        contact_phone = #{record.contactPhone,jdbcType=CHAR},
+      </if>
+      <if test="record.contactMobile != null" >
+        contact_mobile = #{record.contactMobile,jdbcType=CHAR},
+      </if>
+      <if test="record.contactEmail != null" >
+        contact_email = #{record.contactEmail,jdbcType=CHAR},
+      </if>
+      <if test="record.idCard != null" >
+        id_card = #{record.idCard,jdbcType=VARCHAR},
+      </if>
+      <if test="record.merchantLicense != null" >
+        merchant_license = #{record.merchantLicense,jdbcType=VARCHAR},
+      </if>
+      <if test="record.remark != null" >
+        remark = #{record.remark,jdbcType=VARCHAR},
+      </if>
+      <if test="record.status != null" >
+        status = #{record.status,jdbcType=VARCHAR},
+      </if>
+      <if test="record.accNo != null" >
+        acc_no = #{record.accNo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.accName != null" >
+        acc_name = #{record.accName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bankType != null" >
+        bank_type = #{record.bankType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bankName != null" >
+        bank_name = #{record.bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.t0drawFee != null" >
+        t0draw_fee = #{record.t0drawFee,jdbcType=INTEGER},
+      </if>
+      <if test="record.t0tradeRate != null" >
+        t0trade_rate = #{record.t0tradeRate,jdbcType=INTEGER},
+      </if>
+      <if test="record.t1drawFee != null" >
+        t1draw_fee = #{record.t1drawFee,jdbcType=INTEGER},
+      </if>
+      <if test="record.t1tradeRate != null" >
+        t1trade_rate = #{record.t1tradeRate,jdbcType=INTEGER},
+      </if>
+      <if test="record.channelMerchantCode != null" >
+        channel_merchant_code = #{record.channelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null" >
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null" >
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null" >
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null" >
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null" >
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null" >
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update bu_register_result_notice
+    set id = #{record.id,jdbcType=INTEGER},
+      member_code = #{record.memberCode,jdbcType=VARCHAR},
+      merchant_code = #{record.merchantCode,jdbcType=VARCHAR},
+      pay_way = #{record.payWay,jdbcType=VARCHAR},
+      merchant_name = #{record.merchantName,jdbcType=VARCHAR},
+      short_name = #{record.shortName,jdbcType=VARCHAR},
+      merchant_address = #{record.merchantAddress,jdbcType=VARCHAR},
+      service_phone = #{record.servicePhone,jdbcType=VARCHAR},
+      category = #{record.category,jdbcType=VARCHAR},
+      org_code = #{record.orgCode,jdbcType=VARCHAR},
+      contact_name = #{record.contactName,jdbcType=CHAR},
+      contact_phone = #{record.contactPhone,jdbcType=CHAR},
+      contact_mobile = #{record.contactMobile,jdbcType=CHAR},
+      contact_email = #{record.contactEmail,jdbcType=CHAR},
+      id_card = #{record.idCard,jdbcType=VARCHAR},
+      merchant_license = #{record.merchantLicense,jdbcType=VARCHAR},
+      remark = #{record.remark,jdbcType=VARCHAR},
+      status = #{record.status,jdbcType=VARCHAR},
+      acc_no = #{record.accNo,jdbcType=VARCHAR},
+      acc_name = #{record.accName,jdbcType=VARCHAR},
+      bank_type = #{record.bankType,jdbcType=VARCHAR},
+      bank_name = #{record.bankName,jdbcType=VARCHAR},
+      t0draw_fee = #{record.t0drawFee,jdbcType=INTEGER},
+      t0trade_rate = #{record.t0tradeRate,jdbcType=INTEGER},
+      t1draw_fee = #{record.t1drawFee,jdbcType=INTEGER},
+      t1trade_rate = #{record.t1tradeRate,jdbcType=INTEGER},
+      channel_merchant_code = #{record.channelMerchantCode,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.RegisterResultNotice" >
+    update bu_register_result_notice
+    <set >
+      <if test="memberCode != null" >
+        member_code = #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantCode != null" >
+        merchant_code = #{merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="payWay != null" >
+        pay_way = #{payWay,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantName != null" >
+        merchant_name = #{merchantName,jdbcType=VARCHAR},
+      </if>
+      <if test="shortName != null" >
+        short_name = #{shortName,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantAddress != null" >
+        merchant_address = #{merchantAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="servicePhone != null" >
+        service_phone = #{servicePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        category = #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="orgCode != null" >
+        org_code = #{orgCode,jdbcType=VARCHAR},
+      </if>
+      <if test="contactName != null" >
+        contact_name = #{contactName,jdbcType=CHAR},
+      </if>
+      <if test="contactPhone != null" >
+        contact_phone = #{contactPhone,jdbcType=CHAR},
+      </if>
+      <if test="contactMobile != null" >
+        contact_mobile = #{contactMobile,jdbcType=CHAR},
+      </if>
+      <if test="contactEmail != null" >
+        contact_email = #{contactEmail,jdbcType=CHAR},
+      </if>
+      <if test="idCard != null" >
+        id_card = #{idCard,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantLicense != null" >
+        merchant_license = #{merchantLicense,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="accNo != null" >
+        acc_no = #{accNo,jdbcType=VARCHAR},
+      </if>
+      <if test="accName != null" >
+        acc_name = #{accName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankType != null" >
+        bank_type = #{bankType,jdbcType=VARCHAR},
+      </if>
+      <if test="bankName != null" >
+        bank_name = #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="t0drawFee != null" >
+        t0draw_fee = #{t0drawFee,jdbcType=INTEGER},
+      </if>
+      <if test="t0tradeRate != null" >
+        t0trade_rate = #{t0tradeRate,jdbcType=INTEGER},
+      </if>
+      <if test="t1drawFee != null" >
+        t1draw_fee = #{t1drawFee,jdbcType=INTEGER},
+      </if>
+      <if test="t1tradeRate != null" >
+        t1trade_rate = #{t1tradeRate,jdbcType=INTEGER},
+      </if>
+      <if test="channelMerchantCode != null" >
+        channel_merchant_code = #{channelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.RegisterResultNotice" >
+    update bu_register_result_notice
+    set member_code = #{memberCode,jdbcType=VARCHAR},
+      merchant_code = #{merchantCode,jdbcType=VARCHAR},
+      pay_way = #{payWay,jdbcType=VARCHAR},
+      merchant_name = #{merchantName,jdbcType=VARCHAR},
+      short_name = #{shortName,jdbcType=VARCHAR},
+      merchant_address = #{merchantAddress,jdbcType=VARCHAR},
+      service_phone = #{servicePhone,jdbcType=VARCHAR},
+      category = #{category,jdbcType=VARCHAR},
+      org_code = #{orgCode,jdbcType=VARCHAR},
+      contact_name = #{contactName,jdbcType=CHAR},
+      contact_phone = #{contactPhone,jdbcType=CHAR},
+      contact_mobile = #{contactMobile,jdbcType=CHAR},
+      contact_email = #{contactEmail,jdbcType=CHAR},
+      id_card = #{idCard,jdbcType=VARCHAR},
+      merchant_license = #{merchantLicense,jdbcType=VARCHAR},
+      remark = #{remark,jdbcType=VARCHAR},
+      status = #{status,jdbcType=VARCHAR},
+      acc_no = #{accNo,jdbcType=VARCHAR},
+      acc_name = #{accName,jdbcType=VARCHAR},
+      bank_type = #{bankType,jdbcType=VARCHAR},
+      bank_name = #{bankName,jdbcType=VARCHAR},
+      t0draw_fee = #{t0drawFee,jdbcType=INTEGER},
+      t0trade_rate = #{t0tradeRate,jdbcType=INTEGER},
+      t1draw_fee = #{t1drawFee,jdbcType=INTEGER},
+      t1trade_rate = #{t1tradeRate,jdbcType=INTEGER},
+      channel_merchant_code = #{channelMerchantCode,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR},
+      del_flag = #{delFlag,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

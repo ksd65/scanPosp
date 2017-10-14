@@ -1,0 +1,814 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.TradeDetailMapper" >
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.TradeDetail" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="txn_date" property="txnDate" jdbcType="VARCHAR" />
+    <result column="member_id" property="memberId" jdbcType="INTEGER" />
+    <result column="member_code" property="memberCode" jdbcType="VARCHAR" />
+    <result column="merchant_code" property="merchantCode" jdbcType="VARCHAR" />
+    <result column="money" property="money" jdbcType="DECIMAL" />
+    <result column="member_trade_rate" property="memberTradeRate" jdbcType="DECIMAL" />
+    <result column="member_draw_fee" property="memberDrawFee" jdbcType="DECIMAL" />
+    <result column="member_settle_money" property="memberSettleMoney" jdbcType="DECIMAL" />
+    <result column="d0_money" property="d0Money" jdbcType="DECIMAL" />
+    <result column="d0_member_fee" property="d0MemberFee" jdbcType="DECIMAL" />
+    <result column="d0_member_draw" property="d0MemberDraw" jdbcType="DECIMAL" />
+    <result column="d0_routeway_fee" property="d0RoutewayFee" jdbcType="DECIMAL" />
+    <result column="d0_routeway_draw" property="d0RoutewayDraw" jdbcType="DECIMAL" />
+    <result column="t1_money" property="t1Money" jdbcType="DECIMAL" />
+    <result column="t1_member_fee" property="t1MemberFee" jdbcType="DECIMAL" />
+    <result column="t1_member_draw" property="t1MemberDraw" jdbcType="DECIMAL" />
+    <result column="t1_routeway_fee" property="t1RoutewayFee" jdbcType="DECIMAL" />
+    <result column="t1_routeway_draw" property="t1RoutewayDraw" jdbcType="DECIMAL" />
+    <result column="order_code" property="orderCode" jdbcType="VARCHAR" />
+    <result column="order_num_outer" property="orderNumOuter" jdbcType="VARCHAR" />
+    <result column="txn_type" property="txnType" jdbcType="CHAR" />
+    <result column="pt_serial_no" property="ptSerialNo" jdbcType="VARCHAR" />
+    <result column="req_date" property="reqDate" jdbcType="VARCHAR" />
+    <result column="resp_date" property="respDate" jdbcType="VARCHAR" />
+    <result column="resp_type" property="respType" jdbcType="CHAR" />
+    <result column="resp_code" property="respCode" jdbcType="VARCHAR" />
+    <result column="resp_msg" property="respMsg" jdbcType="VARCHAR" />
+    <result column="card_type" property="cardType" jdbcType="CHAR" />
+    <result column="route_id" property="routeId" jdbcType="VARCHAR" />
+    <result column="pay_time" property="payTime" jdbcType="VARCHAR" />
+    <result column="balance_date" property="balanceDate" jdbcType="VARCHAR" />
+    <result column="channel_no" property="channelNo" jdbcType="VARCHAR" />
+    <result column="settle_type" property="settleType" jdbcType="CHAR" />
+    <result column="interface_type" property="interfaceType" jdbcType="CHAR" />
+    <result column="platform_type" property="platformType" jdbcType="CHAR" />
+    <result column="settle_cancel_flag" property="settleCancelFlag" jdbcType="CHAR" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="remarks" property="remarks" jdbcType="VARCHAR" />
+    <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, txn_date, member_id, member_code, merchant_code, money, member_trade_rate, member_draw_fee, 
+    member_settle_money, d0_money, d0_member_fee, d0_member_draw, d0_routeway_fee, d0_routeway_draw, 
+    t1_money, t1_member_fee, t1_member_draw, t1_routeway_fee, t1_routeway_draw, order_code, 
+    order_num_outer, txn_type, pt_serial_no, req_date, resp_date, resp_type, resp_code, 
+    resp_msg, card_type, route_id, pay_time, balance_date, channel_no, settle_type, interface_type, 
+    platform_type, settle_cancel_flag, create_by, create_date, update_by, update_date, 
+    remarks, del_flag
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.TradeDetailExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_trade_detail
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart>=0" >
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from bu_trade_detail
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from bu_trade_detail
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.TradeDetailExample" >
+    delete from bu_trade_detail
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.TradeDetail" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_trade_detail (txn_date, member_id, member_code, merchant_code, 
+      money, member_trade_rate, member_draw_fee, 
+      member_settle_money, d0_money, d0_member_fee, 
+      d0_member_draw, d0_routeway_fee, d0_routeway_draw, 
+      t1_money, t1_member_fee, t1_member_draw, 
+      t1_routeway_fee, t1_routeway_draw, order_code, 
+      order_num_outer, txn_type, pt_serial_no, 
+      req_date, resp_date, resp_type, 
+      resp_code, resp_msg, card_type, 
+      route_id, pay_time, balance_date, 
+      channel_no, settle_type, interface_type, 
+      platform_type, settle_cancel_flag, create_by, 
+      create_date, update_by, update_date, 
+      remarks, del_flag)
+    values (#{txnDate,jdbcType=VARCHAR},#{memberId,jdbcType=INTEGER}, #{memberCode,jdbcType=VARCHAR}, #{merchantCode,jdbcType=VARCHAR}, 
+      #{money,jdbcType=DECIMAL}, #{memberTradeRate,jdbcType=DECIMAL}, #{memberDrawFee,jdbcType=DECIMAL}, 
+      #{memberSettleMoney,jdbcType=DECIMAL}, #{d0Money,jdbcType=DECIMAL}, #{d0MemberFee,jdbcType=DECIMAL}, 
+      #{d0MemberDraw,jdbcType=DECIMAL}, #{d0RoutewayFee,jdbcType=DECIMAL}, #{d0RoutewayDraw,jdbcType=DECIMAL}, 
+      #{t1Money,jdbcType=DECIMAL}, #{t1MemberFee,jdbcType=DECIMAL}, #{t1MemberDraw,jdbcType=DECIMAL}, 
+      #{t1RoutewayFee,jdbcType=DECIMAL}, #{t1RoutewayDraw,jdbcType=DECIMAL}, #{orderCode,jdbcType=VARCHAR}, 
+      #{orderNumOuter,jdbcType=VARCHAR}, #{txnType,jdbcType=CHAR}, #{ptSerialNo,jdbcType=VARCHAR}, 
+      #{reqDate,jdbcType=VARCHAR}, #{respDate,jdbcType=VARCHAR}, #{respType,jdbcType=CHAR}, 
+      #{respCode,jdbcType=VARCHAR}, #{respMsg,jdbcType=VARCHAR}, #{cardType,jdbcType=CHAR}, 
+      #{routeId,jdbcType=VARCHAR}, #{payTime,jdbcType=VARCHAR}, #{balanceDate,jdbcType=VARCHAR}, 
+      #{channelNo,jdbcType=VARCHAR}, #{settleType,jdbcType=CHAR}, #{interfaceType,jdbcType=CHAR}, 
+      #{platformType,jdbcType=CHAR}, #{settleCancelFlag,jdbcType=CHAR}, #{createBy,jdbcType=VARCHAR}, 
+      #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
+      #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.TradeDetail" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_trade_detail
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="txnDate != null" >
+        txn_date,
+      </if>
+      <if test="memberId != null" >
+        member_id,
+      </if>
+      <if test="memberCode != null" >
+        member_code,
+      </if>
+      <if test="merchantCode != null" >
+        merchant_code,
+      </if>
+      <if test="money != null" >
+        money,
+      </if>
+      <if test="memberTradeRate != null" >
+        member_trade_rate,
+      </if>
+      <if test="memberDrawFee != null" >
+        member_draw_fee,
+      </if>
+      <if test="memberSettleMoney != null" >
+        member_settle_money,
+      </if>
+      <if test="d0Money != null" >
+        d0_money,
+      </if>
+      <if test="d0MemberFee != null" >
+        d0_member_fee,
+      </if>
+      <if test="d0MemberDraw != null" >
+        d0_member_draw,
+      </if>
+      <if test="d0RoutewayFee != null" >
+        d0_routeway_fee,
+      </if>
+      <if test="d0RoutewayDraw != null" >
+        d0_routeway_draw,
+      </if>
+      <if test="t1Money != null" >
+        t1_money,
+      </if>
+      <if test="t1MemberFee != null" >
+        t1_member_fee,
+      </if>
+      <if test="t1MemberDraw != null" >
+        t1_member_draw,
+      </if>
+      <if test="t1RoutewayFee != null" >
+        t1_routeway_fee,
+      </if>
+      <if test="t1RoutewayDraw != null" >
+        t1_routeway_draw,
+      </if>
+      <if test="orderCode != null" >
+        order_code,
+      </if>
+      <if test="orderNumOuter != null" >
+        order_num_outer,
+      </if>
+      <if test="txnType != null" >
+        txn_type,
+      </if>
+      <if test="ptSerialNo != null" >
+        pt_serial_no,
+      </if>
+      <if test="reqDate != null" >
+        req_date,
+      </if>
+      <if test="respDate != null" >
+        resp_date,
+      </if>
+      <if test="respType != null" >
+        resp_type,
+      </if>
+      <if test="respCode != null" >
+        resp_code,
+      </if>
+      <if test="respMsg != null" >
+        resp_msg,
+      </if>
+      <if test="cardType != null" >
+        card_type,
+      </if>
+      <if test="routeId != null" >
+        route_id,
+      </if>
+      <if test="payTime != null" >
+        pay_time,
+      </if>
+      <if test="balanceDate != null" >
+        balance_date,
+      </if>
+      <if test="channelNo != null" >
+        channel_no,
+      </if>
+      <if test="settleType != null" >
+        settle_type,
+      </if>
+      <if test="interfaceType != null" >
+        interface_type,
+      </if>
+      <if test="platformType != null" >
+        platform_type,
+      </if>
+      <if test="settleCancelFlag != null" >
+        settle_cancel_flag,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="remarks != null" >
+        remarks,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="txnDate != null" >
+        #{txnDate,jdbcType=VARCHAR},
+      </if>
+      <if test="memberId != null" >
+        #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="memberCode != null" >
+        #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantCode != null" >
+        #{merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="money != null" >
+        #{money,jdbcType=DECIMAL},
+      </if>
+      <if test="memberTradeRate != null" >
+        #{memberTradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="memberDrawFee != null" >
+        #{memberDrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="memberSettleMoney != null" >
+        #{memberSettleMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="d0Money != null" >
+        #{d0Money,jdbcType=DECIMAL},
+      </if>
+      <if test="d0MemberFee != null" >
+        #{d0MemberFee,jdbcType=DECIMAL},
+      </if>
+      <if test="d0MemberDraw != null" >
+        #{d0MemberDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="d0RoutewayFee != null" >
+        #{d0RoutewayFee,jdbcType=DECIMAL},
+      </if>
+      <if test="d0RoutewayDraw != null" >
+        #{d0RoutewayDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="t1Money != null" >
+        #{t1Money,jdbcType=DECIMAL},
+      </if>
+      <if test="t1MemberFee != null" >
+        #{t1MemberFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1MemberDraw != null" >
+        #{t1MemberDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="t1RoutewayFee != null" >
+        #{t1RoutewayFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1RoutewayDraw != null" >
+        #{t1RoutewayDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="orderCode != null" >
+        #{orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNumOuter != null" >
+        #{orderNumOuter,jdbcType=VARCHAR},
+      </if>
+      <if test="txnType != null" >
+        #{txnType,jdbcType=CHAR},
+      </if>
+      <if test="ptSerialNo != null" >
+        #{ptSerialNo,jdbcType=VARCHAR},
+      </if>
+      <if test="reqDate != null" >
+        #{reqDate,jdbcType=VARCHAR},
+      </if>
+      <if test="respDate != null" >
+        #{respDate,jdbcType=VARCHAR},
+      </if>
+      <if test="respType != null" >
+        #{respType,jdbcType=CHAR},
+      </if>
+      <if test="respCode != null" >
+        #{respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="respMsg != null" >
+        #{respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="cardType != null" >
+        #{cardType,jdbcType=CHAR},
+      </if>
+      <if test="routeId != null" >
+        #{routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="payTime != null" >
+        #{payTime,jdbcType=VARCHAR},
+      </if>
+      <if test="balanceDate != null" >
+        #{balanceDate,jdbcType=VARCHAR},
+      </if>
+      <if test="channelNo != null" >
+        #{channelNo,jdbcType=VARCHAR},
+      </if>
+      <if test="settleType != null" >
+        #{settleType,jdbcType=CHAR},
+      </if>
+      <if test="interfaceType != null" >
+        #{interfaceType,jdbcType=CHAR},
+      </if>
+      <if test="platformType != null" >
+        #{platformType,jdbcType=CHAR},
+      </if>
+      <if test="settleCancelFlag != null" >
+        #{settleCancelFlag,jdbcType=CHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.TradeDetailExample" resultType="java.lang.Integer" >
+    select count(*) from bu_trade_detail
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update bu_trade_detail
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.txnDate != null" >
+        txn_date = #{record.txnDate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.memberId != null" >
+        member_id = #{record.memberId,jdbcType=INTEGER},
+      </if>
+      <if test="record.memberCode != null" >
+        member_code = #{record.memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.merchantCode != null" >
+        merchant_code = #{record.merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.money != null" >
+        money = #{record.money,jdbcType=DECIMAL},
+      </if>
+      <if test="record.memberTradeRate != null" >
+        member_trade_rate = #{record.memberTradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.memberDrawFee != null" >
+        member_draw_fee = #{record.memberDrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.memberSettleMoney != null" >
+        member_settle_money = #{record.memberSettleMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="record.d0Money != null" >
+        d0_money = #{record.d0Money,jdbcType=DECIMAL},
+      </if>
+      <if test="record.d0MemberFee != null" >
+        d0_member_fee = #{record.d0MemberFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.d0MemberDraw != null" >
+        d0_member_draw = #{record.d0MemberDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="record.d0RoutewayFee != null" >
+        d0_routeway_fee = #{record.d0RoutewayFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.d0RoutewayDraw != null" >
+        d0_routeway_draw = #{record.d0RoutewayDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1Money != null" >
+        t1_money = #{record.t1Money,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1MemberFee != null" >
+        t1_member_fee = #{record.t1MemberFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1MemberDraw != null" >
+        t1_member_draw = #{record.t1MemberDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1RoutewayFee != null" >
+        t1_routeway_fee = #{record.t1RoutewayFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1RoutewayDraw != null" >
+        t1_routeway_draw = #{record.t1RoutewayDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="record.orderCode != null" >
+        order_code = #{record.orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderNumOuter != null" >
+        order_num_outer = #{record.orderNumOuter,jdbcType=VARCHAR},
+      </if>
+      <if test="record.txnType != null" >
+        txn_type = #{record.txnType,jdbcType=CHAR},
+      </if>
+      <if test="record.ptSerialNo != null" >
+        pt_serial_no = #{record.ptSerialNo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.reqDate != null" >
+        req_date = #{record.reqDate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respDate != null" >
+        resp_date = #{record.respDate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respType != null" >
+        resp_type = #{record.respType,jdbcType=CHAR},
+      </if>
+      <if test="record.respCode != null" >
+        resp_code = #{record.respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respMsg != null" >
+        resp_msg = #{record.respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cardType != null" >
+        card_type = #{record.cardType,jdbcType=CHAR},
+      </if>
+      <if test="record.routeId != null" >
+        route_id = #{record.routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.payTime != null" >
+        pay_time = #{record.payTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.balanceDate != null" >
+        balance_date = #{record.balanceDate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.channelNo != null" >
+        channel_no = #{record.channelNo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.settleType != null" >
+        settle_type = #{record.settleType,jdbcType=CHAR},
+      </if>
+      <if test="record.interfaceType != null" >
+        interface_type = #{record.interfaceType,jdbcType=CHAR},
+      </if>
+      <if test="record.platformType != null" >
+        platform_type = #{record.platformType,jdbcType=CHAR},
+      </if>
+      <if test="record.settleCancelFlag != null" >
+        settle_cancel_flag = #{record.settleCancelFlag,jdbcType=CHAR},
+      </if>
+      <if test="record.createBy != null" >
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null" >
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null" >
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null" >
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null" >
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null" >
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update bu_trade_detail
+    set id = #{record.id,jdbcType=INTEGER},
+      txn_date = #{record.txnDate,jdbcType=VARCHAR},
+      member_id = #{record.memberId,jdbcType=INTEGER},
+      member_code = #{record.memberCode,jdbcType=VARCHAR},
+      merchant_code = #{record.merchantCode,jdbcType=VARCHAR},
+      money = #{record.money,jdbcType=DECIMAL},
+      member_trade_rate = #{record.memberTradeRate,jdbcType=DECIMAL},
+      member_draw_fee = #{record.memberDrawFee,jdbcType=DECIMAL},
+      member_settle_money = #{record.memberSettleMoney,jdbcType=DECIMAL},
+      d0_money = #{record.d0Money,jdbcType=DECIMAL},
+      d0_member_fee = #{record.d0MemberFee,jdbcType=DECIMAL},
+      d0_member_draw = #{record.d0MemberDraw,jdbcType=DECIMAL},
+      d0_routeway_fee = #{record.d0RoutewayFee,jdbcType=DECIMAL},
+      d0_routeway_draw = #{record.d0RoutewayDraw,jdbcType=DECIMAL},
+      t1_money = #{record.t1Money,jdbcType=DECIMAL},
+      t1_member_fee = #{record.t1MemberFee,jdbcType=DECIMAL},
+      t1_member_draw = #{record.t1MemberDraw,jdbcType=DECIMAL},
+      t1_routeway_fee = #{record.t1RoutewayFee,jdbcType=DECIMAL},
+      t1_routeway_draw = #{record.t1RoutewayDraw,jdbcType=DECIMAL},
+      order_code = #{record.orderCode,jdbcType=VARCHAR},
+      order_num_outer = #{record.orderNumOuter,jdbcType=VARCHAR},
+      txn_type = #{record.txnType,jdbcType=CHAR},
+      pt_serial_no = #{record.ptSerialNo,jdbcType=VARCHAR},
+      req_date = #{record.reqDate,jdbcType=VARCHAR},
+      resp_date = #{record.respDate,jdbcType=VARCHAR},
+      resp_type = #{record.respType,jdbcType=CHAR},
+      resp_code = #{record.respCode,jdbcType=VARCHAR},
+      resp_msg = #{record.respMsg,jdbcType=VARCHAR},
+      card_type = #{record.cardType,jdbcType=CHAR},
+      route_id = #{record.routeId,jdbcType=VARCHAR},
+      pay_time = #{record.payTime,jdbcType=VARCHAR},
+      balance_date = #{record.balanceDate,jdbcType=VARCHAR},
+      channel_no = #{record.channelNo,jdbcType=VARCHAR},
+      settle_type = #{record.settleType,jdbcType=CHAR},
+      interface_type = #{record.interfaceType,jdbcType=CHAR},
+      platform_type = #{record.platformType,jdbcType=CHAR},
+      settle_cancel_flag = #{record.settleCancelFlag,jdbcType=CHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.TradeDetail" >
+    update bu_trade_detail
+    <set >
+      <if test="txnDate != null" >
+        txn_date = #{txnDate,jdbcType=VARCHAR},
+      </if>
+      <if test="memberId != null" >
+        member_id = #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="memberCode != null" >
+        member_code = #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantCode != null" >
+        merchant_code = #{merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="money != null" >
+        money = #{money,jdbcType=DECIMAL},
+      </if>
+      <if test="memberTradeRate != null" >
+        member_trade_rate = #{memberTradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="memberDrawFee != null" >
+        member_draw_fee = #{memberDrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="memberSettleMoney != null" >
+        member_settle_money = #{memberSettleMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="d0Money != null" >
+        d0_money = #{d0Money,jdbcType=DECIMAL},
+      </if>
+      <if test="d0MemberFee != null" >
+        d0_member_fee = #{d0MemberFee,jdbcType=DECIMAL},
+      </if>
+      <if test="d0MemberDraw != null" >
+        d0_member_draw = #{d0MemberDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="d0RoutewayFee != null" >
+        d0_routeway_fee = #{d0RoutewayFee,jdbcType=DECIMAL},
+      </if>
+      <if test="d0RoutewayDraw != null" >
+        d0_routeway_draw = #{d0RoutewayDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="t1Money != null" >
+        t1_money = #{t1Money,jdbcType=DECIMAL},
+      </if>
+      <if test="t1MemberFee != null" >
+        t1_member_fee = #{t1MemberFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1MemberDraw != null" >
+        t1_member_draw = #{t1MemberDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="t1RoutewayFee != null" >
+        t1_routeway_fee = #{t1RoutewayFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1RoutewayDraw != null" >
+        t1_routeway_draw = #{t1RoutewayDraw,jdbcType=DECIMAL},
+      </if>
+      <if test="orderCode != null" >
+        order_code = #{orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNumOuter != null" >
+        order_num_outer = #{orderNumOuter,jdbcType=VARCHAR},
+      </if>
+      <if test="txnType != null" >
+        txn_type = #{txnType,jdbcType=CHAR},
+      </if>
+      <if test="ptSerialNo != null" >
+        pt_serial_no = #{ptSerialNo,jdbcType=VARCHAR},
+      </if>
+      <if test="reqDate != null" >
+        req_date = #{reqDate,jdbcType=VARCHAR},
+      </if>
+      <if test="respDate != null" >
+        resp_date = #{respDate,jdbcType=VARCHAR},
+      </if>
+      <if test="respType != null" >
+        resp_type = #{respType,jdbcType=CHAR},
+      </if>
+      <if test="respCode != null" >
+        resp_code = #{respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="respMsg != null" >
+        resp_msg = #{respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="cardType != null" >
+        card_type = #{cardType,jdbcType=CHAR},
+      </if>
+      <if test="routeId != null" >
+        route_id = #{routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="payTime != null" >
+        pay_time = #{payTime,jdbcType=VARCHAR},
+      </if>
+      <if test="balanceDate != null" >
+        balance_date = #{balanceDate,jdbcType=VARCHAR},
+      </if>
+      <if test="channelNo != null" >
+        channel_no = #{channelNo,jdbcType=VARCHAR},
+      </if>
+      <if test="settleType != null" >
+        settle_type = #{settleType,jdbcType=CHAR},
+      </if>
+      <if test="interfaceType != null" >
+        interface_type = #{interfaceType,jdbcType=CHAR},
+      </if>
+      <if test="platformType != null" >
+        platform_type = #{platformType,jdbcType=CHAR},
+      </if>
+      <if test="settleCancelFlag != null" >
+        settle_cancel_flag = #{settleCancelFlag,jdbcType=CHAR},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.TradeDetail" >
+    update bu_trade_detail
+    set txn_date = #{txnDate,jdbcType=VARCHAR},
+      member_id = #{memberId,jdbcType=INTEGER},
+      member_code = #{memberCode,jdbcType=VARCHAR},
+      merchant_code = #{merchantCode,jdbcType=VARCHAR},
+      money = #{money,jdbcType=DECIMAL},
+      member_trade_rate = #{memberTradeRate,jdbcType=DECIMAL},
+      member_draw_fee = #{memberDrawFee,jdbcType=DECIMAL},
+      member_settle_money = #{memberSettleMoney,jdbcType=DECIMAL},
+      d0_money = #{d0Money,jdbcType=DECIMAL},
+      d0_member_fee = #{d0MemberFee,jdbcType=DECIMAL},
+      d0_member_draw = #{d0MemberDraw,jdbcType=DECIMAL},
+      d0_routeway_fee = #{d0RoutewayFee,jdbcType=DECIMAL},
+      d0_routeway_draw = #{d0RoutewayDraw,jdbcType=DECIMAL},
+      t1_money = #{t1Money,jdbcType=DECIMAL},
+      t1_member_fee = #{t1MemberFee,jdbcType=DECIMAL},
+      t1_member_draw = #{t1MemberDraw,jdbcType=DECIMAL},
+      t1_routeway_fee = #{t1RoutewayFee,jdbcType=DECIMAL},
+      t1_routeway_draw = #{t1RoutewayDraw,jdbcType=DECIMAL},
+      order_code = #{orderCode,jdbcType=VARCHAR},
+      order_num_outer = #{orderNumOuter,jdbcType=VARCHAR},
+      txn_type = #{txnType,jdbcType=CHAR},
+      pt_serial_no = #{ptSerialNo,jdbcType=VARCHAR},
+      req_date = #{reqDate,jdbcType=VARCHAR},
+      resp_date = #{respDate,jdbcType=VARCHAR},
+      resp_type = #{respType,jdbcType=CHAR},
+      resp_code = #{respCode,jdbcType=VARCHAR},
+      resp_msg = #{respMsg,jdbcType=VARCHAR},
+      card_type = #{cardType,jdbcType=CHAR},
+      route_id = #{routeId,jdbcType=VARCHAR},
+      pay_time = #{payTime,jdbcType=VARCHAR},
+      balance_date = #{balanceDate,jdbcType=VARCHAR},
+      channel_no = #{channelNo,jdbcType=VARCHAR},
+      settle_type = #{settleType,jdbcType=CHAR},
+      interface_type = #{interfaceType,jdbcType=CHAR},
+      platform_type = #{platformType,jdbcType=CHAR},
+      settle_cancel_flag = #{settleCancelFlag,jdbcType=CHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR},
+      del_flag = #{delFlag,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

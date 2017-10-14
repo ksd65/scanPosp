@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.SysOfficeMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.SysOffice">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+    <result column="parent_ids" jdbcType="VARCHAR" property="parentIds" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="sort" jdbcType="DECIMAL" property="sort" />
+    <result column="area_id" jdbcType="VARCHAR" property="areaId" />
+    <result column="code" jdbcType="VARCHAR" property="code" />
+    <result column="type" jdbcType="CHAR" property="type" />
+    <result column="grade" jdbcType="CHAR" property="grade" />
+    <result column="agt_type" jdbcType="CHAR" property="agtType" />
+    <result column="agt_grade" jdbcType="CHAR" property="agtGrade" />
+    <result column="address" jdbcType="VARCHAR" property="address" />
+    <result column="zip_code" jdbcType="VARCHAR" property="zipCode" />
+    <result column="master" jdbcType="VARCHAR" property="master" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="fax" jdbcType="VARCHAR" property="fax" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="USEABLE" jdbcType="VARCHAR" property="useable" />
+    <result column="PRIMARY_PERSON" jdbcType="VARCHAR" property="primaryPerson" />
+    <result column="DEPUTY_PERSON" jdbcType="VARCHAR" property="deputyPerson" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="remarks" jdbcType="VARCHAR" property="remarks" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+    <result column="private_key_rsa" jdbcType="VARCHAR" property="privateKeyRsa" />
+    <result column="public_key_rsa" jdbcType="VARCHAR" property="publicKeyRsa" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, parent_id, parent_ids, name, sort, area_id, code, type, grade, agt_type, agt_grade, 
+    address, zip_code, master, phone, fax, email, USEABLE, PRIMARY_PERSON, DEPUTY_PERSON, 
+    create_by, create_date, update_by, update_date, remarks, del_flag, private_key_rsa, 
+    public_key_rsa
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.SysOfficeExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from sys_office
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from sys_office
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from sys_office
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.SysOfficeExample">
+    delete from sys_office
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.SysOffice">
+    insert into sys_office (id, parent_id, parent_ids, 
+      name, sort, area_id, 
+      code, type, grade, agt_type, 
+      agt_grade, address, zip_code, 
+      master, phone, fax, 
+      email, USEABLE, PRIMARY_PERSON, 
+      DEPUTY_PERSON, create_by, create_date, 
+      update_by, update_date, remarks, 
+      del_flag, private_key_rsa, public_key_rsa
+      )
+    values (#{id,jdbcType=VARCHAR}, #{parentId,jdbcType=VARCHAR}, #{parentIds,jdbcType=VARCHAR}, 
+      #{name,jdbcType=VARCHAR}, #{sort,jdbcType=DECIMAL}, #{areaId,jdbcType=VARCHAR}, 
+      #{code,jdbcType=VARCHAR}, #{type,jdbcType=CHAR}, #{grade,jdbcType=CHAR}, #{agtType,jdbcType=CHAR}, 
+      #{agtGrade,jdbcType=CHAR}, #{address,jdbcType=VARCHAR}, #{zipCode,jdbcType=VARCHAR}, 
+      #{master,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, #{fax,jdbcType=VARCHAR}, 
+      #{email,jdbcType=VARCHAR}, #{useable,jdbcType=VARCHAR}, #{primaryPerson,jdbcType=VARCHAR}, 
+      #{deputyPerson,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, 
+      #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, 
+      #{delFlag,jdbcType=CHAR}, #{privateKeyRsa,jdbcType=VARCHAR}, #{publicKeyRsa,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.SysOffice">
+    insert into sys_office
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="parentId != null">
+        parent_id,
+      </if>
+      <if test="parentIds != null">
+        parent_ids,
+      </if>
+      <if test="name != null">
+        name,
+      </if>
+      <if test="sort != null">
+        sort,
+      </if>
+      <if test="areaId != null">
+        area_id,
+      </if>
+      <if test="code != null">
+        code,
+      </if>
+      <if test="type != null">
+        type,
+      </if>
+      <if test="grade != null">
+        grade,
+      </if>
+      <if test="agtType != null">
+        agt_type,
+      </if>
+      <if test="agtGrade != null">
+        agt_grade,
+      </if>
+      <if test="address != null">
+        address,
+      </if>
+      <if test="zipCode != null">
+        zip_code,
+      </if>
+      <if test="master != null">
+        master,
+      </if>
+      <if test="phone != null">
+        phone,
+      </if>
+      <if test="fax != null">
+        fax,
+      </if>
+      <if test="email != null">
+        email,
+      </if>
+      <if test="useable != null">
+        USEABLE,
+      </if>
+      <if test="primaryPerson != null">
+        PRIMARY_PERSON,
+      </if>
+      <if test="deputyPerson != null">
+        DEPUTY_PERSON,
+      </if>
+      <if test="createBy != null">
+        create_by,
+      </if>
+      <if test="createDate != null">
+        create_date,
+      </if>
+      <if test="updateBy != null">
+        update_by,
+      </if>
+      <if test="updateDate != null">
+        update_date,
+      </if>
+      <if test="remarks != null">
+        remarks,
+      </if>
+      <if test="delFlag != null">
+        del_flag,
+      </if>
+      <if test="privateKeyRsa != null">
+        private_key_rsa,
+      </if>
+      <if test="publicKeyRsa != null">
+        public_key_rsa,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="parentId != null">
+        #{parentId,jdbcType=VARCHAR},
+      </if>
+      <if test="parentIds != null">
+        #{parentIds,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="sort != null">
+        #{sort,jdbcType=DECIMAL},
+      </if>
+      <if test="areaId != null">
+        #{areaId,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null">
+        #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null">
+        #{type,jdbcType=CHAR},
+      </if>
+      <if test="grade != null">
+        #{grade,jdbcType=CHAR},
+      </if>
+      <if test="agtType != null">
+        #{agtType,jdbcType=CHAR},
+      </if>
+      <if test="agtGrade != null">
+        #{agtGrade,jdbcType=CHAR},
+      </if>
+      <if test="address != null">
+        #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="zipCode != null">
+        #{zipCode,jdbcType=VARCHAR},
+      </if>
+      <if test="master != null">
+        #{master,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="fax != null">
+        #{fax,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null">
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="useable != null">
+        #{useable,jdbcType=VARCHAR},
+      </if>
+      <if test="primaryPerson != null">
+        #{primaryPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="deputyPerson != null">
+        #{deputyPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="privateKeyRsa != null">
+        #{privateKeyRsa,jdbcType=VARCHAR},
+      </if>
+      <if test="publicKeyRsa != null">
+        #{publicKeyRsa,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.SysOfficeExample" resultType="java.lang.Integer">
+    select count(*) from sys_office
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update sys_office
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=VARCHAR},
+      </if>
+      <if test="record.parentId != null">
+        parent_id = #{record.parentId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.parentIds != null">
+        parent_ids = #{record.parentIds,jdbcType=VARCHAR},
+      </if>
+      <if test="record.name != null">
+        name = #{record.name,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sort != null">
+        sort = #{record.sort,jdbcType=DECIMAL},
+      </if>
+      <if test="record.areaId != null">
+        area_id = #{record.areaId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.code != null">
+        code = #{record.code,jdbcType=VARCHAR},
+      </if>
+      <if test="record.type != null">
+        type = #{record.type,jdbcType=CHAR},
+      </if>
+      <if test="record.grade != null">
+        grade = #{record.grade,jdbcType=CHAR},
+      </if>
+      <if test="record.agtType != null">
+        agt_type = #{record.agtType,jdbcType=CHAR},
+      </if>
+      <if test="record.agtGrade != null">
+        agt_grade = #{record.agtGrade,jdbcType=CHAR},
+      </if>
+      <if test="record.address != null">
+        address = #{record.address,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zipCode != null">
+        zip_code = #{record.zipCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.master != null">
+        master = #{record.master,jdbcType=VARCHAR},
+      </if>
+      <if test="record.phone != null">
+        phone = #{record.phone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.fax != null">
+        fax = #{record.fax,jdbcType=VARCHAR},
+      </if>
+      <if test="record.email != null">
+        email = #{record.email,jdbcType=VARCHAR},
+      </if>
+      <if test="record.useable != null">
+        USEABLE = #{record.useable,jdbcType=VARCHAR},
+      </if>
+      <if test="record.primaryPerson != null">
+        PRIMARY_PERSON = #{record.primaryPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="record.deputyPerson != null">
+        DEPUTY_PERSON = #{record.deputyPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null">
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null">
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null">
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null">
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null">
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null">
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+      <if test="record.privateKeyRsa != null">
+        private_key_rsa = #{record.privateKeyRsa,jdbcType=VARCHAR},
+      </if>
+      <if test="record.publicKeyRsa != null">
+        public_key_rsa = #{record.publicKeyRsa,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update sys_office
+    set id = #{record.id,jdbcType=VARCHAR},
+      parent_id = #{record.parentId,jdbcType=VARCHAR},
+      parent_ids = #{record.parentIds,jdbcType=VARCHAR},
+      name = #{record.name,jdbcType=VARCHAR},
+      sort = #{record.sort,jdbcType=DECIMAL},
+      area_id = #{record.areaId,jdbcType=VARCHAR},
+      code = #{record.code,jdbcType=VARCHAR},
+      type = #{record.type,jdbcType=CHAR},
+      grade = #{record.grade,jdbcType=CHAR},
+      agt_type = #{record.agtType,jdbcType=CHAR},
+      agt_grade = #{record.agtGrade,jdbcType=CHAR},
+      address = #{record.address,jdbcType=VARCHAR},
+      zip_code = #{record.zipCode,jdbcType=VARCHAR},
+      master = #{record.master,jdbcType=VARCHAR},
+      phone = #{record.phone,jdbcType=VARCHAR},
+      fax = #{record.fax,jdbcType=VARCHAR},
+      email = #{record.email,jdbcType=VARCHAR},
+      USEABLE = #{record.useable,jdbcType=VARCHAR},
+      PRIMARY_PERSON = #{record.primaryPerson,jdbcType=VARCHAR},
+      DEPUTY_PERSON = #{record.deputyPerson,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR},
+      private_key_rsa = #{record.privateKeyRsa,jdbcType=VARCHAR},
+      public_key_rsa = #{record.publicKeyRsa,jdbcType=VARCHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.SysOffice">
+    update sys_office
+    <set>
+      <if test="parentId != null">
+        parent_id = #{parentId,jdbcType=VARCHAR},
+      </if>
+      <if test="parentIds != null">
+        parent_ids = #{parentIds,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="sort != null">
+        sort = #{sort,jdbcType=DECIMAL},
+      </if>
+      <if test="areaId != null">
+        area_id = #{areaId,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null">
+        code = #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null">
+        type = #{type,jdbcType=CHAR},
+      </if>
+      <if test="grade != null">
+        grade = #{grade,jdbcType=CHAR},
+      </if>
+      <if test="agtType != null">
+        agt_type = #{agtType,jdbcType=CHAR},
+      </if>
+      <if test="agtGrade != null">
+        agt_grade = #{agtGrade,jdbcType=CHAR},
+      </if>
+      <if test="address != null">
+        address = #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="zipCode != null">
+        zip_code = #{zipCode,jdbcType=VARCHAR},
+      </if>
+      <if test="master != null">
+        master = #{master,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="fax != null">
+        fax = #{fax,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null">
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="useable != null">
+        USEABLE = #{useable,jdbcType=VARCHAR},
+      </if>
+      <if test="primaryPerson != null">
+        PRIMARY_PERSON = #{primaryPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="deputyPerson != null">
+        DEPUTY_PERSON = #{deputyPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="privateKeyRsa != null">
+        private_key_rsa = #{privateKeyRsa,jdbcType=VARCHAR},
+      </if>
+      <if test="publicKeyRsa != null">
+        public_key_rsa = #{publicKeyRsa,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.SysOffice">
+    update sys_office
+    set parent_id = #{parentId,jdbcType=VARCHAR},
+      parent_ids = #{parentIds,jdbcType=VARCHAR},
+      name = #{name,jdbcType=VARCHAR},
+      sort = #{sort,jdbcType=DECIMAL},
+      area_id = #{areaId,jdbcType=VARCHAR},
+      code = #{code,jdbcType=VARCHAR},
+      type = #{type,jdbcType=CHAR},
+      grade = #{grade,jdbcType=CHAR},
+      agt_type = #{agtType,jdbcType=CHAR},
+      agt_grade = #{agtGrade,jdbcType=CHAR},
+      address = #{address,jdbcType=VARCHAR},
+      zip_code = #{zipCode,jdbcType=VARCHAR},
+      master = #{master,jdbcType=VARCHAR},
+      phone = #{phone,jdbcType=VARCHAR},
+      fax = #{fax,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      USEABLE = #{useable,jdbcType=VARCHAR},
+      PRIMARY_PERSON = #{primaryPerson,jdbcType=VARCHAR},
+      DEPUTY_PERSON = #{deputyPerson,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR},
+      del_flag = #{delFlag,jdbcType=CHAR},
+      private_key_rsa = #{privateKeyRsa,jdbcType=VARCHAR},
+      public_key_rsa = #{publicKeyRsa,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

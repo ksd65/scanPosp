@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.AgentRateMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.AgentRate">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="office_id" jdbcType="VARCHAR" property="officeId" />
+    <result column="t0_draw_fee" jdbcType="DECIMAL" property="t0DrawFee" />
+    <result column="t0_trade_rate" jdbcType="DECIMAL" property="t0TradeRate" />
+    <result column="t1_draw_fee" jdbcType="DECIMAL" property="t1DrawFee" />
+    <result column="t1_trade_rate" jdbcType="DECIMAL" property="t1TradeRate" />
+    <result column="bonus_quick_rate" jdbcType="DECIMAL" property="bonusQuickRate" />
+    <result column="bonus_quick_fee" jdbcType="DECIMAL" property="bonusQuickFee" />
+    <result column="quick_rate" jdbcType="DECIMAL" property="quickRate" />
+    <result column="quick_fee" jdbcType="DECIMAL" property="quickFee" />
+    <result column="m_t0_draw_fee" jdbcType="DECIMAL" property="mT0DrawFee" />
+    <result column="m_t0_trade_rate" jdbcType="DECIMAL" property="mT0TradeRate" />
+    <result column="m_t1_draw_fee" jdbcType="DECIMAL" property="mT1DrawFee" />
+    <result column="m_t1_trade_rate" jdbcType="DECIMAL" property="mT1TradeRate" />
+    <result column="m_bonus_quick_rate" jdbcType="DECIMAL" property="mBonusQuickRate" />
+    <result column="m_bonus_quick_fee" jdbcType="DECIMAL" property="mBonusQuickFee" />
+    <result column="m_quick_rate" jdbcType="DECIMAL" property="mQuickRate" />
+    <result column="m_quick_fee" jdbcType="DECIMAL" property="mQuickFee" />
+    <result column="m_url" jdbcType="VARCHAR" property="mUrl" />
+    <result column="m_img" jdbcType="VARCHAR" property="mImg" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="remarks" jdbcType="VARCHAR" property="remarks" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, office_id, t0_draw_fee, t0_trade_rate, t1_draw_fee, t1_trade_rate, bonus_quick_rate, 
+    bonus_quick_fee, quick_rate, quick_fee, m_t0_draw_fee, m_t0_trade_rate, m_t1_draw_fee, 
+    m_t1_trade_rate, m_bonus_quick_rate, m_bonus_quick_fee, m_quick_rate, m_quick_fee, 
+    m_url, m_img, create_by, create_date, update_by, update_date, remarks, del_flag
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.AgentRateExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_agent_rate
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from bu_agent_rate
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from bu_agent_rate
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.AgentRateExample">
+    delete from bu_agent_rate
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.AgentRate">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_agent_rate (office_id, t0_draw_fee, t0_trade_rate, 
+      t1_draw_fee, t1_trade_rate, bonus_quick_rate, 
+      bonus_quick_fee, quick_rate, quick_fee, 
+      m_t0_draw_fee, m_t0_trade_rate, m_t1_draw_fee, 
+      m_t1_trade_rate, m_bonus_quick_rate, m_bonus_quick_fee, 
+      m_quick_rate, m_quick_fee, m_url, 
+      m_img, create_by, create_date, 
+      update_by, update_date, remarks, 
+      del_flag)
+    values (#{officeId,jdbcType=VARCHAR}, #{t0DrawFee,jdbcType=DECIMAL}, #{t0TradeRate,jdbcType=DECIMAL}, 
+      #{t1DrawFee,jdbcType=DECIMAL}, #{t1TradeRate,jdbcType=DECIMAL}, #{bonusQuickRate,jdbcType=DECIMAL}, 
+      #{bonusQuickFee,jdbcType=DECIMAL}, #{quickRate,jdbcType=DECIMAL}, #{quickFee,jdbcType=DECIMAL}, 
+      #{mT0DrawFee,jdbcType=DECIMAL}, #{mT0TradeRate,jdbcType=DECIMAL}, #{mT1DrawFee,jdbcType=DECIMAL}, 
+      #{mT1TradeRate,jdbcType=DECIMAL}, #{mBonusQuickRate,jdbcType=DECIMAL}, #{mBonusQuickFee,jdbcType=DECIMAL}, 
+      #{mQuickRate,jdbcType=DECIMAL}, #{mQuickFee,jdbcType=DECIMAL}, #{mUrl,jdbcType=VARCHAR}, 
+      #{mImg,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, 
+      #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, 
+      #{delFlag,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.AgentRate">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_agent_rate
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="officeId != null">
+        office_id,
+      </if>
+      <if test="t0DrawFee != null">
+        t0_draw_fee,
+      </if>
+      <if test="t0TradeRate != null">
+        t0_trade_rate,
+      </if>
+      <if test="t1DrawFee != null">
+        t1_draw_fee,
+      </if>
+      <if test="t1TradeRate != null">
+        t1_trade_rate,
+      </if>
+      <if test="bonusQuickRate != null">
+        bonus_quick_rate,
+      </if>
+      <if test="bonusQuickFee != null">
+        bonus_quick_fee,
+      </if>
+      <if test="quickRate != null">
+        quick_rate,
+      </if>
+      <if test="quickFee != null">
+        quick_fee,
+      </if>
+      <if test="mT0DrawFee != null">
+        m_t0_draw_fee,
+      </if>
+      <if test="mT0TradeRate != null">
+        m_t0_trade_rate,
+      </if>
+      <if test="mT1DrawFee != null">
+        m_t1_draw_fee,
+      </if>
+      <if test="mT1TradeRate != null">
+        m_t1_trade_rate,
+      </if>
+      <if test="mBonusQuickRate != null">
+        m_bonus_quick_rate,
+      </if>
+      <if test="mBonusQuickFee != null">
+        m_bonus_quick_fee,
+      </if>
+      <if test="mQuickRate != null">
+        m_quick_rate,
+      </if>
+      <if test="mQuickFee != null">
+        m_quick_fee,
+      </if>
+      <if test="mUrl != null">
+        m_url,
+      </if>
+      <if test="mImg != null">
+        m_img,
+      </if>
+      <if test="createBy != null">
+        create_by,
+      </if>
+      <if test="createDate != null">
+        create_date,
+      </if>
+      <if test="updateBy != null">
+        update_by,
+      </if>
+      <if test="updateDate != null">
+        update_date,
+      </if>
+      <if test="remarks != null">
+        remarks,
+      </if>
+      <if test="delFlag != null">
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="officeId != null">
+        #{officeId,jdbcType=VARCHAR},
+      </if>
+      <if test="t0DrawFee != null">
+        #{t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t0TradeRate != null">
+        #{t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawFee != null">
+        #{t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1TradeRate != null">
+        #{t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="bonusQuickRate != null">
+        #{bonusQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="bonusQuickFee != null">
+        #{bonusQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="quickRate != null">
+        #{quickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="quickFee != null">
+        #{quickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mT0DrawFee != null">
+        #{mT0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mT0TradeRate != null">
+        #{mT0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mT1DrawFee != null">
+        #{mT1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mT1TradeRate != null">
+        #{mT1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mBonusQuickRate != null">
+        #{mBonusQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mBonusQuickFee != null">
+        #{mBonusQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mQuickRate != null">
+        #{mQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mQuickFee != null">
+        #{mQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mUrl != null">
+        #{mUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="mImg != null">
+        #{mImg,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.AgentRateExample" resultType="java.lang.Integer">
+    select count(*) from bu_agent_rate
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update bu_agent_rate
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.officeId != null">
+        office_id = #{record.officeId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.t0DrawFee != null">
+        t0_draw_fee = #{record.t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t0TradeRate != null">
+        t0_trade_rate = #{record.t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1DrawFee != null">
+        t1_draw_fee = #{record.t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1TradeRate != null">
+        t1_trade_rate = #{record.t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.bonusQuickRate != null">
+        bonus_quick_rate = #{record.bonusQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.bonusQuickFee != null">
+        bonus_quick_fee = #{record.bonusQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.quickRate != null">
+        quick_rate = #{record.quickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.quickFee != null">
+        quick_fee = #{record.quickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mT0DrawFee != null">
+        m_t0_draw_fee = #{record.mT0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mT0TradeRate != null">
+        m_t0_trade_rate = #{record.mT0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mT1DrawFee != null">
+        m_t1_draw_fee = #{record.mT1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mT1TradeRate != null">
+        m_t1_trade_rate = #{record.mT1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mBonusQuickRate != null">
+        m_bonus_quick_rate = #{record.mBonusQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mBonusQuickFee != null">
+        m_bonus_quick_fee = #{record.mBonusQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mQuickRate != null">
+        m_quick_rate = #{record.mQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mQuickFee != null">
+        m_quick_fee = #{record.mQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mUrl != null">
+        m_url = #{record.mUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="record.mImg != null">
+        m_img = #{record.mImg,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null">
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null">
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null">
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null">
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null">
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null">
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update bu_agent_rate
+    set id = #{record.id,jdbcType=INTEGER},
+      office_id = #{record.officeId,jdbcType=VARCHAR},
+      t0_draw_fee = #{record.t0DrawFee,jdbcType=DECIMAL},
+      t0_trade_rate = #{record.t0TradeRate,jdbcType=DECIMAL},
+      t1_draw_fee = #{record.t1DrawFee,jdbcType=DECIMAL},
+      t1_trade_rate = #{record.t1TradeRate,jdbcType=DECIMAL},
+      bonus_quick_rate = #{record.bonusQuickRate,jdbcType=DECIMAL},
+      bonus_quick_fee = #{record.bonusQuickFee,jdbcType=DECIMAL},
+      quick_rate = #{record.quickRate,jdbcType=DECIMAL},
+      quick_fee = #{record.quickFee,jdbcType=DECIMAL},
+      m_t0_draw_fee = #{record.mT0DrawFee,jdbcType=DECIMAL},
+      m_t0_trade_rate = #{record.mT0TradeRate,jdbcType=DECIMAL},
+      m_t1_draw_fee = #{record.mT1DrawFee,jdbcType=DECIMAL},
+      m_t1_trade_rate = #{record.mT1TradeRate,jdbcType=DECIMAL},
+      m_bonus_quick_rate = #{record.mBonusQuickRate,jdbcType=DECIMAL},
+      m_bonus_quick_fee = #{record.mBonusQuickFee,jdbcType=DECIMAL},
+      m_quick_rate = #{record.mQuickRate,jdbcType=DECIMAL},
+      m_quick_fee = #{record.mQuickFee,jdbcType=DECIMAL},
+      m_url = #{record.mUrl,jdbcType=VARCHAR},
+      m_img = #{record.mImg,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.AgentRate">
+    update bu_agent_rate
+    <set>
+      <if test="officeId != null">
+        office_id = #{officeId,jdbcType=VARCHAR},
+      </if>
+      <if test="t0DrawFee != null">
+        t0_draw_fee = #{t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t0TradeRate != null">
+        t0_trade_rate = #{t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawFee != null">
+        t1_draw_fee = #{t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1TradeRate != null">
+        t1_trade_rate = #{t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="bonusQuickRate != null">
+        bonus_quick_rate = #{bonusQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="bonusQuickFee != null">
+        bonus_quick_fee = #{bonusQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="quickRate != null">
+        quick_rate = #{quickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="quickFee != null">
+        quick_fee = #{quickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mT0DrawFee != null">
+        m_t0_draw_fee = #{mT0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mT0TradeRate != null">
+        m_t0_trade_rate = #{mT0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mT1DrawFee != null">
+        m_t1_draw_fee = #{mT1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mT1TradeRate != null">
+        m_t1_trade_rate = #{mT1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mBonusQuickRate != null">
+        m_bonus_quick_rate = #{mBonusQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mBonusQuickFee != null">
+        m_bonus_quick_fee = #{mBonusQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mQuickRate != null">
+        m_quick_rate = #{mQuickRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mQuickFee != null">
+        m_quick_fee = #{mQuickFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mUrl != null">
+        m_url = #{mUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="mImg != null">
+        m_img = #{mImg,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.AgentRate">
+    update bu_agent_rate
+    set office_id = #{officeId,jdbcType=VARCHAR},
+      t0_draw_fee = #{t0DrawFee,jdbcType=DECIMAL},
+      t0_trade_rate = #{t0TradeRate,jdbcType=DECIMAL},
+      t1_draw_fee = #{t1DrawFee,jdbcType=DECIMAL},
+      t1_trade_rate = #{t1TradeRate,jdbcType=DECIMAL},
+      bonus_quick_rate = #{bonusQuickRate,jdbcType=DECIMAL},
+      bonus_quick_fee = #{bonusQuickFee,jdbcType=DECIMAL},
+      quick_rate = #{quickRate,jdbcType=DECIMAL},
+      quick_fee = #{quickFee,jdbcType=DECIMAL},
+      m_t0_draw_fee = #{mT0DrawFee,jdbcType=DECIMAL},
+      m_t0_trade_rate = #{mT0TradeRate,jdbcType=DECIMAL},
+      m_t1_draw_fee = #{mT1DrawFee,jdbcType=DECIMAL},
+      m_t1_trade_rate = #{mT1TradeRate,jdbcType=DECIMAL},
+      m_bonus_quick_rate = #{mBonusQuickRate,jdbcType=DECIMAL},
+      m_bonus_quick_fee = #{mBonusQuickFee,jdbcType=DECIMAL},
+      m_quick_rate = #{mQuickRate,jdbcType=DECIMAL},
+      m_quick_fee = #{mQuickFee,jdbcType=DECIMAL},
+      m_url = #{mUrl,jdbcType=VARCHAR},
+      m_img = #{mImg,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR},
+      del_flag = #{delFlag,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<portable-config>
+	<!-- 
+	<config-file path="WEB-INF/classes/mailservice.properties">
+		<replace key="url">http://192.168.244.173:8581</replace>
+	</config-file>
+	<config-file path="WEB-INF/classes/multi_redis.properties">
+		<replace key="redis1_ip">192.168.244.172</replace>
+		<replace key="redis2_ip">192.168.244.172</replace>
+		<replace key="redis3_ip">192.168.244.172</replace>
+		<replace key="redis4_ip">192.168.244.172</replace>
+		<replace key="redis5_ip">192.168.244.172</replace>
+		<replace key="redis6_ip">192.168.244.172</replace>
+	</config-file>
+	-->
+</portable-config>

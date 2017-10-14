@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.DebitNoteExtendMapper" >
+  
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.DebitNote" extends="com.epay.scanposp.dao.DebitNoteMapper.BaseResultMap">
+  
+  </resultMap>
+  
+  <select id="getDebitMerchantInfoDistinct" parameterType="java.util.Map" resultMap="BaseResultMap">
+  	select member_id , id, money , member_code, merchant_code, order_code, settle_type, txn_type, 
+    status, route_id, resp_code, resp_msg, remarks 
+    from bu_debit_note 
+    where 1=1  
+      <if test="id != null and id != ''" >
+       and id = #{id,jdbcType=INTEGER}
+      </if>
+      <if test="memberId != null and memberId != ''" >
+        and member_id = #{memberId,jdbcType=INTEGER}
+      </if>
+      <if test="memberCode != null and memberCode != ''" >
+        and member_code = #{memberCode,jdbcType=VARCHAR}
+      </if>
+      <if test="merchantCode != null and merchantCode != ''" >
+        and merchant_code = #{merchantCode,jdbcType=VARCHAR}
+      </if>
+      <if test="orderCode != null and orderCode != ''" >
+        and order_code = #{orderCode,jdbcType=VARCHAR}
+      </if>
+      <if test="settleType != null and settleType != ''" >
+        and settle_type = #{settleType,jdbcType=CHAR}
+      </if>
+      <if test="txnType != null and txnType != ''" >
+        and txn_type = #{txnType,jdbcType=CHAR}
+      </if>
+      <if test="status != null and status != ''" >
+        and status = #{status,jdbcType=CHAR}
+      </if>
+      <if test="respCode != null and respCode != ''" >
+        and resp_code = #{respCode,jdbcType=VARCHAR}
+      </if>
+      <if test="respMsg != null and respMsg != ''" >
+        and resp_msg = #{respMsg,jdbcType=VARCHAR}
+      </if>
+      <if test="createDateStart != null and createDateStart != ''" >
+        and create_date &gt; #{createDateStart,jdbcType=TIMESTAMP}
+      </if>
+      <if test="createDateEnd != null and createDateEnd != ''" >
+        and create_date &lt;= #{createDateEnd,jdbcType=TIMESTAMP}
+      </if>
+      <if test="remarks != null" >
+        and remarks like '%#{remarks,jdbcType=VARCHAR}%'
+      </if>
+      
+      GROUP BY member_id 
+  </select>
+  
+</mapper>

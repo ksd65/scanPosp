@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.MsChildConfigMapper" >
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.MsChildConfig" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="member_id" property="memberId" jdbcType="INTEGER" />
+    <result column="member_code" property="memberCode" jdbcType="VARCHAR" />
+    <result column="req_msg_id" property="reqMsgId" jdbcType="VARCHAR" />
+    <result column="zdlx" property="zdlx" jdbcType="VARCHAR" />
+    <result column="zdsj" property="zdsj" jdbcType="VARCHAR" />
+    <result column="resp_type" property="respType" jdbcType="VARCHAR" />
+    <result column="resp_code" property="respCode" jdbcType="VARCHAR" />
+    <result column="resp_msg" property="respMsg" jdbcType="VARCHAR" />
+    <result column="resp_date" property="respDate" jdbcType="VARCHAR" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="remarks" property="remarks" jdbcType="VARCHAR" />
+    <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, member_id, member_code, req_msg_id, zdlx, zdsj, resp_type, resp_code, resp_msg, 
+    resp_date, create_by, create_date, update_by, update_date, remarks, del_flag
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.MsChildConfigExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_ms_child_config
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart>=0" >
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from bu_ms_child_config
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from bu_ms_child_config
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.MsChildConfigExample" >
+    delete from bu_ms_child_config
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.MsChildConfig" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_ms_child_config (member_id, member_code, req_msg_id, 
+      zdlx, zdsj, resp_type, 
+      resp_code, resp_msg, resp_date, 
+      create_by, create_date, update_by, 
+      update_date, remarks, del_flag
+      )
+    values (#{memberId,jdbcType=INTEGER}, #{memberCode,jdbcType=VARCHAR}, #{reqMsgId,jdbcType=VARCHAR}, 
+      #{zdlx,jdbcType=VARCHAR}, #{zdsj,jdbcType=VARCHAR}, #{respType,jdbcType=VARCHAR}, 
+      #{respCode,jdbcType=VARCHAR}, #{respMsg,jdbcType=VARCHAR}, #{respDate,jdbcType=VARCHAR}, 
+      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, 
+      #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.MsChildConfig" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_ms_child_config
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="memberId != null" >
+        member_id,
+      </if>
+      <if test="memberCode != null" >
+        member_code,
+      </if>
+      <if test="reqMsgId != null" >
+        req_msg_id,
+      </if>
+      <if test="zdlx != null" >
+        zdlx,
+      </if>
+      <if test="zdsj != null" >
+        zdsj,
+      </if>
+      <if test="respType != null" >
+        resp_type,
+      </if>
+      <if test="respCode != null" >
+        resp_code,
+      </if>
+      <if test="respMsg != null" >
+        resp_msg,
+      </if>
+      <if test="respDate != null" >
+        resp_date,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="remarks != null" >
+        remarks,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="memberId != null" >
+        #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="memberCode != null" >
+        #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="reqMsgId != null" >
+        #{reqMsgId,jdbcType=VARCHAR},
+      </if>
+      <if test="zdlx != null" >
+        #{zdlx,jdbcType=VARCHAR},
+      </if>
+      <if test="zdsj != null" >
+        #{zdsj,jdbcType=VARCHAR},
+      </if>
+      <if test="respType != null" >
+        #{respType,jdbcType=VARCHAR},
+      </if>
+      <if test="respCode != null" >
+        #{respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="respMsg != null" >
+        #{respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="respDate != null" >
+        #{respDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.MsChildConfigExample" resultType="java.lang.Integer" >
+    select count(*) from bu_ms_child_config
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update bu_ms_child_config
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.memberId != null" >
+        member_id = #{record.memberId,jdbcType=INTEGER},
+      </if>
+      <if test="record.memberCode != null" >
+        member_code = #{record.memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.reqMsgId != null" >
+        req_msg_id = #{record.reqMsgId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zdlx != null" >
+        zdlx = #{record.zdlx,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zdsj != null" >
+        zdsj = #{record.zdsj,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respType != null" >
+        resp_type = #{record.respType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respCode != null" >
+        resp_code = #{record.respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respMsg != null" >
+        resp_msg = #{record.respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respDate != null" >
+        resp_date = #{record.respDate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null" >
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null" >
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null" >
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null" >
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null" >
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null" >
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update bu_ms_child_config
+    set id = #{record.id,jdbcType=INTEGER},
+      member_id = #{record.memberId,jdbcType=INTEGER},
+      member_code = #{record.memberCode,jdbcType=VARCHAR},
+      req_msg_id = #{record.reqMsgId,jdbcType=VARCHAR},
+      zdlx = #{record.zdlx,jdbcType=VARCHAR},
+      zdsj = #{record.zdsj,jdbcType=VARCHAR},
+      resp_type = #{record.respType,jdbcType=VARCHAR},
+      resp_code = #{record.respCode,jdbcType=VARCHAR},
+      resp_msg = #{record.respMsg,jdbcType=VARCHAR},
+      resp_date = #{record.respDate,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.MsChildConfig" >
+    update bu_ms_child_config
+    <set >
+      <if test="memberId != null" >
+        member_id = #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="memberCode != null" >
+        member_code = #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="reqMsgId != null" >
+        req_msg_id = #{reqMsgId,jdbcType=VARCHAR},
+      </if>
+      <if test="zdlx != null" >
+        zdlx = #{zdlx,jdbcType=VARCHAR},
+      </if>
+      <if test="zdsj != null" >
+        zdsj = #{zdsj,jdbcType=VARCHAR},
+      </if>
+      <if test="respType != null" >
+        resp_type = #{respType,jdbcType=VARCHAR},
+      </if>
+      <if test="respCode != null" >
+        resp_code = #{respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="respMsg != null" >
+        resp_msg = #{respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="respDate != null" >
+        resp_date = #{respDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null" >
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.MsChildConfig" >
+    update bu_ms_child_config
+    set member_id = #{memberId,jdbcType=INTEGER},
+      member_code = #{memberCode,jdbcType=VARCHAR},
+      req_msg_id = #{reqMsgId,jdbcType=VARCHAR},
+      zdlx = #{zdlx,jdbcType=VARCHAR},
+      zdsj = #{zdsj,jdbcType=VARCHAR},
+      resp_type = #{respType,jdbcType=VARCHAR},
+      resp_code = #{respCode,jdbcType=VARCHAR},
+      resp_msg = #{respMsg,jdbcType=VARCHAR},
+      resp_date = #{respDate,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR},
+      del_flag = #{delFlag,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

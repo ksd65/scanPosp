@@ -1,0 +1,1432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.MemberInfoMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.MemberInfo">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="code" jdbcType="VARCHAR" property="code" />
+    <result column="type" jdbcType="VARCHAR" property="type" />
+    <result column="login_code" jdbcType="VARCHAR" property="loginCode" />
+    <result column="login_pass" jdbcType="VARCHAR" property="loginPass" />
+    <result column="parent_id" jdbcType="INTEGER" property="parentId" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="mobile_phone" jdbcType="VARCHAR" property="mobilePhone" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="short_name" jdbcType="VARCHAR" property="shortName" />
+    <result column="contact" jdbcType="VARCHAR" property="contact" />
+    <result column="level" jdbcType="VARCHAR" property="level" />
+    <result column="draw_status" jdbcType="VARCHAR" property="drawStatus" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="wx_status" jdbcType="VARCHAR" property="wxStatus" />
+    <result column="zfb_status" jdbcType="VARCHAR" property="zfbStatus" />
+    <result column="qq_status" jdbcType="VARCHAR" property="qqStatus" />
+    <result column="bd_status" jdbcType="VARCHAR" property="bdStatus" />
+    <result column="jd_status" jdbcType="VARCHAR" property="jdStatus" />
+    <result column="ml_jf_status" jdbcType="VARCHAR" property="mlJfStatus" />
+    <result column="ml_wjf_status" jdbcType="VARCHAR" property="mlWjfStatus" />
+    <result column="sex_type" jdbcType="VARCHAR" property="sexType" />
+    <result column="birthday" jdbcType="DATE" property="birthday" />
+    <result column="home_phone" jdbcType="VARCHAR" property="homePhone" />
+    <result column="cert_nbr" jdbcType="VARCHAR" property="certNbr" />
+    <result column="cert_pic1" jdbcType="VARCHAR" property="certPic1" />
+    <result column="cert_pic2" jdbcType="VARCHAR" property="certPic2" />
+    <result column="memCert_pic" jdbcType="VARCHAR" property="memcertPic" />
+    <result column="card_nbr" jdbcType="VARCHAR" property="cardNbr" />
+    <result column="card_pic1" jdbcType="VARCHAR" property="cardPic1" />
+    <result column="card_pic2" jdbcType="VARCHAR" property="cardPic2" />
+    <result column="bus_licence_nbr" jdbcType="VARCHAR" property="busLicenceNbr" />
+    <result column="addr" jdbcType="VARCHAR" property="addr" />
+    <result column="category" jdbcType="VARCHAR" property="category" />
+    <result column="province" jdbcType="VARCHAR" property="province" />
+    <result column="city" jdbcType="VARCHAR" property="city" />
+    <result column="county" jdbcType="VARCHAR" property="county" />
+    <result column="contact_type" jdbcType="CHAR" property="contactType" />
+    <result column="verify_flag" jdbcType="CHAR" property="verifyFlag" />
+    <result column="wx_route_id" jdbcType="VARCHAR" property="wxRouteId" />
+    <result column="wx_member_code" jdbcType="VARCHAR" property="wxMemberCode" />
+    <result column="wx_merchant_code" jdbcType="VARCHAR" property="wxMerchantCode" />
+    <result column="settle_type" jdbcType="CHAR" property="settleType" />
+    <result column="zfb_route_id" jdbcType="VARCHAR" property="zfbRouteId" />
+    <result column="zfb_member_code" jdbcType="VARCHAR" property="zfbMemberCode" />
+    <result column="zfb_merchant_code" jdbcType="VARCHAR" property="zfbMerchantCode" />
+    <result column="qq_route_id" jdbcType="VARCHAR" property="qqRouteId" />
+    <result column="qq_member_code" jdbcType="VARCHAR" property="qqMemberCode" />
+    <result column="qq_merchant_code" jdbcType="VARCHAR" property="qqMerchantCode" />
+    <result column="bd_route_id" jdbcType="VARCHAR" property="bdRouteId" />
+    <result column="bd_member_code" jdbcType="VARCHAR" property="bdMemberCode" />
+    <result column="bd_merchant_code" jdbcType="VARCHAR" property="bdMerchantCode" />
+    <result column="jd_route_id" jdbcType="VARCHAR" property="jdRouteId" />
+    <result column="jd_member_code" jdbcType="VARCHAR" property="jdMemberCode" />
+    <result column="jd_merchant_code" jdbcType="VARCHAR" property="jdMerchantCode" />
+    <result column="wx_channel_merchant_code" jdbcType="VARCHAR" property="wxChannelMerchantCode" />
+    <result column="qq_channel_merchant_code" jdbcType="VARCHAR" property="qqChannelMerchantCode" />
+    <result column="zfb_channel_merchant_code" jdbcType="VARCHAR" property="zfbChannelMerchantCode" />
+    <result column="bd_channel_merchant_code" jdbcType="VARCHAR" property="bdChannelMerchantCode" />
+    <result column="jd_channel_merchant_code" jdbcType="VARCHAR" property="jdChannelMerchantCode" />
+    <result column="t0_draw_fee" jdbcType="DECIMAL" property="t0DrawFee" />
+    <result column="t0_trade_rate" jdbcType="DECIMAL" property="t0TradeRate" />
+    <result column="t1_draw_fee" jdbcType="DECIMAL" property="t1DrawFee" />
+    <result column="t1_trade_rate" jdbcType="DECIMAL" property="t1TradeRate" />
+    <result column="ml_jf_fee" jdbcType="DECIMAL" property="mlJfFee" />
+    <result column="ml_jf_rate" jdbcType="DECIMAL" property="mlJfRate" />
+    <result column="ml_wjf_fee" jdbcType="DECIMAL" property="mlWjfFee" />
+    <result column="ml_wjf_rate" jdbcType="DECIMAL" property="mlWjfRate" />
+    <result column="pay_code" jdbcType="VARCHAR" property="payCode" />
+    <result column="single_limit" jdbcType="DECIMAL" property="singleLimit" />
+    <result column="day_limit" jdbcType="DECIMAL" property="dayLimit" />
+    <result column="bus_pic" jdbcType="VARCHAR" property="busPic" />
+    <result column="head_pic" jdbcType="VARCHAR" property="headPic" />
+    <result column="desk_pic" jdbcType="VARCHAR" property="deskPic" />
+    <result column="inside_pic" jdbcType="VARCHAR" property="insidePic" />
+    <result column="staff_pic" jdbcType="VARCHAR" property="staffPic" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="remarks" jdbcType="VARCHAR" property="remarks" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, code, type, login_code, login_pass, parent_id, email, mobile_phone, name, short_name, 
+    contact, level, draw_status, status, wx_status, zfb_status, qq_status, bd_status, 
+    jd_status, ml_jf_status, ml_wjf_status, sex_type, birthday, home_phone, cert_nbr, 
+    cert_pic1, cert_pic2, memCert_pic, card_nbr, card_pic1, card_pic2, bus_licence_nbr, 
+    addr, category, province, city, county, contact_type, verify_flag, wx_route_id, wx_member_code, 
+    wx_merchant_code, settle_type, zfb_route_id, zfb_member_code, zfb_merchant_code, 
+    qq_route_id, qq_member_code, qq_merchant_code, bd_route_id, bd_member_code, bd_merchant_code, 
+    jd_route_id, jd_member_code, jd_merchant_code, wx_channel_merchant_code, qq_channel_merchant_code, 
+    zfb_channel_merchant_code, bd_channel_merchant_code, jd_channel_merchant_code, t0_draw_fee, 
+    t0_trade_rate, t1_draw_fee, t1_trade_rate, ml_jf_fee, ml_jf_rate, ml_wjf_fee, ml_wjf_rate, 
+    pay_code, single_limit, day_limit, bus_pic, head_pic, desk_pic, inside_pic, staff_pic, 
+    create_by, create_date, update_by, update_date, remarks, del_flag
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberInfoExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_member_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from bu_member_info
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from bu_member_info
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.MemberInfoExample">
+    delete from bu_member_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.MemberInfo">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_member_info (code, type, login_code, 
+      login_pass, parent_id, email, 
+      mobile_phone, name, short_name, 
+      contact, level, draw_status, 
+      status, wx_status, zfb_status, 
+      qq_status, bd_status, jd_status, 
+      ml_jf_status, ml_wjf_status, sex_type, 
+      birthday, home_phone, cert_nbr, 
+      cert_pic1, cert_pic2, memCert_pic, 
+      card_nbr, card_pic1, card_pic2, 
+      bus_licence_nbr, addr, category, 
+      province, city, county, 
+      contact_type, verify_flag, wx_route_id, 
+      wx_member_code, wx_merchant_code, settle_type, 
+      zfb_route_id, zfb_member_code, zfb_merchant_code, 
+      qq_route_id, qq_member_code, qq_merchant_code, 
+      bd_route_id, bd_member_code, bd_merchant_code, 
+      jd_route_id, jd_member_code, jd_merchant_code, 
+      wx_channel_merchant_code, qq_channel_merchant_code, 
+      zfb_channel_merchant_code, bd_channel_merchant_code, 
+      jd_channel_merchant_code, t0_draw_fee, t0_trade_rate, 
+      t1_draw_fee, t1_trade_rate, ml_jf_fee, 
+      ml_jf_rate, ml_wjf_fee, ml_wjf_rate, 
+      pay_code, single_limit, day_limit, 
+      bus_pic, head_pic, desk_pic, 
+      inside_pic, staff_pic, create_by, 
+      create_date, update_by, update_date, 
+      remarks, del_flag)
+    values (#{code,jdbcType=VARCHAR}, #{type,jdbcType=VARCHAR}, #{loginCode,jdbcType=VARCHAR}, 
+      #{loginPass,jdbcType=VARCHAR}, #{parentId,jdbcType=INTEGER}, #{email,jdbcType=VARCHAR}, 
+      #{mobilePhone,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{shortName,jdbcType=VARCHAR}, 
+      #{contact,jdbcType=VARCHAR}, #{level,jdbcType=VARCHAR}, #{drawStatus,jdbcType=VARCHAR}, 
+      #{status,jdbcType=VARCHAR}, #{wxStatus,jdbcType=VARCHAR}, #{zfbStatus,jdbcType=VARCHAR}, 
+      #{qqStatus,jdbcType=VARCHAR}, #{bdStatus,jdbcType=VARCHAR}, #{jdStatus,jdbcType=VARCHAR}, 
+      #{mlJfStatus,jdbcType=VARCHAR}, #{mlWjfStatus,jdbcType=VARCHAR}, #{sexType,jdbcType=VARCHAR}, 
+      #{birthday,jdbcType=DATE}, #{homePhone,jdbcType=VARCHAR}, #{certNbr,jdbcType=VARCHAR}, 
+      #{certPic1,jdbcType=VARCHAR}, #{certPic2,jdbcType=VARCHAR}, #{memcertPic,jdbcType=VARCHAR}, 
+      #{cardNbr,jdbcType=VARCHAR}, #{cardPic1,jdbcType=VARCHAR}, #{cardPic2,jdbcType=VARCHAR}, 
+      #{busLicenceNbr,jdbcType=VARCHAR}, #{addr,jdbcType=VARCHAR}, #{category,jdbcType=VARCHAR}, 
+      #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{county,jdbcType=VARCHAR}, 
+      #{contactType,jdbcType=CHAR}, #{verifyFlag,jdbcType=CHAR}, #{wxRouteId,jdbcType=VARCHAR}, 
+      #{wxMemberCode,jdbcType=VARCHAR}, #{wxMerchantCode,jdbcType=VARCHAR}, #{settleType,jdbcType=CHAR}, 
+      #{zfbRouteId,jdbcType=VARCHAR}, #{zfbMemberCode,jdbcType=VARCHAR}, #{zfbMerchantCode,jdbcType=VARCHAR}, 
+      #{qqRouteId,jdbcType=VARCHAR}, #{qqMemberCode,jdbcType=VARCHAR}, #{qqMerchantCode,jdbcType=VARCHAR}, 
+      #{bdRouteId,jdbcType=VARCHAR}, #{bdMemberCode,jdbcType=VARCHAR}, #{bdMerchantCode,jdbcType=VARCHAR}, 
+      #{jdRouteId,jdbcType=VARCHAR}, #{jdMemberCode,jdbcType=VARCHAR}, #{jdMerchantCode,jdbcType=VARCHAR}, 
+      #{wxChannelMerchantCode,jdbcType=VARCHAR}, #{qqChannelMerchantCode,jdbcType=VARCHAR}, 
+      #{zfbChannelMerchantCode,jdbcType=VARCHAR}, #{bdChannelMerchantCode,jdbcType=VARCHAR}, 
+      #{jdChannelMerchantCode,jdbcType=VARCHAR}, #{t0DrawFee,jdbcType=DECIMAL}, #{t0TradeRate,jdbcType=DECIMAL}, 
+      #{t1DrawFee,jdbcType=DECIMAL}, #{t1TradeRate,jdbcType=DECIMAL}, #{mlJfFee,jdbcType=DECIMAL}, 
+      #{mlJfRate,jdbcType=DECIMAL}, #{mlWjfFee,jdbcType=DECIMAL}, #{mlWjfRate,jdbcType=DECIMAL}, 
+      #{payCode,jdbcType=VARCHAR}, #{singleLimit,jdbcType=DECIMAL}, #{dayLimit,jdbcType=DECIMAL}, 
+      #{busPic,jdbcType=VARCHAR}, #{headPic,jdbcType=VARCHAR}, #{deskPic,jdbcType=VARCHAR}, 
+      #{insidePic,jdbcType=VARCHAR}, #{staffPic,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, 
+      #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
+      #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.MemberInfo">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_member_info
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="code != null">
+        code,
+      </if>
+      <if test="type != null">
+        type,
+      </if>
+      <if test="loginCode != null">
+        login_code,
+      </if>
+      <if test="loginPass != null">
+        login_pass,
+      </if>
+      <if test="parentId != null">
+        parent_id,
+      </if>
+      <if test="email != null">
+        email,
+      </if>
+      <if test="mobilePhone != null">
+        mobile_phone,
+      </if>
+      <if test="name != null">
+        name,
+      </if>
+      <if test="shortName != null">
+        short_name,
+      </if>
+      <if test="contact != null">
+        contact,
+      </if>
+      <if test="level != null">
+        level,
+      </if>
+      <if test="drawStatus != null">
+        draw_status,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="wxStatus != null">
+        wx_status,
+      </if>
+      <if test="zfbStatus != null">
+        zfb_status,
+      </if>
+      <if test="qqStatus != null">
+        qq_status,
+      </if>
+      <if test="bdStatus != null">
+        bd_status,
+      </if>
+      <if test="jdStatus != null">
+        jd_status,
+      </if>
+      <if test="mlJfStatus != null">
+        ml_jf_status,
+      </if>
+      <if test="mlWjfStatus != null">
+        ml_wjf_status,
+      </if>
+      <if test="sexType != null">
+        sex_type,
+      </if>
+      <if test="birthday != null">
+        birthday,
+      </if>
+      <if test="homePhone != null">
+        home_phone,
+      </if>
+      <if test="certNbr != null">
+        cert_nbr,
+      </if>
+      <if test="certPic1 != null">
+        cert_pic1,
+      </if>
+      <if test="certPic2 != null">
+        cert_pic2,
+      </if>
+      <if test="memcertPic != null">
+        memCert_pic,
+      </if>
+      <if test="cardNbr != null">
+        card_nbr,
+      </if>
+      <if test="cardPic1 != null">
+        card_pic1,
+      </if>
+      <if test="cardPic2 != null">
+        card_pic2,
+      </if>
+      <if test="busLicenceNbr != null">
+        bus_licence_nbr,
+      </if>
+      <if test="addr != null">
+        addr,
+      </if>
+      <if test="category != null">
+        category,
+      </if>
+      <if test="province != null">
+        province,
+      </if>
+      <if test="city != null">
+        city,
+      </if>
+      <if test="county != null">
+        county,
+      </if>
+      <if test="contactType != null">
+        contact_type,
+      </if>
+      <if test="verifyFlag != null">
+        verify_flag,
+      </if>
+      <if test="wxRouteId != null">
+        wx_route_id,
+      </if>
+      <if test="wxMemberCode != null">
+        wx_member_code,
+      </if>
+      <if test="wxMerchantCode != null">
+        wx_merchant_code,
+      </if>
+      <if test="settleType != null">
+        settle_type,
+      </if>
+      <if test="zfbRouteId != null">
+        zfb_route_id,
+      </if>
+      <if test="zfbMemberCode != null">
+        zfb_member_code,
+      </if>
+      <if test="zfbMerchantCode != null">
+        zfb_merchant_code,
+      </if>
+      <if test="qqRouteId != null">
+        qq_route_id,
+      </if>
+      <if test="qqMemberCode != null">
+        qq_member_code,
+      </if>
+      <if test="qqMerchantCode != null">
+        qq_merchant_code,
+      </if>
+      <if test="bdRouteId != null">
+        bd_route_id,
+      </if>
+      <if test="bdMemberCode != null">
+        bd_member_code,
+      </if>
+      <if test="bdMerchantCode != null">
+        bd_merchant_code,
+      </if>
+      <if test="jdRouteId != null">
+        jd_route_id,
+      </if>
+      <if test="jdMemberCode != null">
+        jd_member_code,
+      </if>
+      <if test="jdMerchantCode != null">
+        jd_merchant_code,
+      </if>
+      <if test="wxChannelMerchantCode != null">
+        wx_channel_merchant_code,
+      </if>
+      <if test="qqChannelMerchantCode != null">
+        qq_channel_merchant_code,
+      </if>
+      <if test="zfbChannelMerchantCode != null">
+        zfb_channel_merchant_code,
+      </if>
+      <if test="bdChannelMerchantCode != null">
+        bd_channel_merchant_code,
+      </if>
+      <if test="jdChannelMerchantCode != null">
+        jd_channel_merchant_code,
+      </if>
+      <if test="t0DrawFee != null">
+        t0_draw_fee,
+      </if>
+      <if test="t0TradeRate != null">
+        t0_trade_rate,
+      </if>
+      <if test="t1DrawFee != null">
+        t1_draw_fee,
+      </if>
+      <if test="t1TradeRate != null">
+        t1_trade_rate,
+      </if>
+      <if test="mlJfFee != null">
+        ml_jf_fee,
+      </if>
+      <if test="mlJfRate != null">
+        ml_jf_rate,
+      </if>
+      <if test="mlWjfFee != null">
+        ml_wjf_fee,
+      </if>
+      <if test="mlWjfRate != null">
+        ml_wjf_rate,
+      </if>
+      <if test="payCode != null">
+        pay_code,
+      </if>
+      <if test="singleLimit != null">
+        single_limit,
+      </if>
+      <if test="dayLimit != null">
+        day_limit,
+      </if>
+      <if test="busPic != null">
+        bus_pic,
+      </if>
+      <if test="headPic != null">
+        head_pic,
+      </if>
+      <if test="deskPic != null">
+        desk_pic,
+      </if>
+      <if test="insidePic != null">
+        inside_pic,
+      </if>
+      <if test="staffPic != null">
+        staff_pic,
+      </if>
+      <if test="createBy != null">
+        create_by,
+      </if>
+      <if test="createDate != null">
+        create_date,
+      </if>
+      <if test="updateBy != null">
+        update_by,
+      </if>
+      <if test="updateDate != null">
+        update_date,
+      </if>
+      <if test="remarks != null">
+        remarks,
+      </if>
+      <if test="delFlag != null">
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="code != null">
+        #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null">
+        #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="loginCode != null">
+        #{loginCode,jdbcType=VARCHAR},
+      </if>
+      <if test="loginPass != null">
+        #{loginPass,jdbcType=VARCHAR},
+      </if>
+      <if test="parentId != null">
+        #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="email != null">
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="mobilePhone != null">
+        #{mobilePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="shortName != null">
+        #{shortName,jdbcType=VARCHAR},
+      </if>
+      <if test="contact != null">
+        #{contact,jdbcType=VARCHAR},
+      </if>
+      <if test="level != null">
+        #{level,jdbcType=VARCHAR},
+      </if>
+      <if test="drawStatus != null">
+        #{drawStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="wxStatus != null">
+        #{wxStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbStatus != null">
+        #{zfbStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="qqStatus != null">
+        #{qqStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="bdStatus != null">
+        #{bdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="jdStatus != null">
+        #{jdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="mlJfStatus != null">
+        #{mlJfStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="mlWjfStatus != null">
+        #{mlWjfStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="sexType != null">
+        #{sexType,jdbcType=VARCHAR},
+      </if>
+      <if test="birthday != null">
+        #{birthday,jdbcType=DATE},
+      </if>
+      <if test="homePhone != null">
+        #{homePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="certNbr != null">
+        #{certNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="certPic1 != null">
+        #{certPic1,jdbcType=VARCHAR},
+      </if>
+      <if test="certPic2 != null">
+        #{certPic2,jdbcType=VARCHAR},
+      </if>
+      <if test="memcertPic != null">
+        #{memcertPic,jdbcType=VARCHAR},
+      </if>
+      <if test="cardNbr != null">
+        #{cardNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="cardPic1 != null">
+        #{cardPic1,jdbcType=VARCHAR},
+      </if>
+      <if test="cardPic2 != null">
+        #{cardPic2,jdbcType=VARCHAR},
+      </if>
+      <if test="busLicenceNbr != null">
+        #{busLicenceNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="addr != null">
+        #{addr,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null">
+        #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="province != null">
+        #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null">
+        #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="county != null">
+        #{county,jdbcType=VARCHAR},
+      </if>
+      <if test="contactType != null">
+        #{contactType,jdbcType=CHAR},
+      </if>
+      <if test="verifyFlag != null">
+        #{verifyFlag,jdbcType=CHAR},
+      </if>
+      <if test="wxRouteId != null">
+        #{wxRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="wxMemberCode != null">
+        #{wxMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="wxMerchantCode != null">
+        #{wxMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="settleType != null">
+        #{settleType,jdbcType=CHAR},
+      </if>
+      <if test="zfbRouteId != null">
+        #{zfbRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbMemberCode != null">
+        #{zfbMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbMerchantCode != null">
+        #{zfbMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="qqRouteId != null">
+        #{qqRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="qqMemberCode != null">
+        #{qqMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="qqMerchantCode != null">
+        #{qqMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bdRouteId != null">
+        #{bdRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="bdMemberCode != null">
+        #{bdMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bdMerchantCode != null">
+        #{bdMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="jdRouteId != null">
+        #{jdRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="jdMemberCode != null">
+        #{jdMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="jdMerchantCode != null">
+        #{jdMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="wxChannelMerchantCode != null">
+        #{wxChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="qqChannelMerchantCode != null">
+        #{qqChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbChannelMerchantCode != null">
+        #{zfbChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bdChannelMerchantCode != null">
+        #{bdChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="jdChannelMerchantCode != null">
+        #{jdChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="t0DrawFee != null">
+        #{t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t0TradeRate != null">
+        #{t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawFee != null">
+        #{t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1TradeRate != null">
+        #{t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mlJfFee != null">
+        #{mlJfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mlJfRate != null">
+        #{mlJfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mlWjfFee != null">
+        #{mlWjfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mlWjfRate != null">
+        #{mlWjfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="payCode != null">
+        #{payCode,jdbcType=VARCHAR},
+      </if>
+      <if test="singleLimit != null">
+        #{singleLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="dayLimit != null">
+        #{dayLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="busPic != null">
+        #{busPic,jdbcType=VARCHAR},
+      </if>
+      <if test="headPic != null">
+        #{headPic,jdbcType=VARCHAR},
+      </if>
+      <if test="deskPic != null">
+        #{deskPic,jdbcType=VARCHAR},
+      </if>
+      <if test="insidePic != null">
+        #{insidePic,jdbcType=VARCHAR},
+      </if>
+      <if test="staffPic != null">
+        #{staffPic,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.MemberInfoExample" resultType="java.lang.Integer">
+    select count(*) from bu_member_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update bu_member_info
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.code != null">
+        code = #{record.code,jdbcType=VARCHAR},
+      </if>
+      <if test="record.type != null">
+        type = #{record.type,jdbcType=VARCHAR},
+      </if>
+      <if test="record.loginCode != null">
+        login_code = #{record.loginCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.loginPass != null">
+        login_pass = #{record.loginPass,jdbcType=VARCHAR},
+      </if>
+      <if test="record.parentId != null">
+        parent_id = #{record.parentId,jdbcType=INTEGER},
+      </if>
+      <if test="record.email != null">
+        email = #{record.email,jdbcType=VARCHAR},
+      </if>
+      <if test="record.mobilePhone != null">
+        mobile_phone = #{record.mobilePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.name != null">
+        name = #{record.name,jdbcType=VARCHAR},
+      </if>
+      <if test="record.shortName != null">
+        short_name = #{record.shortName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.contact != null">
+        contact = #{record.contact,jdbcType=VARCHAR},
+      </if>
+      <if test="record.level != null">
+        level = #{record.level,jdbcType=VARCHAR},
+      </if>
+      <if test="record.drawStatus != null">
+        draw_status = #{record.drawStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.status != null">
+        status = #{record.status,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wxStatus != null">
+        wx_status = #{record.wxStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zfbStatus != null">
+        zfb_status = #{record.zfbStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.qqStatus != null">
+        qq_status = #{record.qqStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bdStatus != null">
+        bd_status = #{record.bdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.jdStatus != null">
+        jd_status = #{record.jdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.mlJfStatus != null">
+        ml_jf_status = #{record.mlJfStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.mlWjfStatus != null">
+        ml_wjf_status = #{record.mlWjfStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sexType != null">
+        sex_type = #{record.sexType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.birthday != null">
+        birthday = #{record.birthday,jdbcType=DATE},
+      </if>
+      <if test="record.homePhone != null">
+        home_phone = #{record.homePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.certNbr != null">
+        cert_nbr = #{record.certNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="record.certPic1 != null">
+        cert_pic1 = #{record.certPic1,jdbcType=VARCHAR},
+      </if>
+      <if test="record.certPic2 != null">
+        cert_pic2 = #{record.certPic2,jdbcType=VARCHAR},
+      </if>
+      <if test="record.memcertPic != null">
+        memCert_pic = #{record.memcertPic,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cardNbr != null">
+        card_nbr = #{record.cardNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cardPic1 != null">
+        card_pic1 = #{record.cardPic1,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cardPic2 != null">
+        card_pic2 = #{record.cardPic2,jdbcType=VARCHAR},
+      </if>
+      <if test="record.busLicenceNbr != null">
+        bus_licence_nbr = #{record.busLicenceNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="record.addr != null">
+        addr = #{record.addr,jdbcType=VARCHAR},
+      </if>
+      <if test="record.category != null">
+        category = #{record.category,jdbcType=VARCHAR},
+      </if>
+      <if test="record.province != null">
+        province = #{record.province,jdbcType=VARCHAR},
+      </if>
+      <if test="record.city != null">
+        city = #{record.city,jdbcType=VARCHAR},
+      </if>
+      <if test="record.county != null">
+        county = #{record.county,jdbcType=VARCHAR},
+      </if>
+      <if test="record.contactType != null">
+        contact_type = #{record.contactType,jdbcType=CHAR},
+      </if>
+      <if test="record.verifyFlag != null">
+        verify_flag = #{record.verifyFlag,jdbcType=CHAR},
+      </if>
+      <if test="record.wxRouteId != null">
+        wx_route_id = #{record.wxRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wxMemberCode != null">
+        wx_member_code = #{record.wxMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wxMerchantCode != null">
+        wx_merchant_code = #{record.wxMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.settleType != null">
+        settle_type = #{record.settleType,jdbcType=CHAR},
+      </if>
+      <if test="record.zfbRouteId != null">
+        zfb_route_id = #{record.zfbRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zfbMemberCode != null">
+        zfb_member_code = #{record.zfbMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zfbMerchantCode != null">
+        zfb_merchant_code = #{record.zfbMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.qqRouteId != null">
+        qq_route_id = #{record.qqRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.qqMemberCode != null">
+        qq_member_code = #{record.qqMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.qqMerchantCode != null">
+        qq_merchant_code = #{record.qqMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bdRouteId != null">
+        bd_route_id = #{record.bdRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bdMemberCode != null">
+        bd_member_code = #{record.bdMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bdMerchantCode != null">
+        bd_merchant_code = #{record.bdMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.jdRouteId != null">
+        jd_route_id = #{record.jdRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.jdMemberCode != null">
+        jd_member_code = #{record.jdMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.jdMerchantCode != null">
+        jd_merchant_code = #{record.jdMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wxChannelMerchantCode != null">
+        wx_channel_merchant_code = #{record.wxChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.qqChannelMerchantCode != null">
+        qq_channel_merchant_code = #{record.qqChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.zfbChannelMerchantCode != null">
+        zfb_channel_merchant_code = #{record.zfbChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bdChannelMerchantCode != null">
+        bd_channel_merchant_code = #{record.bdChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.jdChannelMerchantCode != null">
+        jd_channel_merchant_code = #{record.jdChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.t0DrawFee != null">
+        t0_draw_fee = #{record.t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t0TradeRate != null">
+        t0_trade_rate = #{record.t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1DrawFee != null">
+        t1_draw_fee = #{record.t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.t1TradeRate != null">
+        t1_trade_rate = #{record.t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mlJfFee != null">
+        ml_jf_fee = #{record.mlJfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mlJfRate != null">
+        ml_jf_rate = #{record.mlJfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mlWjfFee != null">
+        ml_wjf_fee = #{record.mlWjfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="record.mlWjfRate != null">
+        ml_wjf_rate = #{record.mlWjfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="record.payCode != null">
+        pay_code = #{record.payCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.singleLimit != null">
+        single_limit = #{record.singleLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="record.dayLimit != null">
+        day_limit = #{record.dayLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="record.busPic != null">
+        bus_pic = #{record.busPic,jdbcType=VARCHAR},
+      </if>
+      <if test="record.headPic != null">
+        head_pic = #{record.headPic,jdbcType=VARCHAR},
+      </if>
+      <if test="record.deskPic != null">
+        desk_pic = #{record.deskPic,jdbcType=VARCHAR},
+      </if>
+      <if test="record.insidePic != null">
+        inside_pic = #{record.insidePic,jdbcType=VARCHAR},
+      </if>
+      <if test="record.staffPic != null">
+        staff_pic = #{record.staffPic,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null">
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null">
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null">
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null">
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null">
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="record.delFlag != null">
+        del_flag = #{record.delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update bu_member_info
+    set id = #{record.id,jdbcType=INTEGER},
+      code = #{record.code,jdbcType=VARCHAR},
+      type = #{record.type,jdbcType=VARCHAR},
+      login_code = #{record.loginCode,jdbcType=VARCHAR},
+      login_pass = #{record.loginPass,jdbcType=VARCHAR},
+      parent_id = #{record.parentId,jdbcType=INTEGER},
+      email = #{record.email,jdbcType=VARCHAR},
+      mobile_phone = #{record.mobilePhone,jdbcType=VARCHAR},
+      name = #{record.name,jdbcType=VARCHAR},
+      short_name = #{record.shortName,jdbcType=VARCHAR},
+      contact = #{record.contact,jdbcType=VARCHAR},
+      level = #{record.level,jdbcType=VARCHAR},
+      draw_status = #{record.drawStatus,jdbcType=VARCHAR},
+      status = #{record.status,jdbcType=VARCHAR},
+      wx_status = #{record.wxStatus,jdbcType=VARCHAR},
+      zfb_status = #{record.zfbStatus,jdbcType=VARCHAR},
+      qq_status = #{record.qqStatus,jdbcType=VARCHAR},
+      bd_status = #{record.bdStatus,jdbcType=VARCHAR},
+      jd_status = #{record.jdStatus,jdbcType=VARCHAR},
+      ml_jf_status = #{record.mlJfStatus,jdbcType=VARCHAR},
+      ml_wjf_status = #{record.mlWjfStatus,jdbcType=VARCHAR},
+      sex_type = #{record.sexType,jdbcType=VARCHAR},
+      birthday = #{record.birthday,jdbcType=DATE},
+      home_phone = #{record.homePhone,jdbcType=VARCHAR},
+      cert_nbr = #{record.certNbr,jdbcType=VARCHAR},
+      cert_pic1 = #{record.certPic1,jdbcType=VARCHAR},
+      cert_pic2 = #{record.certPic2,jdbcType=VARCHAR},
+      memCert_pic = #{record.memcertPic,jdbcType=VARCHAR},
+      card_nbr = #{record.cardNbr,jdbcType=VARCHAR},
+      card_pic1 = #{record.cardPic1,jdbcType=VARCHAR},
+      card_pic2 = #{record.cardPic2,jdbcType=VARCHAR},
+      bus_licence_nbr = #{record.busLicenceNbr,jdbcType=VARCHAR},
+      addr = #{record.addr,jdbcType=VARCHAR},
+      category = #{record.category,jdbcType=VARCHAR},
+      province = #{record.province,jdbcType=VARCHAR},
+      city = #{record.city,jdbcType=VARCHAR},
+      county = #{record.county,jdbcType=VARCHAR},
+      contact_type = #{record.contactType,jdbcType=CHAR},
+      verify_flag = #{record.verifyFlag,jdbcType=CHAR},
+      wx_route_id = #{record.wxRouteId,jdbcType=VARCHAR},
+      wx_member_code = #{record.wxMemberCode,jdbcType=VARCHAR},
+      wx_merchant_code = #{record.wxMerchantCode,jdbcType=VARCHAR},
+      settle_type = #{record.settleType,jdbcType=CHAR},
+      zfb_route_id = #{record.zfbRouteId,jdbcType=VARCHAR},
+      zfb_member_code = #{record.zfbMemberCode,jdbcType=VARCHAR},
+      zfb_merchant_code = #{record.zfbMerchantCode,jdbcType=VARCHAR},
+      qq_route_id = #{record.qqRouteId,jdbcType=VARCHAR},
+      qq_member_code = #{record.qqMemberCode,jdbcType=VARCHAR},
+      qq_merchant_code = #{record.qqMerchantCode,jdbcType=VARCHAR},
+      bd_route_id = #{record.bdRouteId,jdbcType=VARCHAR},
+      bd_member_code = #{record.bdMemberCode,jdbcType=VARCHAR},
+      bd_merchant_code = #{record.bdMerchantCode,jdbcType=VARCHAR},
+      jd_route_id = #{record.jdRouteId,jdbcType=VARCHAR},
+      jd_member_code = #{record.jdMemberCode,jdbcType=VARCHAR},
+      jd_merchant_code = #{record.jdMerchantCode,jdbcType=VARCHAR},
+      wx_channel_merchant_code = #{record.wxChannelMerchantCode,jdbcType=VARCHAR},
+      qq_channel_merchant_code = #{record.qqChannelMerchantCode,jdbcType=VARCHAR},
+      zfb_channel_merchant_code = #{record.zfbChannelMerchantCode,jdbcType=VARCHAR},
+      bd_channel_merchant_code = #{record.bdChannelMerchantCode,jdbcType=VARCHAR},
+      jd_channel_merchant_code = #{record.jdChannelMerchantCode,jdbcType=VARCHAR},
+      t0_draw_fee = #{record.t0DrawFee,jdbcType=DECIMAL},
+      t0_trade_rate = #{record.t0TradeRate,jdbcType=DECIMAL},
+      t1_draw_fee = #{record.t1DrawFee,jdbcType=DECIMAL},
+      t1_trade_rate = #{record.t1TradeRate,jdbcType=DECIMAL},
+      ml_jf_fee = #{record.mlJfFee,jdbcType=DECIMAL},
+      ml_jf_rate = #{record.mlJfRate,jdbcType=DECIMAL},
+      ml_wjf_fee = #{record.mlWjfFee,jdbcType=DECIMAL},
+      ml_wjf_rate = #{record.mlWjfRate,jdbcType=DECIMAL},
+      pay_code = #{record.payCode,jdbcType=VARCHAR},
+      single_limit = #{record.singleLimit,jdbcType=DECIMAL},
+      day_limit = #{record.dayLimit,jdbcType=DECIMAL},
+      bus_pic = #{record.busPic,jdbcType=VARCHAR},
+      head_pic = #{record.headPic,jdbcType=VARCHAR},
+      desk_pic = #{record.deskPic,jdbcType=VARCHAR},
+      inside_pic = #{record.insidePic,jdbcType=VARCHAR},
+      staff_pic = #{record.staffPic,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR},
+      del_flag = #{record.delFlag,jdbcType=CHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.MemberInfo">
+    update bu_member_info
+    <set>
+      <if test="code != null">
+        code = #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null">
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="loginCode != null">
+        login_code = #{loginCode,jdbcType=VARCHAR},
+      </if>
+      <if test="loginPass != null">
+        login_pass = #{loginPass,jdbcType=VARCHAR},
+      </if>
+      <if test="parentId != null">
+        parent_id = #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="email != null">
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="mobilePhone != null">
+        mobile_phone = #{mobilePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="shortName != null">
+        short_name = #{shortName,jdbcType=VARCHAR},
+      </if>
+      <if test="contact != null">
+        contact = #{contact,jdbcType=VARCHAR},
+      </if>
+      <if test="level != null">
+        level = #{level,jdbcType=VARCHAR},
+      </if>
+      <if test="drawStatus != null">
+        draw_status = #{drawStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="wxStatus != null">
+        wx_status = #{wxStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbStatus != null">
+        zfb_status = #{zfbStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="qqStatus != null">
+        qq_status = #{qqStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="bdStatus != null">
+        bd_status = #{bdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="jdStatus != null">
+        jd_status = #{jdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="mlJfStatus != null">
+        ml_jf_status = #{mlJfStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="mlWjfStatus != null">
+        ml_wjf_status = #{mlWjfStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="sexType != null">
+        sex_type = #{sexType,jdbcType=VARCHAR},
+      </if>
+      <if test="birthday != null">
+        birthday = #{birthday,jdbcType=DATE},
+      </if>
+      <if test="homePhone != null">
+        home_phone = #{homePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="certNbr != null">
+        cert_nbr = #{certNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="certPic1 != null">
+        cert_pic1 = #{certPic1,jdbcType=VARCHAR},
+      </if>
+      <if test="certPic2 != null">
+        cert_pic2 = #{certPic2,jdbcType=VARCHAR},
+      </if>
+      <if test="memcertPic != null">
+        memCert_pic = #{memcertPic,jdbcType=VARCHAR},
+      </if>
+      <if test="cardNbr != null">
+        card_nbr = #{cardNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="cardPic1 != null">
+        card_pic1 = #{cardPic1,jdbcType=VARCHAR},
+      </if>
+      <if test="cardPic2 != null">
+        card_pic2 = #{cardPic2,jdbcType=VARCHAR},
+      </if>
+      <if test="busLicenceNbr != null">
+        bus_licence_nbr = #{busLicenceNbr,jdbcType=VARCHAR},
+      </if>
+      <if test="addr != null">
+        addr = #{addr,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null">
+        category = #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="province != null">
+        province = #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null">
+        city = #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="county != null">
+        county = #{county,jdbcType=VARCHAR},
+      </if>
+      <if test="contactType != null">
+        contact_type = #{contactType,jdbcType=CHAR},
+      </if>
+      <if test="verifyFlag != null">
+        verify_flag = #{verifyFlag,jdbcType=CHAR},
+      </if>
+      <if test="wxRouteId != null">
+        wx_route_id = #{wxRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="wxMemberCode != null">
+        wx_member_code = #{wxMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="wxMerchantCode != null">
+        wx_merchant_code = #{wxMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="settleType != null">
+        settle_type = #{settleType,jdbcType=CHAR},
+      </if>
+      <if test="zfbRouteId != null">
+        zfb_route_id = #{zfbRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbMemberCode != null">
+        zfb_member_code = #{zfbMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbMerchantCode != null">
+        zfb_merchant_code = #{zfbMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="qqRouteId != null">
+        qq_route_id = #{qqRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="qqMemberCode != null">
+        qq_member_code = #{qqMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="qqMerchantCode != null">
+        qq_merchant_code = #{qqMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bdRouteId != null">
+        bd_route_id = #{bdRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="bdMemberCode != null">
+        bd_member_code = #{bdMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bdMerchantCode != null">
+        bd_merchant_code = #{bdMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="jdRouteId != null">
+        jd_route_id = #{jdRouteId,jdbcType=VARCHAR},
+      </if>
+      <if test="jdMemberCode != null">
+        jd_member_code = #{jdMemberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="jdMerchantCode != null">
+        jd_merchant_code = #{jdMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="wxChannelMerchantCode != null">
+        wx_channel_merchant_code = #{wxChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="qqChannelMerchantCode != null">
+        qq_channel_merchant_code = #{qqChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbChannelMerchantCode != null">
+        zfb_channel_merchant_code = #{zfbChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bdChannelMerchantCode != null">
+        bd_channel_merchant_code = #{bdChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="jdChannelMerchantCode != null">
+        jd_channel_merchant_code = #{jdChannelMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="t0DrawFee != null">
+        t0_draw_fee = #{t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t0TradeRate != null">
+        t0_trade_rate = #{t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawFee != null">
+        t1_draw_fee = #{t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1TradeRate != null">
+        t1_trade_rate = #{t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mlJfFee != null">
+        ml_jf_fee = #{mlJfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mlJfRate != null">
+        ml_jf_rate = #{mlJfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="mlWjfFee != null">
+        ml_wjf_fee = #{mlWjfFee,jdbcType=DECIMAL},
+      </if>
+      <if test="mlWjfRate != null">
+        ml_wjf_rate = #{mlWjfRate,jdbcType=DECIMAL},
+      </if>
+      <if test="payCode != null">
+        pay_code = #{payCode,jdbcType=VARCHAR},
+      </if>
+      <if test="singleLimit != null">
+        single_limit = #{singleLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="dayLimit != null">
+        day_limit = #{dayLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="busPic != null">
+        bus_pic = #{busPic,jdbcType=VARCHAR},
+      </if>
+      <if test="headPic != null">
+        head_pic = #{headPic,jdbcType=VARCHAR},
+      </if>
+      <if test="deskPic != null">
+        desk_pic = #{deskPic,jdbcType=VARCHAR},
+      </if>
+      <if test="insidePic != null">
+        inside_pic = #{insidePic,jdbcType=VARCHAR},
+      </if>
+      <if test="staffPic != null">
+        staff_pic = #{staffPic,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null">
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.MemberInfo">
+    update bu_member_info
+    set code = #{code,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR},
+      login_code = #{loginCode,jdbcType=VARCHAR},
+      login_pass = #{loginPass,jdbcType=VARCHAR},
+      parent_id = #{parentId,jdbcType=INTEGER},
+      email = #{email,jdbcType=VARCHAR},
+      mobile_phone = #{mobilePhone,jdbcType=VARCHAR},
+      name = #{name,jdbcType=VARCHAR},
+      short_name = #{shortName,jdbcType=VARCHAR},
+      contact = #{contact,jdbcType=VARCHAR},
+      level = #{level,jdbcType=VARCHAR},
+      draw_status = #{drawStatus,jdbcType=VARCHAR},
+      status = #{status,jdbcType=VARCHAR},
+      wx_status = #{wxStatus,jdbcType=VARCHAR},
+      zfb_status = #{zfbStatus,jdbcType=VARCHAR},
+      qq_status = #{qqStatus,jdbcType=VARCHAR},
+      bd_status = #{bdStatus,jdbcType=VARCHAR},
+      jd_status = #{jdStatus,jdbcType=VARCHAR},
+      ml_jf_status = #{mlJfStatus,jdbcType=VARCHAR},
+      ml_wjf_status = #{mlWjfStatus,jdbcType=VARCHAR},
+      sex_type = #{sexType,jdbcType=VARCHAR},
+      birthday = #{birthday,jdbcType=DATE},
+      home_phone = #{homePhone,jdbcType=VARCHAR},
+      cert_nbr = #{certNbr,jdbcType=VARCHAR},
+      cert_pic1 = #{certPic1,jdbcType=VARCHAR},
+      cert_pic2 = #{certPic2,jdbcType=VARCHAR},
+      memCert_pic = #{memcertPic,jdbcType=VARCHAR},
+      card_nbr = #{cardNbr,jdbcType=VARCHAR},
+      card_pic1 = #{cardPic1,jdbcType=VARCHAR},
+      card_pic2 = #{cardPic2,jdbcType=VARCHAR},
+      bus_licence_nbr = #{busLicenceNbr,jdbcType=VARCHAR},
+      addr = #{addr,jdbcType=VARCHAR},
+      category = #{category,jdbcType=VARCHAR},
+      province = #{province,jdbcType=VARCHAR},
+      city = #{city,jdbcType=VARCHAR},
+      county = #{county,jdbcType=VARCHAR},
+      contact_type = #{contactType,jdbcType=CHAR},
+      verify_flag = #{verifyFlag,jdbcType=CHAR},
+      wx_route_id = #{wxRouteId,jdbcType=VARCHAR},
+      wx_member_code = #{wxMemberCode,jdbcType=VARCHAR},
+      wx_merchant_code = #{wxMerchantCode,jdbcType=VARCHAR},
+      settle_type = #{settleType,jdbcType=CHAR},
+      zfb_route_id = #{zfbRouteId,jdbcType=VARCHAR},
+      zfb_member_code = #{zfbMemberCode,jdbcType=VARCHAR},
+      zfb_merchant_code = #{zfbMerchantCode,jdbcType=VARCHAR},
+      qq_route_id = #{qqRouteId,jdbcType=VARCHAR},
+      qq_member_code = #{qqMemberCode,jdbcType=VARCHAR},
+      qq_merchant_code = #{qqMerchantCode,jdbcType=VARCHAR},
+      bd_route_id = #{bdRouteId,jdbcType=VARCHAR},
+      bd_member_code = #{bdMemberCode,jdbcType=VARCHAR},
+      bd_merchant_code = #{bdMerchantCode,jdbcType=VARCHAR},
+      jd_route_id = #{jdRouteId,jdbcType=VARCHAR},
+      jd_member_code = #{jdMemberCode,jdbcType=VARCHAR},
+      jd_merchant_code = #{jdMerchantCode,jdbcType=VARCHAR},
+      wx_channel_merchant_code = #{wxChannelMerchantCode,jdbcType=VARCHAR},
+      qq_channel_merchant_code = #{qqChannelMerchantCode,jdbcType=VARCHAR},
+      zfb_channel_merchant_code = #{zfbChannelMerchantCode,jdbcType=VARCHAR},
+      bd_channel_merchant_code = #{bdChannelMerchantCode,jdbcType=VARCHAR},
+      jd_channel_merchant_code = #{jdChannelMerchantCode,jdbcType=VARCHAR},
+      t0_draw_fee = #{t0DrawFee,jdbcType=DECIMAL},
+      t0_trade_rate = #{t0TradeRate,jdbcType=DECIMAL},
+      t1_draw_fee = #{t1DrawFee,jdbcType=DECIMAL},
+      t1_trade_rate = #{t1TradeRate,jdbcType=DECIMAL},
+      ml_jf_fee = #{mlJfFee,jdbcType=DECIMAL},
+      ml_jf_rate = #{mlJfRate,jdbcType=DECIMAL},
+      ml_wjf_fee = #{mlWjfFee,jdbcType=DECIMAL},
+      ml_wjf_rate = #{mlWjfRate,jdbcType=DECIMAL},
+      pay_code = #{payCode,jdbcType=VARCHAR},
+      single_limit = #{singleLimit,jdbcType=DECIMAL},
+      day_limit = #{dayLimit,jdbcType=DECIMAL},
+      bus_pic = #{busPic,jdbcType=VARCHAR},
+      head_pic = #{headPic,jdbcType=VARCHAR},
+      desk_pic = #{deskPic,jdbcType=VARCHAR},
+      inside_pic = #{insidePic,jdbcType=VARCHAR},
+      staff_pic = #{staffPic,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR},
+      del_flag = #{delFlag,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

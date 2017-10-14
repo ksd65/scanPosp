@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.CommonServiceMapper" >
+  	<select id="getNextSequenceVal" resultType="java.lang.String" parameterType="java.lang.String">
+  		SELECT _nextval(#{sequenceType,jdbcType=VARCHAR}) 
+  	</select>
+  	<sql id="trade_detail_all">
+		`t`.`id` AS `id`,
+		`t`.`txn_date` AS `txn_date`,
+		`t`.`member_id` AS `member_id`,
+		`t`.`member_code` AS `member_code`,
+		`t`.`merchant_code` AS `merchant_code`,
+		`t`.`money` AS `money`,
+		`t`.`member_trade_rate` AS `member_trade_rate`,
+		`t`.`member_draw_fee` AS `member_draw_fee`,
+		`t`.`member_settle_money` AS `member_settle_money`,
+		`t`.`d0_money` AS `d0_money`,
+		`t`.`d0_member_fee` AS `d0_member_fee`,
+		`t`.`d0_member_draw` AS `d0_member_draw`,
+		`t`.`d0_routeway_fee` AS `d0_routeway_fee`,
+		`t`.`d0_routeway_draw` AS `d0_routeway_draw`,
+		`t`.`t1_money` AS `t1_money`,
+		`t`.`t1_member_fee` AS `t1_member_fee`,
+		`t`.`t1_member_draw` AS `t1_member_draw`,
+		`t`.`t1_routeway_fee` AS `t1_routeway_fee`,
+		`t`.`t1_routeway_draw` AS `t1_routeway_draw`,
+		`t`.`order_code` AS `order_code`,
+		`t`.`order_num_outer` AS `order_num_outer`,
+		`t`.`txn_type` AS `txn_type`,
+		`t`.`pt_serial_no` AS `pt_serial_no`,
+		`t`.`req_date` AS `req_date`,
+		`t`.`resp_date` AS `resp_date`,
+		`t`.`resp_type` AS `resp_type`,
+		`t`.`resp_code` AS `resp_code`,
+		`t`.`resp_msg` AS `resp_msg`,
+		`t`.`card_type` AS `card_type`,
+		`t`.`route_id` AS `route_id`,
+		`t`.`pay_time` AS `pay_time`,
+		`t`.`balance_date` AS `balance_date`,
+		`t`.`channel_no` AS `channel_no`,
+		`t`.`settle_type` AS `settle_type`,
+		`t`.`interface_type` AS `interface_type`,
+		`t`.`platform_type` AS `platform_type`,
+		`t`.`settle_cancel_flag` AS `settle_cancel_flag`,
+		`t`.`create_by` AS `create_by`,
+		`t`.`create_date` AS `create_date`,
+		`t`.`update_by` AS `update_by`,
+		`t`.`update_date` AS `update_date`,
+		`t`.`remarks` AS `remarks`,
+		`t`.`del_flag` AS `del_flag`,
+		`t`.`acc` AS `acc`
+	</sql>
+	<sql id="bu_trade_detail">
+		`a`.`id` AS `id`,
+		`a`.`txn_date` AS `txn_date`,
+		`a`.`member_id` AS `member_id`,
+		`a`.`member_code` AS `member_code`,
+		`a`.`merchant_code` AS `merchant_code`,
+		`a`.`money` AS `money`,
+		`a`.`member_trade_rate` AS `member_trade_rate`,
+		`a`.`member_draw_fee` AS `member_draw_fee`,
+		`a`.`member_settle_money` AS `member_settle_money`,
+		`a`.`d0_money` AS `d0_money`,
+		`a`.`d0_member_fee` AS `d0_member_fee`,
+		`a`.`d0_member_draw` AS `d0_member_draw`,
+		`a`.`d0_routeway_fee` AS `d0_routeway_fee`,
+		`a`.`d0_routeway_draw` AS `d0_routeway_draw`,
+		`a`.`t1_money` AS `t1_money`,
+		`a`.`t1_member_fee` AS `t1_member_fee`,
+		`a`.`t1_member_draw` AS `t1_member_draw`,
+		`a`.`t1_routeway_fee` AS `t1_routeway_fee`,
+		`a`.`t1_routeway_draw` AS `t1_routeway_draw`,
+		`a`.`order_code` AS `order_code`,
+		`a`.`order_num_outer` AS `order_num_outer`,
+		`a`.`txn_type` AS `txn_type`,
+		`a`.`pt_serial_no` AS `pt_serial_no`,
+		`a`.`req_date` AS `req_date`,
+		`a`.`resp_date` AS `resp_date`,
+		`a`.`resp_type` AS `resp_type`,
+		`a`.`resp_code` AS `resp_code`,
+		`a`.`resp_msg` AS `resp_msg`,
+		`a`.`card_type` AS `card_type`,
+		`a`.`route_id` AS `route_id`,
+		`a`.`pay_time` AS `pay_time`,
+		`a`.`balance_date` AS `balance_date`,
+		`a`.`channel_no` AS `channel_no`,
+		`a`.`settle_type` AS `settle_type`,
+		`a`.`interface_type` AS `interface_type`,
+		`a`.`platform_type` AS `platform_type`,
+		`a`.`settle_cancel_flag` AS `settle_cancel_flag`,
+		`a`.`create_by` AS `create_by`,
+		`a`.`create_date` AS `create_date`,
+		`a`.`update_by` AS `update_by`,
+		`a`.`update_date` AS `update_date`,
+		`a`.`remarks` AS `remarks`,
+		`a`.`del_flag` AS `del_flag`,
+		'' AS `acc`
+	</sql>
+	<sql id="ml_trade_detail">
+		`b`.`id` AS `id`,
+		`b`.`txn_date` AS `txn_date`,
+		`b`.`member_id` AS `member_id`,
+		`b`.`member_code` AS `member_code`,
+		`b`.`merchant_code` AS `merchant_code`,
+		`b`.`money` AS `money`,
+		`b`.`member_trade_rate` AS `member_trade_rate`,
+		`b`.`member_draw_fee` AS `member_draw_fee`,
+		`b`.`member_settle_money` AS `member_settle_money`,
+		`b`.`d0_money` AS `d0_money`,
+		`b`.`d0_member_fee` AS `d0_member_fee`,
+		`b`.`d0_member_draw` AS `d0_member_draw`,
+		`b`.`d0_routeway_fee` AS `d0_routeway_fee`,
+		`b`.`d0_routeway_draw` AS `d0_routeway_draw`,
+		`b`.`t1_money` AS `t1_money`,
+		`b`.`t1_member_fee` AS `t1_member_fee`,
+		`b`.`t1_member_draw` AS `t1_member_draw`,
+		`b`.`t1_routeway_fee` AS `t1_routeway_fee`,
+		`b`.`t1_routeway_draw` AS `t1_routeway_draw`,
+		`b`.`order_code` AS `order_code`,
+		`b`.`order_num_outer` AS `order_num_outer`,
+		`b`.`txn_type` AS `txn_type`,
+		`b`.`pt_serial_no` AS `pt_serial_no`,
+		`b`.`req_date` AS `req_date`,
+		`b`.`resp_date` AS `resp_date`,
+		`b`.`resp_type` AS `resp_type`,
+		`b`.`resp_code` AS `resp_code`,
+		`b`.`resp_msg` AS `resp_msg`,
+		'' AS `card_type`,
+		'' AS `route_id`,
+		`b`.`pay_time` AS `pay_time`,
+		'' AS `balance_date`,
+		'' AS `channel_no`,
+		`b`.`settle_type` AS `settle_type`,
+		'' AS `interface_type`,
+		'' AS `platform_type`,
+		'' AS `settle_cancel_flag`,
+		`b`.`create_by` AS `create_by`,
+		`b`.`create_date` AS `create_date`,
+		`b`.`update_by` AS `update_by`,
+		`b`.`update_date` AS `update_date`,
+		`b`.`remarks` AS `remarks`,
+		`b`.`del_flag` AS `del_flag`,
+		`b`.`acc` AS `acc`
+	</sql>
+  	<select id="countTransactionMoneyByCondition" parameterType="java.util.Map" resultType="java.lang.Double">
+      	SELECT
+		SUM(money) transactionCount
+		FROM
+		(
+			SELECT
+			<include refid="bu_trade_detail"></include>
+			FROM
+				`bu_trade_detail` `a`
+			WHERE 1=1 
+			<if test="memberId != null" >
+				AND a.member_id = #{memberId,jdbcType=INTEGER} 
+			</if>
+			<if test="startDate != null" >
+	        	AND a.txn_date &gt;= #{startDate}
+	      	</if>
+			<if test="endDate != null" >
+	        	AND a.txn_date &lt;= #{endDate}
+	      	</if>
+	      	<if test="txnType != null" >
+	        	AND a.txn_type = #{txnType}
+	      	</if>
+			UNION ALL
+			SELECT
+			<include refid="ml_trade_detail"></include>
+			FROM
+				`ml_trade_detail` `b`
+	     	WHERE 1=1 
+			<if test="memberId != null" >
+				AND b.member_id = #{memberId,jdbcType=INTEGER} 
+			</if>
+			<if test="startDate != null" >
+	        	AND b.txn_date &gt;= #{startDate}
+	      	</if>
+			<if test="endDate != null" >
+	        	AND b.txn_date &lt;= #{endDate}
+	      	</if>
+	      	<if test="txnType != null" >
+	        	AND b.txn_type = #{txnType}
+	      	</if>
+   		) `t`
+  	</select>
+  	<select id="countTransactionMoneyByConditionHis" parameterType="java.util.Map" resultType="java.lang.Double">
+      	SELECT
+		SUM(money) transactionCount
+		FROM
+		(
+			SELECT
+			<include refid="bu_trade_detail"></include>
+			FROM
+				`bu_trade_detail_his` `a`
+			WHERE 1=1 
+			<if test="memberId != null" >
+				AND a.member_id = #{memberId,jdbcType=INTEGER} 
+			</if>
+			<if test="startDate != null" >
+	        	AND a.txn_date &gt;= #{startDate}
+	      	</if>
+			<if test="endDate != null" >
+	        	AND a.txn_date &lt;= #{endDate}
+	      	</if>
+	      	<if test="txnType != null" >
+	        	AND a.txn_type = #{txnType}
+	      	</if>
+			UNION ALL
+			SELECT
+			<include refid="ml_trade_detail"></include>
+			FROM
+				`ml_trade_detail_his` `b`
+	     	WHERE 1=1 
+			<if test="memberId != null" >
+				AND b.member_id = #{memberId,jdbcType=INTEGER} 
+			</if>
+			<if test="startDate != null" >
+	        	AND b.txn_date &gt;= #{startDate}
+	      	</if>
+			<if test="endDate != null" >
+	        	AND b.txn_date &lt;= #{endDate}
+	      	</if>
+	      	<if test="txnType != null" >
+	        	AND b.txn_type = #{txnType}
+	      	</if>
+   		) `t`
+  	</select>
+  	
+  	<select id="countDrawMoneyByCondition" parameterType="java.util.Map" resultType="java.lang.Double">
+  		SELECT SUM(drawAmount+drawFee+tradeFee) drawCount FROM bu_routeway_draw 
+		WHERE 1=1 
+		<if test="memberId != null" >
+			AND member_id = #{memberId,jdbcType=INTEGER} 
+		</if>
+		<if test="startDate != null" >
+        	AND create_date &gt;= #{startDate}
+      	</if>
+		<if test="endDate != null" >
+        	AND create_date &lt;= #{endDate}
+      	</if>
+		<if test="wxOrZfb != null" >
+        	AND member_code like #{wxOrZfb}
+      	</if>
+  	</select>
+  	
+  	<select id="countMlDrawMoneyByCondition" parameterType="java.util.Map" resultType="java.lang.Double">
+  		SELECT SUM(money) tradeMoney FROM ml_trade_detail
+		WHERE 1=1 
+		<if test="memberId != null" >
+			AND member_id = #{memberId,jdbcType=INTEGER} 
+		</if>
+		<if test="startDate != null" >
+        	AND txn_date &gt;= #{startDate}
+      	</if>
+		<if test="endDate != null" >
+        	AND txn_date &lt;= #{endDate}
+      	</if>
+  	</select>
+  	
+  	<select id="moveToHis" statementType="CALLABLE" parameterType="java.util.Map" resultType="java.lang.Integer">
+  		{call pro_tradeHis()}
+  	</select>
+  	 
+</mapper>
