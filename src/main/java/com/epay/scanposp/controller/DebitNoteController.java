@@ -30,6 +30,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.MSConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.WxConfig;
@@ -41,6 +42,7 @@ import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
 import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
 import com.epay.scanposp.common.utils.constant.TranCodeConstant;
+import com.epay.scanposp.common.utils.esk.Key;
 import com.epay.scanposp.common.utils.ms.CryptoUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
@@ -140,7 +142,12 @@ public class DebitNoteController {
 		}
 		*/
 		if ("micromessenger".equals(appClientType)) {// 微信公众号支付
-			result = msWxPay(reqDataJson, request);
+			if("ESK".equals(SysConfig.passCode)){
+				result = eskWxPay(reqDataJson, request);
+			}else{
+				result = msWxPay(reqDataJson, request);
+			}
+			
 		}else if ("alipay".equals(appClientType)) {// 支付宝
 			result = msAliPay(reqDataJson, request);
 		}else if ("mqqbrowser".equals(appClientType)) {
@@ -160,6 +167,133 @@ public class DebitNoteController {
 
 	}
 
+	@ResponseBody
+	@RequestMapping("/api/debitNote/oneCodePay")
+	public JSONObject oneCodePay(HttpServletRequest request) {
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result = new JSONObject();
+		try{
+			String epayCode = reqDataJson.getString("epayCode");
+			if ("".equals(epayCode)) {
+				throw new ArgException("收款码出错");
+			}
+			
+			EpayCodeExample epayCodeExample = new EpayCodeExample();
+			epayCodeExample.createCriteria().andPayCodeEqualTo(epayCode).andDelFlagEqualTo("0");
+			List<EpayCode> epayCodes = epayCodeService.selectByExample(epayCodeExample);
+			if (epayCodes == null || epayCodes.size() == 0) {
+				throw new ArgException("收款码不存在");
+			}
+
+			EpayCode payCode = epayCodes.get(0);
+			if(!"5".equals(payCode.getStatus()) && !"7".equals(payCode.getStatus())){
+				throw new ArgException("对不起,收款码不可用，如有疑问请与管理员联系");
+			}
+
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(payCode.getMemberId());
+
+			if (memberInfo == null) {
+				throw new ArgException("商家不存在");
+			}
+			if(!"0".equals(memberInfo.getDelFlag())){
+				throw new ArgException("商家不存在");
+			}
+			if(!"0".equals(memberInfo.getStatus())){
+				if("4".equals(memberInfo.getStatus())){
+					throw new ArgException("该商户未进行认证，暂时无法交易");
+				}
+				throw new ArgException("商家停用，暂不可交易");
+			}
+
+			AccountExample accountExample = new AccountExample();
+			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+			List<Account> accounts = accountService.selectByExample(accountExample);
+			if (accounts == null || accounts.size() != 1) {
+				throw new ArgException("会员账户不存在");
+			}
+			
+			
+			
+			
+			String orderCode = CommonUtil.getOrderCode();
+			
+			
+
+			// 调用支付通道
+			String serverUrl = ESKConfig.msServerUrl;
+			String tranCode = "005";
+			String charset = "utf-8";
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("merchantCode", memberInfo.getWxMerchantCode());
+			reqData.put("orderNumber", orderCode);
+			reqData.put("tranCode", tranCode);
+			
+			System.out.println("待加密数据: "+reqData);
+			
+			String plainXML = reqData.toString();
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = MSCommonUtil.generateLenString(16);
+			;
+			byte[] keyBytes = keyStr.getBytes(charset);
+			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+			String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+			String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("Context", encryptData));
+			nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+			
+			nvps.add(new BasicNameValuePair("signData", signData));
+			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			String resEncryptData = jsonObject.getString("Context");
+			String resEncryptKey = jsonObject.getString("encrtpKey");
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+			// 使用base64解码商户请求报文
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("返回报文[{}]",  respJSONObject );
+			//[{"orderNumber":"20171026151241725855","tranCode":"005","reqTime":"2017-10-26 15:13:05","apiorderNumber":"820171509001985470750","aisleType":"1","respType":"S","respCode":"000000","respMsg":"成功","qrCode":"https://fch.yiguanjinrong.com/flashchannel/ACodePay?data=8b3fb0961d5cdfe8613ade61466e076503b0753751a6c39054e89ec6e321b2c284246ef2c7d04cb4cd4d3756f103d1fbd3b038baffc513ea6062f2dd3096bbd5","respTime":"2017-10-26 15:13:06"}]
+
+			if("000000".equals(respJSONObject.getString("respCode"))&&"S".equals(respJSONObject.getString("respType"))){
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "成功");
+				result.put("orderNumber", respJSONObject.getString("orderNumber") );
+				result.put("qrCode", respJSONObject.getString("qrCode") );
+				
+				String apiorderNumber = respJSONObject.getString("apiorderNumber");
+			}else{
+				result.put("returnCode", "0001");
+				result.put("returnMsg", respJSONObject.getString("respMsg"));
+			}
+			
+		} catch (ArgException e) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", e.getMessage());
+			logger.info(e.getMessage());
+			return result;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		
+		
+		return result;
+
+	}
+	
 	/**
 	 * 民生微信支付
 	 * 
@@ -316,6 +450,187 @@ public class DebitNoteController {
 			JSONObject respJSONObject = XmlConvertUtil.documentToJSONObjectFilter(resXml);
 			System.out.println(respJSONObject);
 			
+			
+			resData.put("orderCode", orderCode);
+			if (respJSONObject.containsKey("resEntity")) {
+				JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
+				if (resEntity.containsKey("wxjsapiStr")) {
+					JSONObject wxjsapiStr=resEntity.getJSONObject("wxjsapiStr");
+					wxjsapiStr.put("package_str", wxjsapiStr.getString("package"));
+					resData.put("wxjsapiStr", wxjsapiStr);
+					result.put("resData", resData);
+				}
+			}
+
+		} catch (ArgException e) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", e.getMessage());
+			logger.info(e.getMessage());
+			return result;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		result.put("returnCode", "0000");
+		result.put("returnMsg", "成功");
+		return result;
+	}
+	
+	/**
+	 * 易收款微信支付
+	 * 
+	 * @param request
+	 * @return
+	 */
+
+	public JSONObject eskWxPay(JSONObject reqDataJson, HttpServletRequest request) {
+		JSONObject result = new JSONObject();
+		JSONObject resData = new JSONObject();
+		try {
+			String money = reqDataJson.getString("money");
+			String epayCode = reqDataJson.getString("epayCode");
+			String remark = reqDataJson.getString("remark");
+//			 String userId = "2088502362301099";
+			String userId = reqDataJson.getString("userId");
+			if ("".equals(money)) {
+				throw new ArgException("请输入正确的金额");
+			}
+
+			if ("".equals(epayCode)) {
+				throw new ArgException("收款码出错");
+			}
+			
+			if(StringUtils.isNotEmpty(remark)){
+				if(remark.length() > 20){
+					throw new ArgException("备注信息超出限制");
+				}
+			}
+
+			EpayCodeExample epayCodeExample = new EpayCodeExample();
+			epayCodeExample.createCriteria().andPayCodeEqualTo(epayCode).andDelFlagEqualTo("0");
+			List<EpayCode> epayCodes = epayCodeService.selectByExample(epayCodeExample);
+			if (epayCodes == null || epayCodes.size() == 0) {
+				throw new ArgException("收款码不存在");
+			}
+
+			EpayCode payCode = epayCodes.get(0);
+			if(!"5".equals(payCode.getStatus()) && !"7".equals(payCode.getStatus())){
+				throw new ArgException("对不起,收款码不可用，如有疑问请与管理员联系");
+			}
+
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(payCode.getMemberId());
+			
+			memberInfo.setWxMerchantCode("2017091882356595");//测试
+			
+			if (memberInfo == null) {
+				throw new ArgException("商家不存在");
+			}
+			if(!"0".equals(memberInfo.getDelFlag())){
+				throw new ArgException("商家不存在");
+			}
+			if(!"0".equals(memberInfo.getStatus())){
+				if("4".equals(memberInfo.getStatus())){
+					throw new ArgException("该商户未进行认证，暂时无法交易");
+				}
+				throw new ArgException("商家停用，暂不可交易");
+			}
+
+			AccountExample accountExample = new AccountExample();
+			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+			List<Account> accounts = accountService.selectByExample(accountExample);
+			if (accounts == null || accounts.size() != 1) {
+				throw new ArgException("会员账户不存在");
+			}
+			
+			JSONObject checkResult = checkPayLimit(memberInfo.getId(), new BigDecimal(money), memberInfo.getSingleLimit(), memberInfo.getDayLimit());
+			if(null != checkResult){
+				return checkResult;
+			}
+			
+			// 插入一条收款记录
+			String orderCode = CommonUtil.getOrderCode();
+			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(money));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setRouteId(memberInfo.getWxRouteId());
+			debitNote.setStatus("0");
+			debitNote.setTxnType("1");
+			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setMerchantCode(memberInfo.getWxMerchantCode());
+			debitNote.setSettleType(memberInfo.getSettleType());
+			debitNote.setRemarks(remark);
+			debitNoteService.insertSelective(debitNote);
+
+			// String callBack = "http://" + request.getServerName() + ":" +
+			// request.getServerPort() + request.getContextPath()+
+			// "/debitNote/msNotify";
+			String callBack = SysConfig.serverUrl + "/debitNote/msPayNotify";
+			// 调用支付通道
+			String serverUrl = ESKConfig.msServerUrl;
+			//PublicKey yhPubKey = null;
+			//yhPubKey = CryptoUtil.getEskRSAPublicKey();
+			//yhPubKey = CryptoUtil.getRSAPublicKey(false);
+			PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			String tranCode = "003";
+			String charset = "utf-8";
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("merchantCode", memberInfo.getWxMerchantCode());
+			reqData.put("orderNumber", orderCode);
+			reqData.put("tranCode", tranCode);
+			reqData.put("userId", userId);
+			reqData.put("totalAmount", money);
+			reqData.put("subject", memberInfo.getName() + " 收款");
+			reqData.put("PayType", "1");
+			reqData.put("callback", callBack);
+			reqData.put("desc", memberInfo.getName() + " 收款");
+			
+			System.out.println("待加密数据: "+reqData);
+			
+			String plainXML = reqData.toString();
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = MSCommonUtil.generateLenString(16);
+			;
+			byte[] keyBytes = keyStr.getBytes(charset);
+			
+			//String encryptData = new String(Base64.encodeBase64((Key.jdkAES(plainBytes, keyBytes))));
+			//String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+			String signData = new String(Base64.encodeBase64(CryptoUtil.digitalSign(plainBytes, hzfPriKey, "SHA1WithRSA")), charset);
+			String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+
+			//String encrtptKey = new String(Base64.encodeBase64(CryptoUtil.RSAEncrypt(keyBytes, yhPubKey, 2048, 11, "RSA/ECB/PKCS1Padding")), charset);
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("Context", encryptData));
+			nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+			
+			nvps.add(new BasicNameValuePair("signData", signData));
+			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("返回报文[{}]", new Object[] { respStr });
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			String resEncryptData = jsonObject.getString("Context");
+			String resEncryptKey = jsonObject.getString("encrtpKey");
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+					
+
+			// 使用base64解码商户请求报文
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("返回报文[{}]",  respJSONObject );
 			
 			resData.put("orderCode", orderCode);
 			if (respJSONObject.containsKey("resEntity")) {

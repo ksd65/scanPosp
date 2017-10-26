@@ -169,6 +169,8 @@ public class MemberInfo {
     private String remarks;
 
     private String delFlag;
+    
+    private String orderNo;
 
     public Integer getId() {
         return id;
@@ -833,4 +835,13 @@ public class MemberInfo {
 	public void setAuthPic(String authPic) {
 		this.authPic = authPic;
 	}
+
+	public String getOrderNo() {
+		return orderNo;
+	}
+
+	public void setOrderNo(String orderNo) {
+		this.orderNo = orderNo;
+	}
+	
 }

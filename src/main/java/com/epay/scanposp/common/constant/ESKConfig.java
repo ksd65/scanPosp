@@ -13,6 +13,7 @@ public class ESKConfig {
 	public static String rsaPublicKeyFilePath;
 	public static String rsaPrivateKeyFilePath;
 	public static String msServerUrl;
+	public static String shopServerUrl;
 	public static String cooperator_t0;
 	public static String cooperator_t1;
 	public static String subAppid;
@@ -37,6 +38,7 @@ public class ESKConfig {
 		rsaPublicKeyFilePath4httpsipay = bundle.getString("rsaPublicKeyFilePath4httpsipay");
 		rsaPrivateKeyFilePath = bundle.getString("rsaPrivateKeyFilePath");
 		msServerUrl = bundle.getString("msServerUrl");
+		shopServerUrl = bundle.getString("shopServerUrl");
 		cooperator_t0 = bundle.getString("cooperator_t0");
 		cooperator_t1 = bundle.getString("cooperator_t1");
 		subAppid = bundle.getString("subAppid");

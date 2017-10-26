@@ -2992,6 +2992,11 @@ public class MemberInfoExample {
             addCriterion("wx_member_code not between", value1, value2, "wxMemberCode");
             return (Criteria) this;
         }
+        
+        public Criteria andOrderNoEqualTo(String value) {
+            addCriterion("order_no =", value, "orderNo");
+            return (Criteria) this;
+        }
 
         public Criteria andWxMerchantCodeIsNull() {
             addCriterion("wx_merchant_code is null");

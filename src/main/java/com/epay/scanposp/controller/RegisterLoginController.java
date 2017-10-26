@@ -33,11 +33,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.MSConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.WxConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
+import com.epay.scanposp.common.utils.FileUtil;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
@@ -45,6 +47,7 @@ import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
 import com.epay.scanposp.common.utils.constant.SequenseTypeConstant;
 import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.common.utils.constant.TranCodeConstant;
+import com.epay.scanposp.common.utils.esk.Key;
 import com.epay.scanposp.common.utils.ms.CryptoUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
@@ -182,6 +185,9 @@ public class RegisterLoginController {
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
 		JSONObject result=new JSONObject();
 		try {
+			if("ESK".equals(SysConfig.passCode)){
+				return toRegisterESK(model, request);
+			}
 			String verifyCode=reqDataJson.getString("verifyCode");
 			RegisterTmp registerTmp=(RegisterTmp) JSONObject.toBean(reqDataJson.getJSONObject("registerTmp"), RegisterTmp.class);
 			
@@ -801,6 +807,699 @@ public class RegisterLoginController {
 		result.put("returnMsg", "成功");
 		return result.toString();
 	}
+	
+	
+	
+	public String toRegisterESK(Model model, HttpServletRequest request) {
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result=new JSONObject();
+		try {
+			String verifyCode=reqDataJson.getString("verifyCode");
+			RegisterTmp registerTmp=(RegisterTmp) JSONObject.toBean(reqDataJson.getJSONObject("registerTmp"), RegisterTmp.class);
+			
+			//直接根据用户信息表进行校验
+			MemberInfoExample memberInfoExample = new MemberInfoExample();
+			memberInfoExample.or().andCertNbrEqualTo(registerTmp.getCertNbr()).andStatusNotEqualTo("1");
+			int countMemberInfo = memberInfoService.countByExample(memberInfoExample);
+			if(countMemberInfo >0){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "商户信息已存在，该身份证号码已注册");
+				return result.toString();
+			}
+			memberInfoExample = new MemberInfoExample();
+			memberInfoExample.or().andMobilePhoneEqualTo(registerTmp.getMobilePhone()).andStatusNotEqualTo("1");
+			countMemberInfo = memberInfoService.countByExample(memberInfoExample);
+			if(countMemberInfo > 0){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "商户信息已存在，该手机号码已注册");
+				return result.toString();
+			}
+			//暂时屏蔽营业执照
+//			memberInfoExample = new MemberInfoExample();
+//			memberInfoExample.or().andBusLicenceNbrEqualTo(registerTmp.getBusLicenceNbr()).andStatusEqualTo("1");
+//			countMemberInfo = memberInfoService.countByExample(memberInfoExample);
+//			if(countMemberInfo > 0){
+//				result.put("returnCode", "4004");
+//				result.put("returnMsg", "对不起，该营业执照编号已注册商户信息");
+//				return result.toString();
+//			}
+			
+			VerifyCodeExample verifyCodeExample = new VerifyCodeExample();
+			verifyCodeExample.setOrderByClause("create_date desc");
+			VerifyCodeExample.Criteria createCriteriaVerify = verifyCodeExample.createCriteria();
+			createCriteriaVerify.andMobilePhoneEqualTo(registerTmp.getMobilePhone());
+			createCriteriaVerify.andTypeEqualTo("1");
+			createCriteriaVerify.andStatusEqualTo("1");
+			List<VerifyCode> verifyCodeList = verifyCodeService.selectByExample(verifyCodeExample);
+			//by linxf 验证码验证屏蔽
+			if(verifyCodeList.size()>0 && verifyCode.equals(verifyCodeList.get(0).getVerifyCode())){
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(new Date());
+				calendar.add(Calendar.MINUTE, -30);
+				if(verifyCodeList.get(0).getCreateDate().compareTo(calendar.getTime())<0){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "验证码已过期");
+					return result.toString();
+				}
+				VerifyCode verifyCodeEntity = new VerifyCode();
+				verifyCodeEntity.setId(verifyCodeList.get(0).getId());
+				verifyCodeEntity.setStatus("0");
+				verifyCodeService.updateByPrimaryKeySelective(verifyCodeEntity);
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "验证码无效");
+				return result.toString();
+			}
+			
+			registerTmp.setCode(SysConfig.prefixMemberCode+commonService.getNextSequenceVal(SequenseTypeConstant.MEMBERCODE));
+			registerTmp.setLoginPass(SecurityUtil.md5Encode(registerTmp.getMobilePhone().substring(5, 11)));
+			Date nowDate = new Date();
+			registerTmp.setCreateDate(nowDate);
+			registerTmp.setUpdateDate(nowDate);
+			
+//			BankSubExample bankSubExample = new BankSubExample();
+//			bankSubExample.or().andBankIdEqualTo(Integer.parseInt(registerTmp.getBankId())).andSubIdEqualTo(registerTmp.getSubId());
+//			List<BankSub> bankSubList = bankSubService.selectByExample(bankSubExample);
+//			if(null != bankSubList && bankSubList.size()>0){
+//				registerTmp.setBankOpen(bankSubList.get(0).getSubName());
+//			}else{
+//				result.put("returnCode", "4004");
+//				result.put("returnMsg", "银行支行信息错误");
+//				return result.toString();
+//			}
+//			//联行号
+//			String bankType = bankSubList.get(0).getSubId();
+//			String bankName = bankSubList.get(0).getSubName();
+			//by linxf  没有选择银行 所以屏蔽
+			KbinExample kbinExample = new KbinExample();
+			kbinExample.or().andBankCodeEqualTo(registerTmp.getBankId());
+			List<Kbin> bankList = kbinService.selectByExample(kbinExample);
+			if(null != bankList && bankList.size()>0){
+				registerTmp.setBankOpen(bankList.get(0).getBankName());
+				boolean isKbin = false;
+				for(Kbin kbin : bankList){
+					if(registerTmp.getAccountNumber().startsWith(kbin.getKbin())){
+						if(kbin.getLen().equals(registerTmp.getAccountNumber().length()+"")){
+							isKbin = true;
+							break;
+						}
+					}
+				}
+				if(!isKbin){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "银行卡号不在有效范围内,请更换银行卡!");
+					return result.toString();
+				}
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "开户银行错误");
+				return result.toString();
+			}
+			
+			if(reqDataJson.containsKey("agentType") && !"".equals(reqDataJson.getString("agentType"))){
+				//agentType	1--瑞卡通，2--其他oem厂商
+				String agentType = reqDataJson.getString("agentType");
+				if(!"1".equals(agentType) && !"2".equals(agentType)){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "无效的请求");
+					return result.toString();
+				}
+				if(!reqDataJson.containsKey("agentCode") || "".equals(reqDataJson.getString("agentCode"))){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "无效的机构编码");
+					return result.toString();
+				}
+				String agentCode = reqDataJson.getString("agentCode");
+				SysOfficeExample sysOfficeExample = new SysOfficeExample();
+				sysOfficeExample.or().andCodeEqualTo(agentCode).andDelFlagEqualTo("0");
+				List<SysOffice> sysOfficeList = sysOfficeService.selectByExample(sysOfficeExample);
+				if(sysOfficeList.size() == 0){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "无效的机构编码");
+					return result.toString();
+				}
+				//根据机构号直接从机构下获取易付码
+//				EpayCodeExample payCodeExample = new EpayCodeExample();
+//				payCodeExample.or().andOfficeIdEqualTo(sysOfficeList.get(0).getId()).andStatusEqualTo("8").andDelFlagEqualTo("0");
+//				payCodeExample.setOrderByClause(" id asc ");
+//				payCodeExample.setLimitStart(0);
+//				payCodeExample.setLimitSize(1);
+//				List<EpayCode> epayCodeEnableList = epayCodeService.selectByExample(payCodeExample);
+//				if(epayCodeEnableList.size() == 0){
+//					result.put("returnCode", "4004");
+//					result.put("returnMsg", "库存二维码不足，请联系代理商！");
+//					return result.toString();
+//				}
+				
+				//更改获取epayCode方式，改由统一从指定的机构下获取再分配
+				sysOfficeExample = new SysOfficeExample();
+				sysOfficeExample.or().andTypeEqualTo("2").andDelFlagEqualTo("0");
+				List<SysOffice> sysOfficeCommon = sysOfficeService.selectByExample(sysOfficeExample);
+				if (sysOfficeCommon.size()==0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "系统配置错误，无法获取易付码");
+					return result.toString();
+				}
+				EpayCodeExample payCodeExample = new EpayCodeExample();
+				payCodeExample.or().andOfficeIdEqualTo(sysOfficeCommon.get(0).getId()).andStatusEqualTo("8").andDelFlagEqualTo("0");
+				payCodeExample.setOrderByClause(" id asc ");
+				payCodeExample.setLimitStart(0);
+				payCodeExample.setLimitSize(1);
+				List<EpayCode> epayCodeEnableList = epayCodeService.selectByExample(payCodeExample);
+				if(epayCodeEnableList.size() == 0){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "库存二维码不足，请联系代理商！");
+					return result.toString();
+				}
+				EpayCode epayCode = epayCodeEnableList.get(0);
+				payCodeExample = new EpayCodeExample();
+				EpayCode epayCodeUpdate = new EpayCode();
+				epayCodeUpdate.setId(epayCode.getId());
+				//暂用标志  -1  表示该epayCode暂时被暂用，降低并发时多用户使用同一code的风险
+				epayCode.setStatus("-1");
+				epayCode.setOfficeId(sysOfficeList.get(0).getId());
+				epayCodeService.updateByPrimaryKeySelective(epayCode);
+				registerTmp.setPayCode(epayCode.getPayCode());
+				
+			}else{
+				String payCode = registerTmp.getPayCode();
+				EpayCodeExample payCodeExample = new EpayCodeExample();
+				payCodeExample.or().andPayCodeEqualTo(payCode).andDelFlagEqualTo("0");
+				List<EpayCode> payCodeList = epayCodeService.selectByExample(payCodeExample);
+				if(payCodeList.size() > 0){
+					String payCodeStatus = payCodeList.get(0).getStatus();
+					if(!"3".equals(payCodeStatus)){
+						result.put("returnCode", "4004");
+						result.put("returnMsg", "对不起,当前收款码无效,请与管理员联系");
+						return result.toString();
+					}
+				}else {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "对不起,收款码不存在,请联系管理员获取正确收款码");
+					return result.toString();
+				}
+			}
+			String bankType = "";//D+0不送此参数
+			String bankName = "";//bankList.get(0).getBankName();
+			registerTmp.setWxMemberCode("w"+commonService.getNextSequenceVal(SequenseTypeConstant.WXMEMBERCODE));
+			registerTmp.setZfbMemberCode("z"+commonService.getNextSequenceVal(SequenseTypeConstant.ZFBMEMBERCODE));
+			registerTmp.setQqMemberCode("q"+commonService.getNextSequenceVal(SequenseTypeConstant.QQMEMBERCODE));
+			registerTmp.setBdMemberCode("b"+commonService.getNextSequenceVal(SequenseTypeConstant.BDMEMBERCODE));
+			registerTmp.setJdMemberCode("j"+commonService.getNextSequenceVal(SequenseTypeConstant.JDMEMBERCODE));
+
+			if(registerTmp.getShortName() == null || "".equals(registerTmp.getShortName())){
+				registerTmp.setShortName(registerTmp.getName());
+			}
+			
+//			if("0".equals(registerTmp.getSettleType())){
+//				Bank bankInfo = bankService.selectByPrimaryKey(Integer.parseInt(registerTmp.getBankId()));
+//				if(null == bankInfo){
+//					result.put("returnCode", "4004");
+//					result.put("returnMsg", "所选银行信息错误");
+//					return result.toString();
+//				}
+//				if(bankInfo.getKbinId() != null){
+//					Kbin kbinInfo = kbinService.selectByPrimaryKey(bankInfo.getKbinId());
+//					if(null == kbinInfo){
+//						result.put("returnCode", "4004");
+//						result.put("returnMsg", "所选结算方式不支持所选银行");
+//						return result.toString();
+//					}
+//				}else{
+//					result.put("returnCode", "4004");
+//					result.put("returnMsg", "所选结算方式不支持所选银行");
+//					return result.toString();
+//				}
+//			}
+			
+			MemberInfo memberInfo = new MemberInfo();
+			memberInfo.setCode(registerTmp.getCode());
+			memberInfo.setPayCode(registerTmp.getPayCode());
+			memberInfo.setType(registerTmp.getType());
+			memberInfo.setLoginCode(registerTmp.getLoginCode());
+			memberInfo.setLoginPass(registerTmp.getLoginPass());
+			memberInfo.setContact(registerTmp.getContact());
+			memberInfo.setContactType(registerTmp.getContactType());
+			//该项赋值注意区分========
+			memberInfo.setCardNbr(registerTmp.getAccountNumber());
+			memberInfo.setCertNbr(registerTmp.getCertNbr());
+			memberInfo.setProvince(registerTmp.getProvince());
+			memberInfo.setCity(registerTmp.getCity());
+			memberInfo.setCounty(registerTmp.getCounty());
+			memberInfo.setAddr(registerTmp.getAddr());
+			getMerchantAddress(memberInfo);
+			memberInfo.setMobilePhone(registerTmp.getMobilePhone());
+			memberInfo.setCardPic1(registerTmp.getCardPic1());
+			memberInfo.setCardPic2(registerTmp.getCardPic2());
+			memberInfo.setCertPic1(registerTmp.getCertPic1());
+			memberInfo.setCertPic2(registerTmp.getCertPic2());
+			memberInfo.setMemcertPic(registerTmp.getMemcertPic());
+			memberInfo.setAuthPic(registerTmp.getAuthPic());
+			
+			memberInfo.setStatus("3");//默认状态 审核中
+			memberInfo.setCreateBy("1");
+			memberInfo.setCreateDate(new Date());
+			memberInfo.setUpdateBy("1");
+			memberInfo.setUpdateDate(new Date());
+			memberInfo.setName(registerTmp.getName());
+			memberInfo.setShortName(registerTmp.getShortName());
+			memberInfo.setWxMemberCode(registerTmp.getWxMemberCode());
+			memberInfo.setZfbMemberCode(registerTmp.getZfbMemberCode());
+			memberInfo.setQqMemberCode(registerTmp.getQqMemberCode());
+			memberInfo.setBdMemberCode(registerTmp.getBdMemberCode());
+			memberInfo.setJdMemberCode(registerTmp.getJdMemberCode());
+			memberInfo.setSettleType(registerTmp.getSettleType());
+//			memberInfo.setCategory(registerTmp.getCategory());
+//			memberInfo.setBusLicenceNbr(registerTmp.getBusLicenceNbr());//营业执照编号
+			memberInfo.setLevel("0");
+			
+			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo(SysCommonConfigConstant.SYS_SINGLE_LIMIT).andDelFlagEqualTo("0");
+			List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig.size() == 0) {
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "系统默认单笔交易限额配置缺失，请与管理员联系");
+				return result.toString();
+			}
+			memberInfo.setSingleLimit(new BigDecimal(sysCommonConfig.get(0).getValue()));
+			
+			sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo(SysCommonConfigConstant.SYS_DAY_LIMIT).andDelFlagEqualTo("0");
+			sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig.size() == 0) {
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "系统默认日交易限额配置缺失，请与管理员联系");
+				return result.toString();
+			}
+			memberInfo.setDayLimit(new BigDecimal(sysCommonConfig.get(0).getValue()));
+			
+			memberInfo.setDrawStatus("1"); //默认D+0提现状态关闭
+			sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo(SysCommonConfigConstant.SYS_DRAW_STATUS).andDelFlagEqualTo("0");
+			sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig.size() > 0) {
+				memberInfo.setDrawStatus(sysCommonConfig.get(0).getValue());
+			}
+			
+			AgentRate agentRate = null;
+			boolean isDefaultRate = true;
+			if (reqDataJson.containsKey("agentType") && !"".equals(reqDataJson.getString("agentType"))) {
+				//机构注册  获取费率信息
+				String agentCode = reqDataJson.getString("agentCode");
+				SysOfficeExample sysOfficeExample = new SysOfficeExample();
+				sysOfficeExample.or().andCodeEqualTo(agentCode).andDelFlagEqualTo("0");
+				List<SysOffice> sysOfficeList = sysOfficeService.selectByExample(sysOfficeExample);
+				
+				AgentRateExample agentRateExample = new AgentRateExample();
+				agentRateExample.or().andOfficeIdEqualTo(sysOfficeList.get(0).getId()).andDelFlagEqualTo("0");
+				List<AgentRate> agentRateList = agentRateService.selectByExample(agentRateExample);
+				if (agentRateList.size()>0) {
+					isDefaultRate = false;
+					agentRate = agentRateList.get(0);
+					memberInfo.setT0DrawFee(agentRate.getmT0DrawFee());
+					memberInfo.setT0TradeRate(agentRate.getmT0TradeRate());
+					memberInfo.setT1DrawFee(agentRate.getmT1DrawFee());
+					memberInfo.setT1TradeRate(agentRate.getmT1TradeRate());
+					memberInfo.setMlJfFee(agentRate.getmBonusQuickFee());
+					memberInfo.setMlJfRate(agentRate.getmBonusQuickRate());
+					memberInfo.setMlWjfFee(agentRate.getmQuickFee());
+					memberInfo.setMlWjfRate(agentRate.getmQuickRate());
+				}
+			}else{
+				if(registerTmp.getPayCode() != null && !"".equals(registerTmp.getPayCode())){
+					EpayCodeExample epayCodeExample = new EpayCodeExample();
+					epayCodeExample.or().andPayCodeEqualTo(registerTmp.getPayCode());
+					List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
+					if(epayCodeList.size()>0){
+						isDefaultRate = false;
+						EpayCode epayCode = new EpayCode();
+						epayCode.setId(epayCodeList.get(0).getId());
+						memberInfo.setT0DrawFee(epayCodeList.get(0).getT0DrawFee());
+						memberInfo.setT0TradeRate(epayCodeList.get(0).getT0TradeRate());
+						memberInfo.setT1DrawFee(epayCodeList.get(0).getT1DrawFee());
+						memberInfo.setT1TradeRate(epayCodeList.get(0).getT1TradeRate());
+						memberInfo.setMlJfFee(epayCodeList.get(0).getMlJfFee());
+						memberInfo.setMlJfRate(epayCodeList.get(0).getMlJfRate());
+						memberInfo.setMlWjfFee(epayCodeList.get(0).getMlWjfFee());
+						memberInfo.setMlWjfRate(epayCodeList.get(0).getMlWjfRate());
+					}
+				}
+			}
+			
+			if (isDefaultRate){
+				TransactionRateExample transactionRateExample = new TransactionRateExample();
+				transactionRateExample.or().andTypeEqualTo("0").andDelFlagEqualTo("0");
+				
+				List<TransactionRate> transactionRateList = transactionRateService.selectByExample(transactionRateExample);
+				if(transactionRateList.size() == 0){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "交易费率信息配置缺失");
+					return result.toString();
+				}
+				//设置费率
+				memberInfo.setT0DrawFee(transactionRateList.get(0).getT0DrawFee());
+				memberInfo.setT0TradeRate(transactionRateList.get(0).getT0TradeRate());
+				memberInfo.setT1DrawFee(transactionRateList.get(0).getT1DrawFee());
+				memberInfo.setT1TradeRate(transactionRateList.get(0).getT1TradeRate());
+				memberInfo.setMlJfFee(transactionRateList.get(0).getMlJfFee());
+				memberInfo.setMlJfRate(transactionRateList.get(0).getMlJfRate());
+				memberInfo.setMlWjfFee(transactionRateList.get(0).getMlWjfFee());
+				memberInfo.setMlWjfRate(transactionRateList.get(0).getMlWjfRate());
+			}
+			
+			//支付通道信息获取   --- 微信
+			RouteWayExample routeWayExample = new RouteWayExample();
+			routeWayExample.or().andTxnTypeEqualTo("1").andDelFlagEqualTo("0").andIsUsableEqualTo("0");
+			List<RouteWay> routeWayList = routeWayService.selectByExample(routeWayExample);
+			if(routeWayList.size() > 0){
+				memberInfo.setWxRouteId(routeWayList.get(0).getRouteId());
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "微信交易类型配置信息缺失");
+				return result.toString();
+			}
+			//支付通道信息获取   --- 支付宝
+			routeWayExample = new RouteWayExample();
+			routeWayExample.or().andTxnTypeEqualTo("2").andDelFlagEqualTo("0").andIsUsableEqualTo("0");
+			routeWayList = routeWayService.selectByExample(routeWayExample);
+			if(routeWayList.size() > 0){
+				memberInfo.setZfbRouteId(routeWayList.get(0).getRouteId());
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "支付宝交易类型配置信息缺失");
+				return result.toString();
+			}
+			
+			
+			
+			//获取经营类别配置信息
+			BusinessCategoryExample businessCategoryExample = new BusinessCategoryExample();
+			businessCategoryExample.or().andDelFlagEqualTo("0");
+			List<BusinessCategory> businessCategoryList = businessCategoryService.selectByExample(businessCategoryExample);
+			BusinessCategory businessCategory = null;
+			if(businessCategoryList.size() > 0){
+				businessCategory = businessCategoryList.get((new Random()).nextInt(businessCategoryList.size()));
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "经营类别配置信息缺失");
+				return result.toString();
+			}
+			
+			JSONObject picObj = this.uploadCert(memberInfo);
+			
+			if(!"0000".equals(picObj.getString("returnCode"))){
+				return picObj.toString();
+			}
+			
+			String picOrderNo = picObj.getString("orderNumber");
+			
+			
+			String wxMerchantCode = null;
+			String zfbMerchantCode = null;
+			String qqMerchantCode = null;
+			String bdMerchantCode = null;
+			String jdMerchantCode = null;
+			String channelMerchantCode=null;
+			JSONObject wxPayAccount = this.registerEskAccount(MSPayWayConstant.WXPAY, memberInfo , businessCategory,bankType,bankName,picOrderNo,registerTmp.getBankOpen());
+			if("0000".equals(wxPayAccount.getString("returnCode"))){
+				//wxMerchantCode = wxPayAccount.getString("merchantCode");
+			//	channelMerchantCode=wxPayAccount.getString("channelMerchantCode");
+			//	if(channelMerchantCode!=null && !channelMerchantCode.equals("")){
+				//	memberInfo.setWxChannelMerchantCode(channelMerchantCode);
+				//}
+				memberInfo.setOrderNo(wxPayAccount.getString("orderNumber"));
+				memberInfo.setWxStatus("0");//0审核中，1审核通过
+			}else{
+				return wxPayAccount.toString();
+		//		memberInfo.setWxStatus("4");//注册不成功
+			}
+			
+			
+			/*
+			if (null == wxMerchantCode){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "失败");
+				return result.toString();
+			}
+			*/
+			registerTmp.setCategory(businessCategory.getId()+"");
+			registerTmpService.insertSelective(registerTmp);
+
+			if("1".equals(memberInfo.getWxStatus()) || "1".equals(memberInfo.getZfbStatus()) 
+					|| "1".equals(memberInfo.getQqStatus()) || "1".equals(memberInfo.getBdStatus())
+					|| "1".equals(memberInfo.getJdStatus())){
+//				memberInfo.setStatus("0");
+				memberInfo.setStatus("4");   //默认注册成功后为未认证状态，不允许交易
+			}
+			memberInfo.setCategory(businessCategory.getId()+"");
+			memberInfo.setWxMerchantCode(wxMerchantCode);
+			memberInfo.setZfbMerchantCode(zfbMerchantCode);
+			memberInfo.setQqMerchantCode(qqMerchantCode);
+			memberInfo.setBdMerchantCode(bdMerchantCode);
+			memberInfo.setJdMerchantCode(jdMerchantCode);
+			//hkz 默认开通米联平台支付
+			memberInfo.setMlJfStatus("1");
+			memberInfo.setMlWjfStatus("1");
+			memberInfoService.insertSelective(memberInfo);
+			
+			EpayCode epayCode = null;
+			if(registerTmp.getPayCode() != null && !"".equals(registerTmp.getPayCode())){
+				EpayCodeExample epayCodeExample = new EpayCodeExample();
+				epayCodeExample.or().andPayCodeEqualTo(registerTmp.getPayCode());
+				List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
+				if(epayCodeList.size()>0){
+					epayCode = epayCodeList.get(0);
+					epayCode.setStatus("5");
+					epayCode.setMemberId(memberInfo.getId());
+					epayCode.setT0DrawFee(memberInfo.getT0DrawFee());
+					epayCode.setT0TradeRate(memberInfo.getT0TradeRate());
+					epayCode.setT1DrawFee(memberInfo.getT1DrawFee());
+					epayCode.setT1TradeRate(memberInfo.getT1TradeRate());
+					epayCode.setMlJfFee(memberInfo.getMlJfFee());
+					epayCode.setMlJfRate(memberInfo.getMlJfRate());
+					epayCode.setMlWjfFee(memberInfo.getMlWjfFee());
+					epayCode.setMlWjfRate(memberInfo.getMlWjfRate());
+					epayCodeService.updateByPrimaryKeySelective(epayCode);
+				}
+			}
+			
+			MemberBank memberBank = new MemberBank();
+			memberBank.setMemberId(memberInfo.getId());
+			memberBank.setBankId(registerTmp.getBankId());
+			memberBank.setSubId(registerTmp.getSubId());
+			memberBank.setProvince(registerTmp.getProvince());
+			memberBank.setCity(registerTmp.getCity());
+			memberBank.setBankOpen(registerTmp.getBankOpen());
+			memberBank.setAccountName(registerTmp.getAccountName());
+			memberBank.setAccountNumber(memberInfo.getCardNbr());
+			memberBank.setSettleType(memberInfo.getSettleType());
+			memberBank.setCreateBy("1");
+			memberBank.setCreateDate(new Date());
+			memberBank.setUpdateBy("1");
+			memberBank.setUpdateDate(new Date());
+			memberBank.setDelFlag("0");
+			memberBankService.insertSelective(memberBank);
+			
+			Account accountInfo = new Account();
+			accountInfo.setMemberId(memberInfo.getId());
+			accountInfo.setBalance(new BigDecimal("0.0"));
+			accountInfo.setFreezeMoney(new BigDecimal("0.0"));
+			accountInfo.setCreateBy("1");
+			accountInfo.setCreateDate(new Date());
+			accountInfo.setUpdateBy("1");
+			accountInfo.setUpdateDate(new Date());
+			accountService.insertSelective(accountInfo);
+			
+			RegisterTmp registerTempUpdate = new RegisterTmp();
+			registerTempUpdate.setId(registerTmp.getId());
+			registerTempUpdate.setStatus("1");
+			registerTmpService.updateByPrimaryKeySelective(registerTempUpdate);
+			//生成二维码
+			if (reqDataJson.containsKey("agentType") && !"".equals(reqDataJson.getString("agentType")) && null != agentRate) {
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+				String defaultQrcodeBasePath = SysConfig.defaultQrcodeBasePath;
+				String qrUrl = agentRate.getmUrl();
+				/*
+				if (null != qrUrl && !"".equals(qrUrl)) {
+					if (qrUrl.contains("?")) {
+						if (!qrUrl.endsWith("?")) {
+							qrUrl = qrUrl + "&epayCode" + memberInfo.getPayCode();
+						}else{
+							qrUrl = qrUrl + "epayCode" + memberInfo.getPayCode();
+						}
+					}else {
+						qrUrl = qrUrl + "?epayCode" + memberInfo.getPayCode();
+					}
+					
+				}
+				*/
+				String logoPath = defaultQrcodeBasePath + File.separator + agentRate.getmImg();
+				String epayCodePath = File.separator + sdf.format(new Date()) + File.separator + memberInfo.getPayCode() + ".png";
+				String saveFilePath = defaultQrcodeBasePath + epayCodePath;
+				String savePath = defaultQrcodeBasePath +File.separator+ sdf.format(new Date()) +File.separator;
+				if (null != epayCode) {
+					epayCode.setPath(epayCodePath);
+					epayCodeService.updateByPrimaryKeySelective(epayCode);
+				}
+				String code = memberInfo.getPayCode();
+				String mImg = agentRate.getmImg();
+				QrcodeCreateThread qrcodeCreateThread = new QrcodeCreateThread(qrUrl, logoPath, saveFilePath, code ,defaultQrcodeBasePath, mImg, savePath);
+				threadPoolTaskExecutor.execute(qrcodeCreateThread);
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result.toString();
+		}
+		result.put("returnCode", "0000");
+		result.put("returnMsg", "成功");
+		return result.toString();
+	}
+	
+	
+	
+	public JSONObject uploadCert(MemberInfo member) {
+		
+		JSONObject result=new JSONObject();
+		try {
+			String serverUrl = ESKConfig.shopServerUrl;
+			
+			String baseFilePath = SysConfig.baseUploadFilePath; 
+			
+		//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			String tranCode = "010";
+			String charset = "utf-8";
+			
+			String orderCode = CommonUtil.getOrderCode();
+			JSONObject reqData = new JSONObject();
+			reqData.put("orderNumber", orderCode);
+			reqData.put("tranCode", tranCode);
+			
+			FileUtil fileUtil = new FileUtil();
+
+			String cert_correct_path = member.getCertPic1();
+			File cert_correct_file=new File((baseFilePath+cert_correct_path).replace('/', File.separatorChar));
+			if(!cert_correct_file.exists()){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "身份证正面图片不存在");
+				return result;
+			}
+			reqData.put("cert_correct", fileUtil.ConvertFileToBase64(baseFilePath+cert_correct_path));
+			
+			String cert_opposite_path = member.getCertPic2();
+			File cert_opposite_file=new File((baseFilePath+cert_opposite_path).replace('/', File.separatorChar));
+			if(!cert_opposite_file.exists()){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "身份证背面图片不存在");
+				return result;
+			}
+			reqData.put("cert_opposite", fileUtil.ConvertFileToBase64(baseFilePath+cert_opposite_path));
+			
+			String bl_img_path = member.getMemcertPic();
+			File bl_img_file=new File((baseFilePath+bl_img_path).replace('/', File.separatorChar));
+			if(!bl_img_file.exists()){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "营业执照图片不存在");
+				return result;
+			}
+			reqData.put("bl_img", fileUtil.ConvertFileToBase64(baseFilePath+bl_img_path));
+			
+			String card_correct_path = member.getCardPic1();
+			File card_correct_file=new File((baseFilePath+card_correct_path).replace('/', File.separatorChar));
+			if(!card_correct_file.exists()){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "银行卡正面图片不存在");
+				return result;
+			}
+			reqData.put("card_correct", fileUtil.ConvertFileToBase64(baseFilePath+card_correct_path));
+			
+			String card_opposite_path = member.getCardPic2();
+			File card_opposite_file=new File((baseFilePath+card_opposite_path).replace('/', File.separatorChar));
+			if(!card_opposite_file.exists()){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "银行卡背面图片不存在");
+				return result;
+			}
+			reqData.put("card_opposite", fileUtil.ConvertFileToBase64(baseFilePath+card_opposite_path));
+			
+			if(!"01".equals(member.getContactType())){
+				String auth_path = member.getAuthPic();
+				File auth_file=new File((baseFilePath + auth_path).replace('/', File.separatorChar));
+				if(!auth_file.exists()){
+					result.put("returnCode", "0007");
+					result.put("returnMsg", "授权书图片不存在");
+					return result;
+				}
+				reqData.put("authorization", fileUtil.ConvertFileToBase64(baseFilePath + auth_path));
+			}
+			
+			System.out.println("待加密数据: "+reqData);
+				
+			String plainXML = reqData.toString();
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = MSCommonUtil.generateLenString(16);
+			;
+			byte[] keyBytes = keyStr.getBytes(charset);
+			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+			//先用对方给的私钥调试 by linxf
+			//String signData = new String(Base64.encodeBase64(CryptoUtil.digitalSign(plainBytes, hzfPriKey, "SHA1WithRSA")), charset);
+			String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+			String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("Context", encryptData));
+			nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+			
+			nvps.add(new BasicNameValuePair("signData", signData));
+			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			String resEncryptData = jsonObject.getString("Context");
+			String resEncryptKey = jsonObject.getString("encrtpKey");
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey
+			//先用对方给的私钥调试 by linxf
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+			// 使用base64解码商户请求报文
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("返回报文[{}]",  respJSONObject );
+			
+			if("000000".equals(respJSONObject.getString("respCode"))&&"S".equals(respJSONObject.getString("respType"))){
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "成功");
+				result.put("orderNumber", respJSONObject.getString("orderNumber") );
+			}else{
+				result.put("returnCode", "0001");
+				result.put("returnMsg", "照片上传失败["+respJSONObject.getString("respMsg")+"]");
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		return result;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	@ResponseBody
 	@RequestMapping("/toHandleRegister")
 	public String toHandleRegister(Model model, HttpServletRequest request) {
@@ -2448,6 +3147,166 @@ public class RegisterLoginController {
 		return result;
 	
 	}
+	
+	
+	
+	public JSONObject registerEskAccount(String payWay ,MemberInfo memberInfo ,BusinessCategory businessCategory ,String bankType ,String bankName ,String picOrderNo,String bankOpen) {
+		
+		JSONObject result = new JSONObject();
+		//String reqMsgId=CommonUtil.getOrderCode();
+		try {
+			// 调用支付通道
+			String serverUrl = ESKConfig.shopServerUrl;
+		//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			String tranCode = "011";
+			String charset = "utf-8";
+			
+			String merchantId = "";
+			
+			String orderCode = CommonUtil.getOrderCode();
+			
+			if(businessCategory == null){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "经营类目信息缺失");
+				return result;
+			}
+			String categoryVal = "";
+			String cooperator = "";
+			
+			
+			if(MSPayWayConstant.WXPAY.equals(payWay)){
+				merchantId = memberInfo.getWxMemberCode();
+				categoryVal = businessCategory.getWxCategoryId();
+			}else if(MSPayWayConstant.ZFBZF.equals(payWay)){
+				merchantId = memberInfo.getZfbMemberCode();
+				categoryVal = businessCategory.getZfbCategoryId();
+			}else if(MSPayWayConstant.QQZF.equals(payWay)){
+				merchantId = memberInfo.getQqMemberCode();
+				categoryVal = businessCategory.getQqCategoryId();
+			}else if(MSPayWayConstant.BDZF.equals(payWay)){
+				merchantId = memberInfo.getBdMemberCode();
+				categoryVal = businessCategory.getBdCategoryId();
+			}else if(MSPayWayConstant.JDZF.equals(payWay)){
+				merchantId = memberInfo.getJdMemberCode();
+				categoryVal = businessCategory.getJdCategoryId();
+			}
+			
+			String callBack = SysConfig.serverUrl + "/api/registerLogin/EskExamNotify";
+			System.out.println("-------------注册审核结果通知地址------" + callBack + "------------");
+			
+			
+			
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("orderNumber", orderCode);
+			reqData.put("tranCode", tranCode);
+			reqData.put("imgOrderNumber", picOrderNo);
+			
+			reqData.put("phone", memberInfo.getMobilePhone());
+			reqData.put("contatctNumber", memberInfo.getMobilePhone());
+			reqData.put("contactType", memberInfo.getContactType());
+			reqData.put("realName", memberInfo.getContact());
+			reqData.put("cardType", "1");
+			reqData.put("cardNo", memberInfo.getCardNbr());
+			reqData.put("settlement", "D0");//写死D0
+			reqData.put("certType", "00");
+			reqData.put("certNo", memberInfo.getCertNbr() );
+			reqData.put("mobile", memberInfo.getMobilePhone());
+			reqData.put("location", bankOpen);
+			reqData.put("shopName", memberInfo.getName() );
+			reqData.put("cmer", memberInfo.getName());//by linxf先写商户名称
+			reqData.put("cmerShort", memberInfo.getShortName());
+			reqData.put("businessId", categoryVal);
+			reqData.put("isCorp", "N");
+			reqData.put("wxRate", memberInfo.getT0TradeRate());
+			reqData.put("aliRate", memberInfo.getT0TradeRate());//by linxf 先一样
+			
+			reqData.put("channelCode", "WXPAY");
+			reqData.put("ProviceCode", memberInfo.getProvince());
+			reqData.put("ctityCode", memberInfo.getCity());
+			reqData.put("districtCode", memberInfo.getCounty());
+			reqData.put("address", memberInfo.getAddr());
+			
+			reqData.put("callback", callBack);
+			
+			System.out.println("待加密数据: "+reqData);
+			
+			String plainXML = reqData.toString();
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = MSCommonUtil.generateLenString(16);
+			;
+			byte[] keyBytes = keyStr.getBytes(charset);
+			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+			//先用对方给的私钥调试 by linxf
+			//String signData = new String(Base64.encodeBase64(CryptoUtil.digitalSign(plainBytes, hzfPriKey, "SHA1WithRSA")), charset);
+			String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+			String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("Context", encryptData));
+			nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+			
+			nvps.add(new BasicNameValuePair("signData", signData));
+			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			String resEncryptData = jsonObject.getString("Context");
+			String resEncryptKey = jsonObject.getString("encrtpKey");
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey
+			//先用对方给的私钥调试 by linxf
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+			// 使用base64解码商户请求报文
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("返回报文[{}]",  respJSONObject );
+			
+			
+			
+			
+			
+			
+			if("000000".equals(respJSONObject.getString("respCode"))){
+			//	String merchantCode = respJSONObject.getString("merchantCode");
+				
+				result.put("returnCode", "0000");
+				result.put("orderNumber", orderCode);
+			//	result.put("merchantCode", merchantCode);
+				
+				result.put("returnMsg", "成功");
+			}else if("200012".equals(respJSONObject.getString("respCode"))){
+				result.put("returnCode", "200012");
+				result.put("returnMsg", respJSONObject.getString("respMsg"));
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", respJSONObject.getString("respMsg"));
+			}
+		} catch (ArgException e) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "商户入驻失败");
+			logger.info(e.getMessage());
+			return result;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		return result;
+	
+	}
+	
+	
+	
+	
+	
 	/**
 	 * 商户入驻接口 T1
 	 * @param payWay  支付方式
@@ -2735,6 +3594,64 @@ public class RegisterLoginController {
 					memberInfoService.updateByExampleSelective(m, memberInfoExample);
 				}
 			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("注册审核结果通知处理失败:"+e.getMessage());
+		}
+		
+		try {
+			response.getWriter().write("000000");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 商户入驻审核结果异步通知
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping("/eskExamNotify")
+	public void eskExamNotify(HttpServletRequest request,HttpServletResponse response) {
+		try {
+			String resEncryptData = request.getParameter("Context");
+			
+			String resEncryptKey = request.getParameter("encrtpKey");
+			logger.info("eskExamNotify回调返回报文resEncryptData{}，resEncryptKey{}",  resEncryptData, resEncryptKey);
+			String charset = "utf-8";
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey  屏蔽by linxf 测试
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			// 使用base64解码商户请求报文
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("eskExamNotify解密回调返回报文[{}]",  respJSONObject );
+
+			//JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
+			String orderNumber = respJSONObject.getString("orderNumber");
+			
+			String merchantCode = respJSONObject.getString("merchantCode");
+			
+			MemberInfoExample memberInfoExample = new MemberInfoExample();
+			Criteria memberInfoCriteria = memberInfoExample.createCriteria();
+			memberInfoCriteria.andOrderNoEqualTo(orderNumber);
+			
+			if("S".equals(respJSONObject.getString("respType"))&&"000000".equals(respJSONObject.getString("respCode"))){
+				MemberInfo member = new MemberInfo();
+				member.setWxMerchantCode(merchantCode);
+				member.setZfbMerchantCode(merchantCode);
+				member.setWxStatus("1");
+				member.setZfbStatus("1");
+				member.setStatus("0");
+				memberInfoService.updateByExampleSelective(member, memberInfoExample);
+			}
+			
+			
 
 		} catch (Exception e) {
 			e.printStackTrace();
