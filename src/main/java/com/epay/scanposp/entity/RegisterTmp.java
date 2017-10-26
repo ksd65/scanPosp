@@ -42,6 +42,8 @@ public class RegisterTmp {
     private String cardPic1;
 
     private String cardPic2;
+    
+    private String authPic;
 
     private String busLicenceNbr;
 
@@ -442,4 +444,12 @@ public class RegisterTmp {
     public void setDelFlag(String delFlag) {
         this.delFlag = delFlag == null ? null : delFlag.trim();
     }
+
+	public String getAuthPic() {
+		return authPic;
+	}
+
+	public void setAuthPic(String authPic) {
+		this.authPic = authPic;
+	}
 }
