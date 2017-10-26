@@ -15,6 +15,8 @@ public class SysConfig {
  public static String smsFromName;
  public static String defaultQrcodeBasePath;
  public static String prefixMemberCode;
+ public static String passCode;
+ public static String baseUploadFilePath;
 	/**
 	 * 初始化系统配置
 	 */
@@ -30,6 +32,8 @@ public class SysConfig {
 			smsFromName = configuration.getString("smsFromName");
 			defaultQrcodeBasePath = configuration.getString("defaultQrcodeBasePath");
 			prefixMemberCode = configuration.getString("prefixMemberCode");
+			passCode = configuration.getString("passCode");
+			baseUploadFilePath = configuration.getString("baseUploadFilePath");
 		} catch (Exception e) {
 			throw new RuntimeException("[加载配置文件失败]", e);
 		}
