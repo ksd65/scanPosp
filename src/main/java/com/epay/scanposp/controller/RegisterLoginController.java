@@ -2897,6 +2897,9 @@ public class RegisterLoginController {
 			List<String> statusList = new ArrayList<String>();
 			statusList.add("0");
 			statusList.add("4");
+			if("ESK".equals(SysConfig.passCode)){
+				statusList.add("3");
+			}
 			memberInfoExample.or().andLoginCodeEqualTo(loginCode).andStatusIn(statusList);
 			List<MemberInfo> memberInfoList = memberInfoService.selectByExample(memberInfoExample);
 			if(memberInfoList.size()==0){
@@ -3191,7 +3194,7 @@ public class RegisterLoginController {
 				categoryVal = businessCategory.getJdCategoryId();
 			}
 			
-			String callBack = SysConfig.serverUrl + "/api/registerLogin/EskExamNotify";
+			String callBack = SysConfig.serverUrl + "/registerLogin/eskExamNotify";
 			System.out.println("-------------注册审核结果通知地址------" + callBack + "------------");
 			
 			
@@ -3607,63 +3610,7 @@ public class RegisterLoginController {
 		}
 	}
 	
-	/**
-	 * 商户入驻审核结果异步通知
-	 * @param request
-	 * @param response
-	 */
-	@RequestMapping("/eskExamNotify")
-	public void eskExamNotify(HttpServletRequest request,HttpServletResponse response) {
-		try {
-			String resEncryptData = request.getParameter("Context");
-			
-			String resEncryptKey = request.getParameter("encrtpKey");
-			logger.info("eskExamNotify回调返回报文resEncryptData{}，resEncryptKey{}",  resEncryptData, resEncryptKey);
-			String charset = "utf-8";
-			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
-			// 解密encryptKey得到merchantAESKey  屏蔽by linxf 测试
-			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
-			// 使用base64解码商户请求报文
-			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
-			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
-			// 用解密得到的merchantAESKey解密encryptData
-			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
-			String resXml = new String(merchantXmlDataBytes, charset);
-			JSONObject respJSONObject = JSONObject.fromObject(resXml);
-			logger.info("eskExamNotify解密回调返回报文[{}]",  respJSONObject );
-
-			//JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
-			String orderNumber = respJSONObject.getString("orderNumber");
-			
-			String merchantCode = respJSONObject.getString("merchantCode");
-			
-			MemberInfoExample memberInfoExample = new MemberInfoExample();
-			Criteria memberInfoCriteria = memberInfoExample.createCriteria();
-			memberInfoCriteria.andOrderNoEqualTo(orderNumber);
-			
-			if("S".equals(respJSONObject.getString("respType"))&&"000000".equals(respJSONObject.getString("respCode"))){
-				MemberInfo member = new MemberInfo();
-				member.setWxMerchantCode(merchantCode);
-				member.setZfbMerchantCode(merchantCode);
-				member.setWxStatus("1");
-				member.setZfbStatus("1");
-				member.setStatus("0");
-				memberInfoService.updateByExampleSelective(member, memberInfoExample);
-			}
-			
-			
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("注册审核结果通知处理失败:"+e.getMessage());
-		}
-		
-		try {
-			response.getWriter().write("000000");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+	
  	
 	/**
 	 * 为所有商户入驻t0,Test.java用

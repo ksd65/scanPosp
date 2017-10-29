@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.EskNoticeMapper">
+  
+  <insert id="insertNotice" parameterType="com.epay.scanposp.entity.EskNotice">
+    
+    insert into bu_esk_notice (notice_data, order_number, create_date
+      )
+    values (#{noticeData,jdbcType=VARCHAR}, #{orderNumber,jdbcType=INTEGER}, sysdate()
+      )
+  </insert>
+  
+</mapper>

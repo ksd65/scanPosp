@@ -53,6 +53,7 @@ import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
+import com.epay.scanposp.entity.EskNotice;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberInfoExample.Criteria;
@@ -69,6 +70,7 @@ import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.BusinessCategoryService;
 import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.EpayCodeService;
+import com.epay.scanposp.service.EskNoticeService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.MsResultNoticeService;
@@ -128,6 +130,9 @@ public class DebitNoteController {
 	
 	@Autowired
 	private SysCommonConfigService sysCommonConfigService;
+	
+	@Autowired
+	private EskNoticeService eskNoticeService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -2627,6 +2632,90 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		
 		return null;
 	}
+	
+	
+	/**
+	 * 易收款商户入驻审核结果异步通知
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping("/registerLogin/eskExamNotify")
+	public void eskExamNotify(HttpServletRequest request,HttpServletResponse response) {
+		try {
+			String resEncryptData = request.getParameter("Context");
+			
+			String resEncryptKey = request.getParameter("encrtpKey");
+			logger.info("eskExamNotify回调返回报文resEncryptData{}，resEncryptKey{}",  resEncryptData, resEncryptKey);
+			String charset = "utf-8";
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey  屏蔽by linxf 测试
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			// 使用base64解码商户请求报文
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("eskExamNotify解密回调返回报文[{}]",  respJSONObject );
+			
+			String orderNumber = "";
+			String merchantCode = "";
+			
+			if(respJSONObject.containsKey("orderNumber")){
+				orderNumber = respJSONObject.getString("orderNumber");
+			}
+			
+			if(respJSONObject.containsKey("merchantCode")){
+				merchantCode = respJSONObject.getString("merchantCode");
+			}
+
+			EskNotice notice = new EskNotice();
+			notice.setNoticeData(resXml);
+			notice.setOrderNumber(orderNumber);
+			eskNoticeService.insertNotice(notice);
+			
+			MemberInfoExample memberInfoExample = new MemberInfoExample();
+			Criteria memberInfoCriteria = memberInfoExample.createCriteria();
+			memberInfoCriteria.andOrderNoEqualTo(orderNumber);
+			
+			if("S".equals(respJSONObject.getString("respType"))&&"000000".equals(respJSONObject.getString("respCode"))){
+				MemberInfo member = new MemberInfo();
+				member.setWxMerchantCode(merchantCode);
+				member.setZfbMerchantCode(merchantCode);
+				member.setWxStatus("1");
+				member.setZfbStatus("1");
+				member.setStatus("0");
+				memberInfoService.updateByExampleSelective(member, memberInfoExample);
+			}
+			
+			
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("注册审核结果通知处理失败:"+e.getMessage());
+		}
+		
+		try {
+			response.getWriter().write("000000");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@RequestMapping("/testT/testNotice")
+	public void testNotice(HttpServletRequest request,HttpServletResponse response){
+		try {
+			EskNotice notice = new EskNotice();
+			notice.setNoticeData("111111111");
+			notice.setOrderNumber("201700000222");
+			eskNoticeService.insertNotice(notice);
+			response.getWriter().write("000000");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	
 	@RequestMapping("/testT/getMerchatCode")
 	public void testTT(){
