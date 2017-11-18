@@ -56,6 +56,8 @@ import com.epay.scanposp.entity.EpayCodeExample;
 import com.epay.scanposp.entity.EskNotice;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
+import com.epay.scanposp.entity.PayResultNotice;
+import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.MemberInfoExample.Criteria;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
@@ -81,6 +83,7 @@ import com.epay.scanposp.service.SysOfficeConfigOemService;
 import com.epay.scanposp.service.SysOfficeService;
 import com.epay.scanposp.service.TradeDetailService;
 import com.epay.scanposp.service.TradeVolumnDailyService;
+import com.epay.scanposp.thread.PayResultNoticeThread;
 import com.epay.scanposp.thread.WeixinTemplateSendThread;
 
 @Controller
@@ -140,12 +143,13 @@ public class DebitNoteController {
 		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
 		String appClientType = reqDataJson.getString("appClientType");
-		JSONObject result = new JSONObject();
+		JSONObject result = new JSONObject();  
 		/*
 		if ("micromessenger".equals(appClientType)) {// 微信扫码支付
 			result = msWxScanQrcodePay(reqDataJson, request);
 		}
 		*/
+		System.out.println("1111111111");
 		if ("micromessenger".equals(appClientType)) {// 微信公众号支付
 			if("ESK".equals(SysConfig.passCode)){
 				result = eskWxPay(reqDataJson, request);
@@ -494,7 +498,7 @@ public class DebitNoteController {
 	public JSONObject eskWxPay(JSONObject reqDataJson, HttpServletRequest request) {
 		JSONObject result = new JSONObject();
 		JSONObject resData = new JSONObject();
-		try {
+		try {System.out.println("22222222");
 			String money = reqDataJson.getString("money");
 			String epayCode = reqDataJson.getString("epayCode");
 			String remark = reqDataJson.getString("remark");
@@ -525,10 +529,10 @@ public class DebitNoteController {
 			if(!"5".equals(payCode.getStatus()) && !"7".equals(payCode.getStatus())){
 				throw new ArgException("对不起,收款码不可用，如有疑问请与管理员联系");
 			}
-
+			System.out.println("333333333");
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(payCode.getMemberId());
 			
-			
+			System.out.println("44444444");
 			if (memberInfo == null) {
 				throw new ArgException("商家不存在");
 			}
@@ -541,19 +545,19 @@ public class DebitNoteController {
 				}
 				throw new ArgException("商家停用，暂不可交易");
 			}
-
+			System.out.println("555555555555");
 			AccountExample accountExample = new AccountExample();
 			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
 			List<Account> accounts = accountService.selectByExample(accountExample);
 			if (accounts == null || accounts.size() != 1) {
 				throw new ArgException("会员账户不存在");
 			}
-			
+			System.out.println("6666666666");
 			JSONObject checkResult = checkPayLimit(memberInfo.getId(), new BigDecimal(money), memberInfo.getSingleLimit(), memberInfo.getDayLimit());
 			if(null != checkResult){
 				return checkResult;
 			}
-			
+			System.out.println("777777777777");
 			// 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
 			
@@ -570,25 +574,27 @@ public class DebitNoteController {
 			debitNote.setSettleType(memberInfo.getSettleType());
 			debitNote.setRemarks(remark);
 			debitNoteService.insertSelective(debitNote);
-
+			System.out.println("88888888888");
 			// String callBack = "http://" + request.getServerName() + ":" +
 			// request.getServerPort() + request.getContextPath()+
 			// "/debitNote/msNotify";
 			String callBack = SysConfig.serverUrl + "/debitNote/eskPayNotify";
 			// 调用支付通道
 			String serverUrl = ESKConfig.msServerUrl;
+			System.out.println("9999999999");
 			//PublicKey yhPubKey = null;
 			//yhPubKey = CryptoUtil.getEskRSAPublicKey();
 			//yhPubKey = CryptoUtil.getRSAPublicKey(false);
 			PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
 			String tranCode = "003";
 			String charset = "utf-8";
-			
+			System.out.println("10001000000");
 			JSONObject reqData = new JSONObject();
 			reqData.put("merchantCode", memberInfo.getWxMerchantCode());
 			reqData.put("orderNumber", orderCode);
 			reqData.put("tranCode", tranCode);
 			reqData.put("userId", userId);
+			reqData.put("aisleType", "1");
 			reqData.put("totalAmount", money);
 			reqData.put("subject", memberInfo.getName() + " 收款");
 			reqData.put("PayType", "1");
@@ -1578,8 +1584,10 @@ public class DebitNoteController {
 			JSONObject respJSONObject = JSONObject.fromObject(resXml);
 			logger.info("eskPayNotify解密回调返回报文[{}]",  respJSONObject );
 
-	/*		JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
-			String reqMsgId = resEntity.getString("reqMsgId");
+	
+			
+			String reqMsgId = respJSONObject.getString("orderNumber");
+			
 			MsResultNoticeExample msResultNoticeExample = new MsResultNoticeExample();
 			msResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
 			List<MsResultNotice> msResultNoticeList = msResultNoticeService.selectByExample(msResultNoticeExample);
@@ -1589,22 +1597,28 @@ public class DebitNoteController {
 				List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
 
 				if (debitNotes != null && debitNotes.size() > 0) {
-					String tradeDate = DateUtil.getDateFormat(new Date(), "yyyyMMdd");
 					DebitNote debitNote = debitNotes.get(0);
 					debitNote.setRespCode(respJSONObject.get("respCode").toString());
 					debitNote.setRespMsg(respJSONObject.get("respMsg").toString());
 					
 					//新增一条交易明细记录
 					TradeDetail tradeDetail=new TradeDetail();
-					tradeDetail.setTxnDate(tradeDate);
-//					tradeDetail.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+					tradeDetail.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
 					tradeDetail.setMemberId(debitNote.getMemberId());
 					tradeDetail.setMerchantCode(debitNote.getMerchantCode());
-					tradeDetail.setBalanceDate(resEntity.get("settleDate").toString());
-					tradeDetail.setChannelNo(resEntity.get("channelNo").toString());
+					if(respJSONObject.containsKey("settleDate") && null != respJSONObject.getString("settleDate")){
+						tradeDetail.setBalanceDate(respJSONObject.get("settleDate").toString());
+					}
+					if(respJSONObject.containsKey("OrderNo") && null != respJSONObject.getString("OrderNo")){
+						tradeDetail.setChannelNo(respJSONObject.get("OrderNo").toString());
+					}
 					tradeDetail.setMemberCode(debitNote.getMemberCode());
 					tradeDetail.setMoney(debitNote.getMoney());
-					tradeDetail.setPayTime(resEntity.get("payTime").toString());
+					if(respJSONObject.containsKey("payTime") && null != respJSONObject.getString("payTime")){
+						tradeDetail.setPayTime(respJSONObject.get("payTime").toString());
+					}else{
+						tradeDetail.setPayTime(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
+					}
 					tradeDetail.setPtSerialNo(debitNote.getOrderCode());
 					tradeDetail.setOrderCode(debitNote.getOrderCode());
 					tradeDetail.setReqDate(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
@@ -1613,7 +1627,6 @@ public class DebitNoteController {
 					tradeDetail.setRespMsg(respJSONObject.get("respMsg").toString());
 					tradeDetail.setRouteId(debitNote.getRouteId());
 					tradeDetail.setTxnType(debitNote.getTxnType());
-					tradeDetail.setRemarks(debitNote.getRemarks());
 					tradeDetail.setDelFlag("0");
 					tradeDetail.setCreateDate(new Date());
 					if ("S".equals(respJSONObject.get("respType")) && "000000".equals(respJSONObject.get("respCode"))) {
@@ -1630,29 +1643,47 @@ public class DebitNoteController {
 					debitNoteService.updateByPrimaryKey(debitNote);
 					
 					MsResultNotice msResultNotice = new MsResultNotice();
-					msResultNotice.setMoney(new BigDecimal(resEntity.getString("totalAmount")));
+					msResultNotice.setMoney(new BigDecimal(respJSONObject.getString("buyerPayAmount")));
 					msResultNotice.setOrderCode(reqMsgId);
-					msResultNotice.setPtSerialNo(respJSONObject.getString("smzfMsgId"));
-					msResultNotice.setRespDate(respJSONObject.getString("respDate"));
+					msResultNotice.setPtSerialNo(respJSONObject.getString("OrderNo"));
+					String respTime = respJSONObject.getString("respTime");
+					SimpleDateFormat dateSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					msResultNotice.setRespDate(DateUtil.getDateTimeStr(dateSimpleDateFormat.parse(respTime)));
 					msResultNotice.setRespType(respJSONObject.getString("respType"));
 					msResultNotice.setRespCode(respJSONObject.getString("respCode"));
 					msResultNotice.setRespMsg(respJSONObject.getString("respMsg"));
-					if(resEntity.containsKey("payType") && null != resEntity.getString("payType")){
-						msResultNotice.setCardType(resEntity.getString("payType"));
+					if(respJSONObject.containsKey("payType") && null != respJSONObject.getString("payType")){
+						msResultNotice.setCardType(respJSONObject.getString("payType"));
 					}
-					if(resEntity.containsKey("payTime") && null != resEntity.getString("payTime")){
-						msResultNotice.setPayTime(resEntity.getString("payTime"));
+					if(respJSONObject.containsKey("payTime") && null != respJSONObject.getString("payTime")){
+						msResultNotice.setPayTime(respJSONObject.getString("payTime"));
 					}
-					msResultNotice.setBalanceDate(resEntity.getString("settleDate"));
-					if(resEntity.containsKey("payTime") && null != resEntity.getString("payTime")){
-						msResultNotice.setChannelNo(resEntity.getString("channelNo"));
+					if(respJSONObject.containsKey("settleDate") && null != respJSONObject.getString("settleDate")){
+						msResultNotice.setBalanceDate(respJSONObject.getString("settleDate"));
 					}
-					if(resEntity.containsKey("isClearOrCancel") && null != resEntity.getString("isClearOrCancel")){
-						msResultNotice.setSettleCancelFlag(resEntity.getString("isClearOrCancel"));
+					if(respJSONObject.containsKey("payTime") && null != respJSONObject.getString("payTime")){
+						msResultNotice.setChannelNo(respJSONObject.getString("channelNo"));
+					}
+					if(respJSONObject.containsKey("isClearOrCancel") && null != respJSONObject.getString("isClearOrCancel")){
+						msResultNotice.setSettleCancelFlag(respJSONObject.getString("isClearOrCancel"));
 					}
 					msResultNotice.setCreateDate(new Date());
+					msResultNotice.setUpdateDate(new Date());
 					msResultNoticeService.insertSelective(msResultNotice);
 					
+					/**不发起提现时操作*/
+					if ("S".equals(respJSONObject.get("respType")) && "000000".equals(respJSONObject.get("respCode"))) {
+//						if("0".equals(debitNote.getSettleType())){
+//							tradeDetail.setSettleType("0");
+//						}else{
+//							tradeDetail.setSettleType("1");
+//						}
+						tradeDetail.setSettleType("1");
+						
+					}
+					
+					
+					String tradeDate = DateUtil.getDateFormat(new Date(), "yyyyMMdd");
 					String nowTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
 					//更改逻辑  只有交易成功的记录才写进交易记录表  单独写在此处防止后面再次更改逻辑会不理解
 //					if ("S".equals(respJSONObject.get("respType")) && "000000".equals(respJSONObject.get("respCode"))) {
@@ -1694,8 +1725,13 @@ public class DebitNoteController {
 						threadPoolTaskExecutor.execute(weixinTemplateSendThread);
 						System.out.println("模板消息getActiveCount====" + threadPoolTaskExecutor.getActiveCount());
 					}
+					
 				}
-			}*/
+			}
+			
+			
+			
+			
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -2081,68 +2117,79 @@ public class DebitNoteController {
 			DebitNote debitNote=debitNotes.get(0);
 			
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(debitNote.getMemberId());
-			
-			String serverUrl = MSConfig.msServerUrl;
-			PublicKey yhPubKey = null;
-			if (serverUrl.startsWith("https://ipay")) {
-				yhPubKey = CryptoUtil.getRSAPublicKey(true);
-			} else {
-				yhPubKey = CryptoUtil.getRSAPublicKey(false);
-			}
-			PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
-			String tranCode = TranCodeConstant.JYCX;//"SMZF006";
-			String charset = "utf-8";
-			StringBuilder sBuilder = new StringBuilder();
-			sBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-			sBuilder.append("<merchant>");
-			sBuilder.append("<head>");
-			sBuilder.append("<version>1.0.0</version>");
-			sBuilder.append("<msgType>01</msgType>");
-			sBuilder.append("<reqDate>" + DateFormatUtils.format(new Date(), "yyyyMMddHHmmss") + "</reqDate>");
-			sBuilder.append("</head>");
-			sBuilder.append("<body>");
-			sBuilder.append("<oriReqMsgId>" + orderCode + "</oriReqMsgId>");
-			sBuilder.append("</body>");
-			sBuilder.append("</merchant>");
-			String plainXML = sBuilder.toString();
-			byte[] plainBytes = plainXML.getBytes(charset);
-			String keyStr = MSCommonUtil.generateLenString(16);
-			;
-			byte[] keyBytes = keyStr.getBytes(charset);
-			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
-			String signData = new String(Base64.encodeBase64(CryptoUtil.digitalSign(plainBytes, hzfPriKey, "SHA1WithRSA")), charset);
-			String encrtptKey = new String(Base64.encodeBase64(CryptoUtil.RSAEncrypt(keyBytes, yhPubKey, 2048, 11, "RSA/ECB/PKCS1Padding")), charset);
-			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
-			nvps.add(new BasicNameValuePair("encryptData", encryptData));
-			nvps.add(new BasicNameValuePair("encryptKey", encrtptKey));
-			
-			if("0".equals(debitNote.getSettleType())){
-				nvps.add(new BasicNameValuePair("cooperator", MSConfig.cooperator_t0));
+			if(!"ESK".equals(SysConfig.passCode)){
+				String serverUrl = MSConfig.msServerUrl;
+				PublicKey yhPubKey = null;
+				if (serverUrl.startsWith("https://ipay")) {
+					yhPubKey = CryptoUtil.getRSAPublicKey(true);
+				} else {
+					yhPubKey = CryptoUtil.getRSAPublicKey(false);
+				}
+				PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+				String tranCode = TranCodeConstant.JYCX;//"SMZF006";
+				String charset = "utf-8";
+				StringBuilder sBuilder = new StringBuilder();
+				sBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+				sBuilder.append("<merchant>");
+				sBuilder.append("<head>");
+				sBuilder.append("<version>1.0.0</version>");
+				sBuilder.append("<msgType>01</msgType>");
+				sBuilder.append("<reqDate>" + DateFormatUtils.format(new Date(), "yyyyMMddHHmmss") + "</reqDate>");
+				sBuilder.append("</head>");
+				sBuilder.append("<body>");
+				sBuilder.append("<oriReqMsgId>" + orderCode + "</oriReqMsgId>");
+				sBuilder.append("</body>");
+				sBuilder.append("</merchant>");
+				String plainXML = sBuilder.toString();
+				byte[] plainBytes = plainXML.getBytes(charset);
+				String keyStr = MSCommonUtil.generateLenString(16);
+				;
+				byte[] keyBytes = keyStr.getBytes(charset);
+				String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+				String signData = new String(Base64.encodeBase64(CryptoUtil.digitalSign(plainBytes, hzfPriKey, "SHA1WithRSA")), charset);
+				String encrtptKey = new String(Base64.encodeBase64(CryptoUtil.RSAEncrypt(keyBytes, yhPubKey, 2048, 11, "RSA/ECB/PKCS1Padding")), charset);
+				List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+				nvps.add(new BasicNameValuePair("encryptData", encryptData));
+				nvps.add(new BasicNameValuePair("encryptKey", encrtptKey));
+				
+				if("0".equals(debitNote.getSettleType())){
+					nvps.add(new BasicNameValuePair("cooperator", MSConfig.cooperator_t0));
+				}else{
+					nvps.add(new BasicNameValuePair("cooperator", MSConfig.cooperator_t1));
+				}
+				nvps.add(new BasicNameValuePair("signData", signData));
+				nvps.add(new BasicNameValuePair("tranCode", tranCode));
+				nvps.add(new BasicNameValuePair("reqMsgId", reqMsgId));
+				byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+				String respStr = new String(b, charset);
+				logger.info("返回报文[{}]", new Object[] { respStr });
+				JSONObject jsonObject = JSONObject.fromObject(respStr);
+				String resEncryptData = jsonObject.getString("encryptData");
+				String resEncryptKey = jsonObject.getString("encryptKey");
+				byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+				// 解密encryptKey得到merchantAESKey
+				byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+				// 使用base64解码商户请求报文
+				byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+				// 用解密得到的merchantAESKey解密encryptData
+				byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+				String resXml = new String(merchantXmlDataBytes, charset);
+				JSONObject respJSONObject = XmlConvertUtil.documentToJSONObjectFilter(resXml);
+				System.out.println(respJSONObject);
+				if (respJSONObject.containsKey("resEntity")) {
+					JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
+						result.put("resData", resEntity);
+				}
 			}else{
-				nvps.add(new BasicNameValuePair("cooperator", MSConfig.cooperator_t1));
-			}
-			nvps.add(new BasicNameValuePair("signData", signData));
-			nvps.add(new BasicNameValuePair("tranCode", tranCode));
-			nvps.add(new BasicNameValuePair("reqMsgId", reqMsgId));
-			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
-			String respStr = new String(b, charset);
-			logger.info("返回报文[{}]", new Object[] { respStr });
-			JSONObject jsonObject = JSONObject.fromObject(respStr);
-			String resEncryptData = jsonObject.getString("encryptData");
-			String resEncryptKey = jsonObject.getString("encryptKey");
-			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
-			// 解密encryptKey得到merchantAESKey
-			byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
-			// 使用base64解码商户请求报文
-			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
-			// 用解密得到的merchantAESKey解密encryptData
-			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
-			String resXml = new String(merchantXmlDataBytes, charset);
-			JSONObject respJSONObject = XmlConvertUtil.documentToJSONObjectFilter(resXml);
-			System.out.println(respJSONObject);
-			if (respJSONObject.containsKey("resEntity")) {
-				JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
-					result.put("resData", resEntity);
+				JSONObject resEntity = new JSONObject();
+				if("1".equals(debitNote.getStatus())){
+					resEntity.put("oriRespType", "S");
+					resEntity.put("oriRespCode", "000000");
+					resEntity.put("totalAmount", debitNote.getMoney());
+				}else{
+					resEntity.put("oriRespType", "R");
+				}
+				result.put("resData", resEntity);
 			}
 			result.put("certNbr", memberInfo.getCertNbr());
 		} catch (ArgException e) {
@@ -2942,6 +2989,107 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			e.printStackTrace();
 		}
 	}
+	
+	@ResponseBody
+	@RequestMapping("/configSubAccount")
+	public JSONObject configSubAccount() {
+		
+		JSONObject result = new JSONObject();
+		//String reqMsgId=CommonUtil.getOrderCode();
+		try {
+			// 调用支付通道
+			String serverUrl = ESKConfig.msServerUrl;
+		//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			String tranCode = "006";
+			String charset = "utf-8";
+			
+			String merchantCode="20171011171821";
+			
+			String orderCode = CommonUtil.getOrderCode();
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("orderNumber", orderCode);
+			reqData.put("tranCode", tranCode);
+			reqData.put("merchantCode", merchantCode);
+			reqData.put("zdlx", "1");
+			reqData.put("zdsj", ESKConfig.jsDomain);
+			
+			System.out.println("待加密数据: "+reqData);
+			
+			String plainXML = reqData.toString();
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = MSCommonUtil.generateLenString(16);
+			;
+			byte[] keyBytes = keyStr.getBytes(charset);
+			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+			//先用对方给的私钥调试 by linxf
+			//String signData = new String(Base64.encodeBase64(CryptoUtil.digitalSign(plainBytes, hzfPriKey, "SHA1WithRSA")), charset);
+			String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+			String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("Context", encryptData));
+			nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+			
+			nvps.add(new BasicNameValuePair("signData", signData));
+			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			String resEncryptData = jsonObject.getString("Context");
+			String resEncryptKey = jsonObject.getString("encrtpKey");
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey
+			//先用对方给的私钥调试 by linxf
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+			// 使用base64解码商户请求报文
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("返回报文[{}]",  respJSONObject );
+			
+			if("000000".equals(respJSONObject.getString("respCode"))){
+			//	String merchantCode = respJSONObject.getString("merchantCode");
+				
+				result.put("returnCode", "0000");
+				result.put("orderNumber", orderCode);
+			//	result.put("merchantCode", merchantCode);
+				
+				result.put("returnMsg", "成功");
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", respJSONObject.getString("respMsg"));
+			}
+		} catch (ArgException e) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "子商户号配置失败");
+			logger.info(e.getMessage());
+			return result;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		return result;
+	
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	@RequestMapping("/testT/testNotice")
 	public void testNotice(HttpServletRequest request,HttpServletResponse response){

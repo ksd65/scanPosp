@@ -34,7 +34,7 @@ public class RSAUtil {
      * 密钥长度，DH算法的默认密钥长度是1024 
      * 密钥长度必须是64的倍数，在512到65536位之间 
      * */  
-    private static final int KEY_SIZE=512;  
+    private static final int KEY_SIZE=2048;  
     //公钥  
     private static final String PUBLIC_KEY="RSAPublicKey";  
       
@@ -163,7 +163,7 @@ public class RSAUtil {
      * @param args 
      * @throws Exception  
      */  
-    public static void main2(String[] args) throws Exception {  
+    public static void main(String[] args) throws Exception {  
         //初始化密钥  
         //生成密钥对  
         Map<String,Object> keyMap=RSAUtil.initKey();  
@@ -173,6 +173,8 @@ public class RSAUtil {
         //私钥  
         byte[] privateKey=RSAUtil.getPrivateKey(keyMap);  
         //公钥私钥经过base64位编码后存储即存储Base64.encodeBase64String(keyStr)位密钥
+        System.out.println("公钥1：/n"+publicKey.toString());  
+        System.out.println("私钥1：/n"+new String(privateKey));  
         System.out.println("公钥：/n"+Base64.encodeBase64String(publicKey));  
         System.out.println("私钥：/n"+Base64.encodeBase64String(privateKey));  
           
@@ -207,7 +209,7 @@ public class RSAUtil {
           
         System.out.println("甲方解密后的数据："+new String(decode2));  
     }  
-    public static void main(String[] args) throws Exception {
+    public static void main2(String[] args) throws Exception {
     	//初始化密钥  
     	//生成密钥对  
     	Map<String,Object> keyMap=RSAUtil.initKey();  

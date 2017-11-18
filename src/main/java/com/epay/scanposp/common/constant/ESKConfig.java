@@ -3,9 +3,6 @@ package com.epay.scanposp.common.constant;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.PropertiesConfiguration;
-
 import com.epay.scanposp.common.utils.EnvironmentUtil;
 
 public class ESKConfig {
@@ -29,12 +26,14 @@ public class ESKConfig {
 	public static String agentId;
 	public static String yhPublicKey;
 	public static String privateKey;
+	public static String jsDomain;
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "esk_config");
 		//测试环境参数
 //		ResourceBundle bundle = PropertyResourceBundle.getBundle("mskeytest/ms_config");
 		rsaPublicKeyFilePath = bundle.getString("rsaPublicKeyFilePath");
+		System.out.println("rsaPublicKeyFilePath======"+rsaPublicKeyFilePath);
 		rsaPublicKeyFilePath4httpsipay = bundle.getString("rsaPublicKeyFilePath4httpsipay");
 		rsaPrivateKeyFilePath = bundle.getString("rsaPrivateKeyFilePath");
 		msServerUrl = bundle.getString("msServerUrl");
@@ -54,5 +53,7 @@ public class ESKConfig {
 		agentId=bundle.getString("agentId");
 		yhPublicKey=bundle.getString("yhPublicKey");
 		privateKey=bundle.getString("privateKey");
+		jsDomain=bundle.getString("jsDomain");
+		System.out.println("jsDomain======"+jsDomain);
 	}
 }

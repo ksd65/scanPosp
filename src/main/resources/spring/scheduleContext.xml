@@ -16,12 +16,12 @@
 				<ref local="tradeHisTriggerBean" />
 				<ref local="queryPayResultTiggerBean" />
 			-->
-				 <ref local="updateExamTriggerBean" />			 
+			<!--	 <ref local="updateExamTriggerBean" />			 
 				 <ref local="updateExamTriggerBean2" />			 
 				 <ref local="updateExamTriggerBean3" />			 
 				 <ref local="drawResultNoticeTiggerBean" />			 
 				 <ref local="PayResultNoticeTriggerBean" />
-				 <ref local="mlPayResultNoticeTiggerBean" />
+				 <ref local="mlPayResultNoticeTiggerBean" />-->
 			 </list>
 		</property>
 		<property name="quartzProperties">

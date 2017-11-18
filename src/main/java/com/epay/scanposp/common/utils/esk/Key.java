@@ -21,8 +21,8 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 import java.util.List;
+
 
 
 
@@ -42,6 +42,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.bouncycastle.util.encoders.Base64;
 
 public class Key {
 
@@ -116,7 +117,7 @@ public class Key {
 	public static byte[] jdkRSA(byte[] plainBytes, String publicKey) {
 		try {
 			// 公钥字符串转RSAPublicKey对象
-			byte[] bytePublicKey = Base64.getDecoder().decode(publicKey.getBytes());
+			byte[] bytePublicKey = Base64.decode(publicKey.getBytes());
 			X509EncodedKeySpec keySpec = new X509EncodedKeySpec(bytePublicKey);
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			RSAPublicKey rsaPublicKey = (RSAPublicKey) keyFactory.generatePublic(keySpec);
@@ -154,7 +155,7 @@ public class Key {
 	public static byte[] jdkRSA_(byte[] plainBytes, String stringPrivateKey) {
 		try {
 			// 私钥字符串转RSAPrivateKey对象
-			byte[] bytePrivateKey = Base64.getDecoder().decode(stringPrivateKey.getBytes());
+			byte[] bytePrivateKey = Base64.decode(stringPrivateKey.getBytes());
 			
 ;
 			PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(bytePrivateKey);
@@ -190,7 +191,7 @@ public class Key {
 	public static byte[] rsaSign(byte[] plainBytes, String rsaPrivateKey) {
 		try {
 			
-			byte[] bytePrivateKey = Base64.getDecoder().decode(rsaPrivateKey.getBytes());
+			byte[] bytePrivateKey = Base64.decode(rsaPrivateKey.getBytes());
 			PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(bytePrivateKey);
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			RSAPrivateKey privateKey = (RSAPrivateKey) keyFactory.generatePrivate(pkcs8EncodedKeySpec);

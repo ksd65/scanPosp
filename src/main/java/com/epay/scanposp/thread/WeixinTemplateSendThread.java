@@ -57,14 +57,17 @@ public class WeixinTemplateSendThread implements Runnable{
 		EpayCodeExample epayCodeExample = new EpayCodeExample();
 		epayCodeExample.or().andMemberIdEqualTo(debitNote.getMemberId()).andStatusEqualTo("5");
 		List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
+		System.out.println("epayCodeList====="+epayCodeList.size());
 		if(epayCodeList.size() > 0){
 			String memberOfficeId = epayCodeList.get(0).getOfficeId();
 			SysOffice sysOffice = getTopAgentOffice(memberOfficeId);
 			if(null != sysOffice){
+				System.out.println("11111111");
 				MemberOpenidExample memberOpenidExample = new MemberOpenidExample();
 				memberOpenidExample.or().andMemberIdEqualTo(debitNote.getMemberId());
 				List<MemberOpenid> memberOpenidList = memberOpenidService.selectByExample(memberOpenidExample);
 				if(memberOpenidList.size()>0){
+					System.out.println("2222222");
 					MemberOpenid memberOpenid = memberOpenidList.get(0);
 					if(null != memberOpenid.getOpenid() && !"".equals(memberOpenid.getOpenid())){
 						SimpleDateFormat sdf= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -80,22 +83,27 @@ public class WeixinTemplateSendThread implements Runnable{
 						}else{
 							payTime = sdf.format(new Date());
 						}
+						System.out.println("sysOffice.getAgtType()===="+sysOffice.getAgtType());
 						if("2".equals(sysOffice.getAgtType())){
 							SysOfficeConfigOemExample sysOfficeConfigOemExample = new SysOfficeConfigOemExample();
 							sysOfficeConfigOemExample.or().andOfficeIdEqualTo(sysOffice.getId());
 							List<SysOfficeConfigOem> officeConfogList = sysOfficeConfigOemService.selectByExample(sysOfficeConfigOemExample);
 							if(officeConfogList.size()>0){
+								System.out.println("333333333");
 								int expiresSeconds = 7200;//单位秒
 								SysOfficeConfigOem officeConfigOEM = officeConfogList.get(0);
 								String accessToken = officeConfigOEM.getAccessToken();
 								Date updateDate = officeConfigOEM.getUpdateDate();
 								if(null != accessToken && !"".equals(accessToken) && ((new Date()).getTime() < updateDate.getTime()+expiresSeconds*1000)){
-									//accessToken有效											
+									//accessToken有效	
+									System.out.println("444444444");
 									WxMessageUtil.sendTmpMsgSKTZOEM(accessToken,officeConfigOEM.getWxTemplateid(), memberOpenid.getOpenid(), messageTitle, memberInfo.getName(), debitNote.getMoney() + "元", payTime, remark);
 								}else{
+									System.out.println("5555555555");
 									String result = HttpUtil.sendGetRequest("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + officeConfigOEM.getWxAppid() + "&secret=" + officeConfigOEM.getWxAppsecret());
 									JSONObject resultJson = JSONObject.fromObject(result);
 									if (resultJson.has("access_token")) {
+										System.out.println("666666666");
 										accessToken = resultJson.getString("access_token");
 										updateDate = new Date();
 										officeConfigOEM.setAccessToken(accessToken);
@@ -106,6 +114,7 @@ public class WeixinTemplateSendThread implements Runnable{
 								}
 							}
 						}else{
+							System.out.println("77777777");
 							WxMessageUtil.sendTmpMsgSKTZ(memberOpenid.getOpenid(), messageTitle, memberInfo.getName(), debitNote.getMoney() + "元", payTime, remark);
 						}
 					}
