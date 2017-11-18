@@ -149,7 +149,6 @@ public class DebitNoteController {
 			result = msWxScanQrcodePay(reqDataJson, request);
 		}
 		*/
-		System.out.println("1111111111");
 		if ("micromessenger".equals(appClientType)) {// 微信公众号支付
 			if("ESK".equals(SysConfig.passCode)){
 				result = eskWxPay(reqDataJson, request);
@@ -498,7 +497,7 @@ public class DebitNoteController {
 	public JSONObject eskWxPay(JSONObject reqDataJson, HttpServletRequest request) {
 		JSONObject result = new JSONObject();
 		JSONObject resData = new JSONObject();
-		try {System.out.println("22222222");
+		try {
 			String money = reqDataJson.getString("money");
 			String epayCode = reqDataJson.getString("epayCode");
 			String remark = reqDataJson.getString("remark");
@@ -529,10 +528,8 @@ public class DebitNoteController {
 			if(!"5".equals(payCode.getStatus()) && !"7".equals(payCode.getStatus())){
 				throw new ArgException("对不起,收款码不可用，如有疑问请与管理员联系");
 			}
-			System.out.println("333333333");
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(payCode.getMemberId());
 			
-			System.out.println("44444444");
 			if (memberInfo == null) {
 				throw new ArgException("商家不存在");
 			}
@@ -545,19 +542,16 @@ public class DebitNoteController {
 				}
 				throw new ArgException("商家停用，暂不可交易");
 			}
-			System.out.println("555555555555");
 			AccountExample accountExample = new AccountExample();
 			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
 			List<Account> accounts = accountService.selectByExample(accountExample);
 			if (accounts == null || accounts.size() != 1) {
 				throw new ArgException("会员账户不存在");
 			}
-			System.out.println("6666666666");
 			JSONObject checkResult = checkPayLimit(memberInfo.getId(), new BigDecimal(money), memberInfo.getSingleLimit(), memberInfo.getDayLimit());
 			if(null != checkResult){
 				return checkResult;
 			}
-			System.out.println("777777777777");
 			// 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
 			
@@ -574,27 +568,28 @@ public class DebitNoteController {
 			debitNote.setSettleType(memberInfo.getSettleType());
 			debitNote.setRemarks(remark);
 			debitNoteService.insertSelective(debitNote);
-			System.out.println("88888888888");
 			// String callBack = "http://" + request.getServerName() + ":" +
 			// request.getServerPort() + request.getContextPath()+
 			// "/debitNote/msNotify";
 			String callBack = SysConfig.serverUrl + "/debitNote/eskPayNotify";
 			// 调用支付通道
 			String serverUrl = ESKConfig.msServerUrl;
-			System.out.println("9999999999");
 			//PublicKey yhPubKey = null;
 			//yhPubKey = CryptoUtil.getEskRSAPublicKey();
 			//yhPubKey = CryptoUtil.getRSAPublicKey(false);
 			PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
 			String tranCode = "003";
 			String charset = "utf-8";
-			System.out.println("10001000000");
+			String aisleType = memberInfo.getAisleType();
+			if(aisleType==null||"".equals(aisleType)){
+				aisleType = "1";
+			}
 			JSONObject reqData = new JSONObject();
 			reqData.put("merchantCode", memberInfo.getWxMerchantCode());
 			reqData.put("orderNumber", orderCode);
 			reqData.put("tranCode", tranCode);
 			reqData.put("userId", userId);
-			reqData.put("aisleType", "1");
+			reqData.put("aisleType", aisleType);
 			reqData.put("totalAmount", money);
 			reqData.put("subject", memberInfo.getName() + " 收款");
 			reqData.put("PayType", "1");
@@ -649,13 +644,16 @@ public class DebitNoteController {
 					wxjsapiStr.put("package_str", wxjsapiStr.getString("package"));
 					resData.put("wxjsapiStr", wxjsapiStr);
 					result.put("resData", resData);
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "成功");
+					
 				}else{
 					result.put("returnCode", "4004");
 					result.put("returnMsg", "获取微信信息失败");
 				}
 			}else{
 				result.put("returnCode", "4004");
-				result.put("returnMsg", "调用微信支付接口返回失败");
+				result.put("returnMsg", "调用微信支付接口返回失败("+respJSONObject.getString("respMsg")+")");
 			}
 		/*	if (respJSONObject.containsKey("resEntity")) {
 				JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
@@ -679,8 +677,6 @@ public class DebitNoteController {
 			result.put("returnMsg", "请求失败");
 			return result;
 		}
-		result.put("returnCode", "0000");
-		result.put("returnMsg", "成功");
 		return result;
 	}
 	
@@ -2904,6 +2900,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				member.setZfbStatus("1");
 				member.setStatus("0");
 				memberInfoService.updateByExampleSelective(member, memberInfoExample);
+				configSubAccount(merchantCode);
 			}
 			
 			
@@ -2990,9 +2987,9 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}
 	}
 	
-	@ResponseBody
-	@RequestMapping("/configSubAccount")
-	public JSONObject configSubAccount() {
+	//@ResponseBody
+	//@RequestMapping("/configSubAccount")
+	public JSONObject configSubAccount(String merchantCode) {
 		
 		JSONObject result = new JSONObject();
 		//String reqMsgId=CommonUtil.getOrderCode();
@@ -3003,7 +3000,6 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			String tranCode = "006";
 			String charset = "utf-8";
 			
-			String merchantCode="20171011171821";
 			
 			String orderCode = CommonUtil.getOrderCode();
 			

@@ -171,6 +171,8 @@ public class MemberInfo {
     private String delFlag;
     
     private String orderNo;
+    
+    private String aisleType;
 
     public Integer getId() {
         return id;
@@ -843,5 +845,14 @@ public class MemberInfo {
 	public void setOrderNo(String orderNo) {
 		this.orderNo = orderNo;
 	}
+
+	public String getAisleType() {
+		return aisleType;
+	}
+
+	public void setAisleType(String aisleType) {
+		this.aisleType = aisleType;
+	}
+	
 	
 }

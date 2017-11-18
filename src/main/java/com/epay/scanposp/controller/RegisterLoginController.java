@@ -1221,7 +1221,7 @@ public class RegisterLoginController {
 			String bdMerchantCode = null;
 			String jdMerchantCode = null;
 			String channelMerchantCode=null;
-			JSONObject wxPayAccount = this.registerEskAccount(MSPayWayConstant.WXPAY, memberInfo , businessCategory,bankType,bankName,picOrderNo,registerTmp.getBankOpen());
+			JSONObject wxPayAccount = this.registerEskAccount(MSPayWayConstant.WXPAY, memberInfo , businessCategory,bankType,bankName,picOrderNo,registerTmp.getBankArea());
 			if("0000".equals(wxPayAccount.getString("returnCode"))){
 				//wxMerchantCode = wxPayAccount.getString("merchantCode");
 			//	channelMerchantCode=wxPayAccount.getString("channelMerchantCode");
@@ -3221,8 +3221,12 @@ public class RegisterLoginController {
 			reqData.put("cmerShort", memberInfo.getShortName());
 			reqData.put("businessId", categoryVal);
 			reqData.put("isCorp", "N");
-			reqData.put("wxRate", memberInfo.getT0TradeRate());
-			reqData.put("aliRate", memberInfo.getT0TradeRate());//by linxf 先一样
+			double tradeRate = memberInfo.getT0TradeRate().doubleValue();
+			if(tradeRate > 0.006){
+				tradeRate = 0.006;
+			}
+			reqData.put("wxRate", tradeRate);
+			reqData.put("aliRate", tradeRate);//by linxf 先一样
 			
 			reqData.put("channelCode", "WXPAY");
 			reqData.put("ProviceCode", memberInfo.getProvince());

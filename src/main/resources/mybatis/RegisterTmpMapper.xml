@@ -46,6 +46,7 @@
     <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
     <result column="remarks" jdbcType="VARCHAR" property="remarks" />
     <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+    <result column="bankArea" jdbcType="VARCHAR" property="bank_area" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -111,7 +112,7 @@
     card_pic1, card_pic2, bus_licence_nbr, addr, category, settle_type, province, city, 
     county, bank_id, sub_id, bank_open, account_name, account_number, pay_code, wx_member_code, 
     zfb_member_code, qq_member_code, bd_member_code, jd_member_code, create_by, create_date, 
-    update_by, update_date, remarks, del_flag
+    update_by, update_date, remarks, del_flag,bank_area
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.RegisterTmpExample" resultMap="BaseResultMap">
     select
@@ -316,6 +317,9 @@
       <if test="delFlag != null">
         del_flag,
       </if>
+      <if test="bankArea != null">
+        bank_area,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="code != null">
@@ -446,6 +450,9 @@
       </if>
       <if test="delFlag != null">
         #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="bankArea != null">
+        #{bankArea,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>

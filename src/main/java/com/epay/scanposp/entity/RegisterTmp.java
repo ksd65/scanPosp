@@ -92,6 +92,8 @@ public class RegisterTmp {
     private String remarks;
 
     private String delFlag;
+    
+    private String bankArea;
 
     public Integer getId() {
         return id;
@@ -452,4 +454,14 @@ public class RegisterTmp {
 	public void setAuthPic(String authPic) {
 		this.authPic = authPic;
 	}
+
+	public String getBankArea() {
+		return bankArea;
+	}
+
+	public void setBankArea(String bankArea) {
+		this.bankArea = bankArea;
+	}
+	
+	
 }
