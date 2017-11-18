@@ -1071,7 +1071,8 @@ public class RegisterLoginController {
 			memberInfo.setJdMemberCode(registerTmp.getJdMemberCode());
 			memberInfo.setSettleType(registerTmp.getSettleType());
 //			memberInfo.setCategory(registerTmp.getCategory());
-//			memberInfo.setBusLicenceNbr(registerTmp.getBusLicenceNbr());//营业执照编号
+			memberInfo.setBusLicenceNbr(registerTmp.getBusLicenceNbr());//营业执照编号
+			memberInfo.setEmail(registerTmp.getEmail());
 			memberInfo.setLevel("0");
 			
 			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
@@ -3229,6 +3230,12 @@ public class RegisterLoginController {
 			reqData.put("aliRate", tradeRate);//by linxf 先一样
 			
 			reqData.put("channelCode", "WXPAY");
+			
+			reqData.put("email", memberInfo.getEmail());
+			reqData.put("businessType", "NATIONAL_LEGAL_MERGE");
+			reqData.put("business", memberInfo.getBusLicenceNbr());
+			
+			
 			reqData.put("ProviceCode", memberInfo.getProvince());
 			reqData.put("ctityCode", memberInfo.getCity());
 			reqData.put("districtCode", memberInfo.getCounty());
