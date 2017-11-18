@@ -1257,10 +1257,15 @@ public class CashierDeskController {
 			}else if("5".equals(payType)){
 				reqData.put("merchantCode", memberInfo.getJdMerchantCode());
 			}
+			String aisleType = memberInfo.getAisleType();
+			if(aisleType==null||"".equals(aisleType)){
+				aisleType = "1";
+			}
 			reqData.put("scene", "1");
 			reqData.put("tranCode", tranCode);
 			reqData.put("totalAmount", payMoney);
 			reqData.put("orderNumber", orderCode);
+			reqData.put("aisleType", aisleType);
 			reqData.put("subject", memberInfo.getName() + " 收款");
 			reqData.put("PayType", eskPayType);
 			reqData.put("desc", memberInfo.getName() + " 收款");
