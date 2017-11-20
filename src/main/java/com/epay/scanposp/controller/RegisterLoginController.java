@@ -1054,7 +1054,8 @@ public class RegisterLoginController {
 			memberInfo.setCardPic2(registerTmp.getCardPic2());
 			memberInfo.setCertPic1(registerTmp.getCertPic1());
 			memberInfo.setCertPic2(registerTmp.getCertPic2());
-			memberInfo.setMemcertPic(registerTmp.getMemcertPic());
+			memberInfo.setBusPic(registerTmp.getMemcertPic());//营业执照照片
+			memberInfo.setHeadPic(registerTmp.getAuthPic());//授权证书
 			memberInfo.setAuthPic(registerTmp.getAuthPic());
 			
 			memberInfo.setStatus("3");//默认状态 审核中
@@ -1399,7 +1400,7 @@ public class RegisterLoginController {
 			}
 			reqData.put("cert_opposite", fileUtil.ConvertFileToBase64(baseFilePath+cert_opposite_path));
 			
-			String bl_img_path = member.getMemcertPic();
+			String bl_img_path = member.getBusPic();
 			File bl_img_file=new File((baseFilePath+bl_img_path).replace('/', File.separatorChar));
 			if(!bl_img_file.exists()){
 				result.put("returnCode", "0007");
@@ -1427,7 +1428,7 @@ public class RegisterLoginController {
 			reqData.put("card_opposite", fileUtil.ConvertFileToBase64(baseFilePath+card_opposite_path));
 			
 			if(!"01".equals(member.getContactType())){
-				String auth_path = member.getAuthPic();
+				String auth_path = member.getHeadPic();
 				File auth_file=new File((baseFilePath + auth_path).replace('/', File.separatorChar));
 				if(!auth_file.exists()){
 					result.put("returnCode", "0007");
