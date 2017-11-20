@@ -1055,8 +1055,8 @@ public class RegisterLoginController {
 			memberInfo.setCertPic1(registerTmp.getCertPic1());
 			memberInfo.setCertPic2(registerTmp.getCertPic2());
 			memberInfo.setBusPic(registerTmp.getMemcertPic());//营业执照照片
-			memberInfo.setHeadPic(registerTmp.getAuthPic());//授权证书
-			memberInfo.setAuthPic(registerTmp.getAuthPic());
+			memberInfo.setMemcertPic(registerTmp.getAuthPic());//授权证书
+			//memberInfo.setAuthPic(registerTmp.getAuthPic());
 			
 			memberInfo.setStatus("3");//默认状态 审核中
 			memberInfo.setCreateBy("1");
@@ -1428,7 +1428,7 @@ public class RegisterLoginController {
 			reqData.put("card_opposite", fileUtil.ConvertFileToBase64(baseFilePath+card_opposite_path));
 			
 			if(!"01".equals(member.getContactType())){
-				String auth_path = member.getHeadPic();
+				String auth_path = member.getMemcertPic();
 				File auth_file=new File((baseFilePath + auth_path).replace('/', File.separatorChar));
 				if(!auth_file.exists()){
 					result.put("returnCode", "0007");
