@@ -2177,13 +2177,64 @@ public class DebitNoteController {
 						result.put("resData", resEntity);
 				}
 			}else{
+				
+				// 调用支付通道
+				String serverUrl = ESKConfig.msServerUrl;
+			//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+				String tranCode = "004";
+				String charset = "utf-8";
+				
+				JSONObject reqData = new JSONObject();
+				reqData.put("oriOrderNumber", orderCode);
+				reqData.put("tranCode", tranCode);
+				
+				System.out.println("待加密数据: "+reqData);
+				
+				String plainXML = reqData.toString();
+				byte[] plainBytes = plainXML.getBytes(charset);
+				String keyStr = MSCommonUtil.generateLenString(16);
+				;
+				byte[] keyBytes = keyStr.getBytes(charset);
+				String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+				String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+				String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+				List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+				nvps.add(new BasicNameValuePair("Context", encryptData));
+				nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+				
+				nvps.add(new BasicNameValuePair("signData", signData));
+				nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+				byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+				String respStr = new String(b, charset);
+				logger.info("返回报文[{}]", new Object[] { respStr });
+				
+				JSONObject jsonObject = JSONObject.fromObject(respStr);
+				String resEncryptData = jsonObject.getString("Context");
+				String resEncryptKey = jsonObject.getString("encrtpKey");
+				byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+				// 解密encryptKey得到merchantAESKey
+				//先用对方给的私钥调试 by linxf
+				//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+				byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+				// 使用base64解码商户请求报文
+				byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+				// 用解密得到的merchantAESKey解密encryptData
+				byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+				String resXml = new String(merchantXmlDataBytes, charset);
+				JSONObject respJSONObject = JSONObject.fromObject(resXml);
+				logger.info("返回报文[{}]",  respJSONObject );
+				
+				
 				JSONObject resEntity = new JSONObject();
-				if("1".equals(debitNote.getStatus())){
-					resEntity.put("oriRespType", "S");
-					resEntity.put("oriRespCode", "000000");
-					resEntity.put("totalAmount", debitNote.getMoney());
+				if("S".equals(respJSONObject.getString("respType"))&&"000000".equals(respJSONObject.getString("respCode"))){
+				//	String merchantCode = respJSONObject.getString("merchantCode");
+					resEntity.put("oriRespType", respJSONObject.getString("oriRespType"));
+					resEntity.put("oriRespCode", respJSONObject.getString("oriRespCode"));
+					if("S".equals(respJSONObject.getString("oriRespType"))&&"000000".equals(respJSONObject.getString("oriRespCode"))){
+						resEntity.put("totalAmount", respJSONObject.getString("buyerPayAmount"));
+					}
 				}else{
-					resEntity.put("oriRespType", "R");
+					resEntity.put("oriRespType", "E");
 				}
 				result.put("resData", resEntity);
 			}
@@ -2987,10 +3038,100 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}
 	}
 	
+	@ResponseBody
+	@RequestMapping("/api/orderQuery")
+	public JSONObject orderQuery(HttpServletRequest request,HttpServletResponse response) {
+		
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result = new JSONObject();
+		JSONObject resData = new JSONObject();
+		try {
+			String reqMsgId=CommonUtil.getOrderCode();
+			String orderCode = reqDataJson.getString("orderCode");
+			// 调用支付通道
+			String serverUrl = ESKConfig.msServerUrl;
+		//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			String tranCode = "004";
+			String charset = "utf-8";
+			
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("oriOrderNumber", orderCode);
+			reqData.put("tranCode", tranCode);
+			
+			System.out.println("待加密数据: "+reqData);
+			
+			String plainXML = reqData.toString();
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = MSCommonUtil.generateLenString(16);
+			;
+			byte[] keyBytes = keyStr.getBytes(charset);
+			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+			//先用对方给的私钥调试 by linxf
+			//String signData = new String(Base64.encodeBase64(CryptoUtil.digitalSign(plainBytes, hzfPriKey, "SHA1WithRSA")), charset);
+			String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+			String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("Context", encryptData));
+			nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+			
+			nvps.add(new BasicNameValuePair("signData", signData));
+			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			String resEncryptData = jsonObject.getString("Context");
+			String resEncryptKey = jsonObject.getString("encrtpKey");
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey
+			//先用对方给的私钥调试 by linxf
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+			// 使用base64解码商户请求报文
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("返回报文[{}]",  respJSONObject );
+			
+			if("000000".equals(respJSONObject.getString("respCode"))){
+			//	String merchantCode = respJSONObject.getString("merchantCode");
+				
+				result.put("returnCode", "0000");
+				result.put("orderNumber", orderCode);
+			//	result.put("merchantCode", merchantCode);
+				
+				result.put("returnMsg", "成功");
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", respJSONObject.getString("respMsg"));
+			}
+		} catch (ArgException e) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "子商户号配置失败");
+			logger.info(e.getMessage());
+			return result;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		return result;
+	
+	}
+	
+	
+	
 	//@ResponseBody
 	//@RequestMapping("/configSubAccount")
 	public JSONObject configSubAccount(String merchantCode) {
-		
+			
 		JSONObject result = new JSONObject();
 		//String reqMsgId=CommonUtil.getOrderCode();
 		try {
@@ -3073,12 +3214,8 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			return result;
 		}
 		return result;
-	
+		
 	}
-	
-	
-	
-	
 	
 	
 	
