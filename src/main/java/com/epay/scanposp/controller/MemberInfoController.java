@@ -17,6 +17,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.sf.json.JSON;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +56,7 @@ import com.epay.scanposp.entity.MemberBindAcc;
 import com.epay.scanposp.entity.MemberBindAccDtl;
 import com.epay.scanposp.entity.MemberBindAccExample;
 import com.epay.scanposp.entity.MemberInfo;
+import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberInfoMore;
 import com.epay.scanposp.entity.MemberOpenid;
 import com.epay.scanposp.entity.MemberOpenidExample;
@@ -62,6 +65,10 @@ import com.epay.scanposp.entity.MlTradeDetail;
 import com.epay.scanposp.entity.MlTradeDetailAll;
 import com.epay.scanposp.entity.MlTradeDetailAllExample;
 import com.epay.scanposp.entity.MlTradeResNotice;
+import com.epay.scanposp.entity.PayRoute;
+import com.epay.scanposp.entity.PayRouteExample;
+import com.epay.scanposp.entity.PayType;
+import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.RequestMsg;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
@@ -86,6 +93,8 @@ import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.MlTradeDetailAllService;
 import com.epay.scanposp.service.MlTradeDetailService;
 import com.epay.scanposp.service.MlTradeResNoticeService;
+import com.epay.scanposp.service.PayRouteService;
+import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.StTradeDetailAllService;
 import com.epay.scanposp.service.StTradeDetailService;
@@ -157,6 +166,12 @@ public class MemberInfoController {
 	private StTradeDetailAllService stTradeDetailAllService;
 	@Resource
 	private SysOfficeExtendService sysOfficeExtendService;
+	
+	@Autowired
+	private PayRouteService payRouteService;
+	
+	@Autowired
+	private PayTypeService payTypeService;
 	
 	@Resource
 	ThreadPoolTaskExecutor threadPoolTaskExecutor;
@@ -1682,5 +1697,68 @@ public class MemberInfoController {
 				result.put("returnMsg", "失败");
 			}
 		return result.toString();
+	}
+	
+	
+	@ResponseBody
+	@RequestMapping("/getMemberPayTypeByCode")
+	public JSONObject getMemberPayTypeByCode(HttpServletRequest request) {
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result = new JSONObject();
+		JSONObject resData = new JSONObject();
+		result.put("returnCode", "0000");
+		result.put("returnMsg", "成功");
+		try {
+			String memberCode = reqDataJson.getString("memberCode");
+			if (StringUtil.isEmpty(memberCode)) {
+				throw new ArgException("商户编码不能为空");
+			}
+			MemberInfoExample memberInfoExample = new MemberInfoExample();
+			memberInfoExample.createCriteria().andCodeEqualTo(memberCode).andDelFlagEqualTo("0");
+			List<MemberInfo> memberList = memberInfoService.selectByExample(memberInfoExample);
+			if(memberList == null || memberList.size()!=1){
+				throw new ArgException("商户不存在！");
+			}
+			String tranCode = reqDataJson.getString("tranCode");
+			MemberInfo memberInfo = memberList.get(0);
+			String aisleType = memberInfo.getAisleType();
+			if(aisleType==null||"".equals(aisleType)){
+				PayRouteExample payRouteExample=new PayRouteExample();
+				payRouteExample.createCriteria().andRouteCodeEqualTo(SysConfig.passCode).andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
+				List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
+				if(list!=null&&list.size()>0){
+					aisleType = list.get(0).getAisleType();
+				}
+				if(aisleType==null||"".equals(aisleType)){
+					aisleType = "1";
+				}
+			}
+			PayTypeExample payTypeExample = new PayTypeExample();
+			payTypeExample.createCriteria().andRouteCodeEqualTo(SysConfig.passCode).andAisleTypeEqualTo(aisleType).andDelFlagEqualTo("0");
+			List<PayType> payTypeList = payTypeService.selectByExample(payTypeExample);
+			String typeStr = "";
+			if(payTypeList!=null&&payTypeList.size()>0){
+				for(int i=0;i<payTypeList.size();i++){
+					typeStr += payTypeList.get(i).getPayType()+"#";
+				}
+			}
+			resData.put("payTypeList", typeStr);
+			
+			result.put("resData", resData);
+
+		} catch (ArgException e) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", e.getMessage());
+			logger.info(e.getMessage());
+			return result;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		return result;
 	}
 }

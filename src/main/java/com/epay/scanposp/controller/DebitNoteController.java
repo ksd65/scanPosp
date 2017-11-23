@@ -61,6 +61,8 @@ import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.MemberInfoExample.Criteria;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
+import com.epay.scanposp.entity.PayRoute;
+import com.epay.scanposp.entity.PayRouteExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.SysOffice;
@@ -77,6 +79,7 @@ import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.MsbillService;
+import com.epay.scanposp.service.PayRouteService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeConfigOemService;
@@ -136,6 +139,9 @@ public class DebitNoteController {
 	
 	@Autowired
 	private EskNoticeService eskNoticeService;
+	
+	@Autowired
+	private PayRouteService payRouteService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -577,12 +583,20 @@ public class DebitNoteController {
 			//PublicKey yhPubKey = null;
 			//yhPubKey = CryptoUtil.getEskRSAPublicKey();
 			//yhPubKey = CryptoUtil.getRSAPublicKey(false);
-			PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			//PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
 			String tranCode = "003";
 			String charset = "utf-8";
 			String aisleType = memberInfo.getAisleType();
 			if(aisleType==null||"".equals(aisleType)){
-				aisleType = "1";
+				PayRouteExample payRouteExample=new PayRouteExample();
+				payRouteExample.createCriteria().andRouteCodeEqualTo("ESK").andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
+				List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
+				if(list!=null&&list.size()>0){
+					aisleType = list.get(0).getAisleType();
+				}
+				if(aisleType==null||"".equals(aisleType)){
+					aisleType = "1";
+				}
 			}
 			JSONObject reqData = new JSONObject();
 			reqData.put("merchantCode", memberInfo.getWxMerchantCode());
@@ -3227,10 +3241,16 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	@RequestMapping("/testT/testNotice")
 	public void testNotice(HttpServletRequest request,HttpServletResponse response){
 		try {
-			EskNotice notice = new EskNotice();
-			notice.setNoticeData("111111111");
-			notice.setOrderNumber("201700000222");
-			eskNoticeService.insertNotice(notice);
+			PayRouteExample payRouteExample=new PayRouteExample();
+			payRouteExample.createCriteria().andRouteCodeEqualTo("ESK").andTranCodeEqualTo("003").andDelFlagEqualTo("1");
+			List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
+			System.out.println(list.size());
+			
+			
+			//EskNotice notice = new EskNotice();
+			//notice.setNoticeData("111111111");
+			//notice.setOrderNumber("201700000222");
+			//eskNoticeService.insertNotice(notice);
 			response.getWriter().write("000000");
 		} catch (IOException e) {
 			e.printStackTrace();

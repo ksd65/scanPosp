@@ -81,6 +81,8 @@ import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
+import com.epay.scanposp.entity.PayRoute;
+import com.epay.scanposp.entity.PayRouteExample;
 import com.epay.scanposp.entity.RegisterTmp;
 import com.epay.scanposp.entity.RouteWay;
 import com.epay.scanposp.entity.RouteWayExample;
@@ -108,6 +110,7 @@ import com.epay.scanposp.service.MemberBindAccService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
+import com.epay.scanposp.service.PayRouteService;
 import com.epay.scanposp.service.RegisterTmpService;
 import com.epay.scanposp.service.RouteWayService;
 import com.epay.scanposp.service.RoutewayDrawService;
@@ -194,6 +197,9 @@ public class CashierDeskController {
 	
 	@Resource
 	private TradeVolumnDailyService tradeVolumnDailyService;
+	
+	@Autowired
+	private PayRouteService payRouteService;
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/getQrcodePay")
@@ -324,7 +330,7 @@ public class CashierDeskController {
 			return result;
 		}
 		srcStr.append("&payType="+payType);
-	/*	if(signStr == null || "".equals(signStr)){  联调先屏蔽20171017 by linxf
+	/*	if(signStr == null || "".equals(signStr)){ // 联调先屏蔽20171017 by linxf
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "缺少签名信息");
 			return result;
@@ -1257,9 +1263,18 @@ public class CashierDeskController {
 			}else if("5".equals(payType)){
 				reqData.put("merchantCode", memberInfo.getJdMerchantCode());
 			}
+			
 			String aisleType = memberInfo.getAisleType();
 			if(aisleType==null||"".equals(aisleType)){
-				aisleType = "1";
+				PayRouteExample payRouteExample=new PayRouteExample();
+				payRouteExample.createCriteria().andRouteCodeEqualTo("ESK").andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
+				List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
+				if(list!=null&&list.size()>0){
+					aisleType = list.get(0).getAisleType();
+				}
+				if(aisleType==null||"".equals(aisleType)){
+					aisleType = "1";
+				}
 			}
 			reqData.put("scene", "1");
 			reqData.put("tranCode", tranCode);
