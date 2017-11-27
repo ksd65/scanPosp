@@ -263,11 +263,11 @@ public class CashierDeskController {
 		}
 		srcStr.append("&platformType="+platformType);
 		
-	/*	if(signStr == null || "".equals(signStr)){  by linxf 测试屏蔽
+		if(signStr == null || "".equals(signStr)){ 
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "缺少签名信息");
 			return result;
-		}*/
+		}
 		
 		if(!"1".equals(payType) && !"2".equals(payType)){
 			result.put("returnCode", "0007");
@@ -330,11 +330,11 @@ public class CashierDeskController {
 			return result;
 		}
 		srcStr.append("&payType="+payType);
-	/*	if(signStr == null || "".equals(signStr)){ // 联调先屏蔽20171017 by linxf
+		if(signStr == null || "".equals(signStr)){ // 联调先屏蔽20171017 by linxf
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "缺少签名信息");
 			return result;
-		}*/
+		}
 		
 		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3", payType, srcStr.toString(), signStr, callbackUrl);
 		
@@ -951,11 +951,11 @@ public class CashierDeskController {
 		SysOffice sysOffice = sysOfficeList.get(0);
 //		String singedStr = EpaySignUtil.sign(sysOffice.getPrivateKeyRsa(), signOrginalStr);
 //		System.out.println(singedStr);  
-/*		if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){by linxf 测试屏蔽
+		if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
 			result.put("returnCode", "0004");
 			result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 			return result;
-		}*/
+		}
 		
 		//校验交易额是否超出限制
 	    /*
@@ -965,9 +965,6 @@ public class CashierDeskController {
 		}
 		*/
 		if("ESK".equals(SysConfig.passCode)){
-			//by linxf 测试
-			//memberInfo.setWxMerchantCode("20171011171821");
-			//memberInfo.setZfbMerchantCode("20171011171821");
 			result = eskScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl);
 		}else{
 			result = msScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl);
