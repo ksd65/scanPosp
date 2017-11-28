@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.epay.scanposp.common.excep.ArgException;
+import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.entity.Bank;
 import com.epay.scanposp.entity.BankExample;
 import com.epay.scanposp.entity.BankName;
@@ -29,6 +30,8 @@ import com.epay.scanposp.entity.MemberOpenid;
 import com.epay.scanposp.entity.MemberOpenidExample;
 import com.epay.scanposp.entity.SysArea;
 import com.epay.scanposp.entity.SysAreaExample;
+import com.epay.scanposp.entity.SysCommonConfig;
+import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.service.BankNameService;
 import com.epay.scanposp.service.BankService;
 import com.epay.scanposp.service.BankSubService;
@@ -36,6 +39,7 @@ import com.epay.scanposp.service.BuAreaCodeService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.SysAraeService;
+import com.epay.scanposp.service.SysCommonConfigService;
 
 @Controller
 @RequestMapping("api/common")
@@ -56,6 +60,9 @@ public class CommomServiceController {
 	private MemberInfoService memberInfoService;
 	@Autowired
 	private BuAreaCodeService buAreaCodeService;
+	
+	@Autowired
+	private SysCommonConfigService sysCommonConfigService;
 	
 	@ResponseBody
 	@RequestMapping("/getAddrAreaList")
@@ -232,5 +239,37 @@ public class CommomServiceController {
 		result.put("resData", resData);
 		return result.toString();
 	}
+	
+	
+	@ResponseBody
+	@RequestMapping("/getCommonConfig")
+	public String getCommonConfig(Model model, HttpServletRequest request) {
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result=new JSONObject();
+		try {
+			String configName = reqDataJson.getString("configName");
+			String value = "";
+			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+			List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+				value = sysCommonConfig.get(0).getValue();
+			}
+			
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "获取系统配置成功");
+			result.put("resData", value);
+			System.out.println(result);
+			return result.toString();
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result.toString();
+		}
+	}
+	
 	
 }

@@ -41,6 +41,7 @@ import com.epay.scanposp.common.utils.JsonBeanReleaseUtil;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
 import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
+import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.common.utils.constant.TranCodeConstant;
 import com.epay.scanposp.common.utils.esk.Key;
 import com.epay.scanposp.common.utils.ms.CryptoUtil;
@@ -58,6 +59,8 @@ import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
+import com.epay.scanposp.entity.SysCommonConfig;
+import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.MemberInfoExample.Criteria;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
@@ -3233,7 +3236,16 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	
 	
 	
-	
+	private String getRouteCode(){
+		String routeCode = SysConfig.passCode;
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(SysCommonConfigConstant.SYS_ROUTE_CODE).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			routeCode = sysCommonConfig.get(0).getValue();
+		}
+		return routeCode;
+	}
 	
 	
 	
