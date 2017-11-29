@@ -45,6 +45,7 @@ import com.epay.scanposp.common.utils.SignUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.WxMessageUtil;
 import com.epay.scanposp.common.utils.XmlUtil;
+import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.entity.Bank;
 import com.epay.scanposp.entity.BankName;
 import com.epay.scanposp.entity.BankNameExample;
@@ -74,6 +75,8 @@ import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.StTradeDetail;
 import com.epay.scanposp.entity.StTradeDetailExample;
+import com.epay.scanposp.entity.SysCommonConfig;
+import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeConfigOem;
 import com.epay.scanposp.entity.SysOfficeConfigOemExample;
@@ -98,6 +101,7 @@ import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.StTradeDetailAllService;
 import com.epay.scanposp.service.StTradeDetailService;
+import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeConfigOemService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
@@ -172,6 +176,9 @@ public class MemberInfoController {
 	
 	@Autowired
 	private PayTypeService payTypeService;
+	
+	@Autowired
+	private SysCommonConfigService sysCommonConfigService;
 	
 	@Resource
 	ThreadPoolTaskExecutor threadPoolTaskExecutor;
@@ -1723,9 +1730,10 @@ public class MemberInfoController {
 			String tranCode = reqDataJson.getString("tranCode");
 			MemberInfo memberInfo = memberList.get(0);
 			String aisleType = memberInfo.getAisleType();
+			String routeCode = getRouteCode();
 			if(aisleType==null||"".equals(aisleType)){
 				PayRouteExample payRouteExample=new PayRouteExample();
-				payRouteExample.createCriteria().andRouteCodeEqualTo(SysConfig.passCode).andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
+				payRouteExample.createCriteria().andRouteCodeEqualTo(routeCode).andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
 				List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
 				if(list!=null&&list.size()>0){
 					aisleType = list.get(0).getAisleType();
@@ -1735,7 +1743,7 @@ public class MemberInfoController {
 				}
 			}
 			PayTypeExample payTypeExample = new PayTypeExample();
-			payTypeExample.createCriteria().andRouteCodeEqualTo(SysConfig.passCode).andAisleTypeEqualTo(aisleType).andDelFlagEqualTo("0");
+			payTypeExample.createCriteria().andRouteCodeEqualTo(routeCode).andAisleTypeEqualTo(aisleType).andDelFlagEqualTo("0");
 			List<PayType> payTypeList = payTypeService.selectByExample(payTypeExample);
 			String typeStr = "";
 			if(payTypeList!=null&&payTypeList.size()>0){
@@ -1760,5 +1768,16 @@ public class MemberInfoController {
 			return result;
 		}
 		return result;
+	}
+	
+	private String getRouteCode(){
+		String routeCode = SysConfig.passCode;
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(SysCommonConfigConstant.SYS_ROUTE_CODE).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			routeCode = sysCommonConfig.get(0).getValue();
+		}
+		return routeCode;
 	}
 }

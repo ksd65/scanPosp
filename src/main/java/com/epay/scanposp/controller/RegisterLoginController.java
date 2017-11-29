@@ -44,6 +44,7 @@ import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
 import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
+import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.SequenseTypeConstant;
 import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.common.utils.constant.TranCodeConstant;
@@ -185,7 +186,8 @@ public class RegisterLoginController {
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
 		JSONObject result=new JSONObject();
 		try {
-			if("ESK".equals(SysConfig.passCode)){
+			String routeCode = getRouteCode();
+			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 				return toRegisterESK(model, request);
 			}
 			String verifyCode=reqDataJson.getString("verifyCode");
@@ -2884,6 +2886,7 @@ public class RegisterLoginController {
 		JSONObject result=new JSONObject();
 		JSONObject resData=new JSONObject();
 		try {
+			String routeCode = getRouteCode();
 			String loginCode=reqDataJson.getString("loginCode");
 			String password=reqDataJson.getString("password");
 			String userOpenID=reqDataJson.getString("userOpenID");
@@ -2899,7 +2902,7 @@ public class RegisterLoginController {
 			List<String> statusList = new ArrayList<String>();
 			statusList.add("0");
 			statusList.add("4");
-			if("ESK".equals(SysConfig.passCode)){
+			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.XF_ROUTE_CODE.equals(routeCode)){
 				statusList.add("3");
 			}
 			memberInfoExample.or().andLoginCodeEqualTo(loginCode).andStatusIn(statusList);
@@ -4096,5 +4099,16 @@ public class RegisterLoginController {
 			result.put("returnMsg", "请求失败");
 			return result.toString();
 		}
+	}
+	
+	private String getRouteCode(){
+		String routeCode = SysConfig.passCode;
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(SysCommonConfigConstant.SYS_ROUTE_CODE).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			routeCode = sysCommonConfig.get(0).getValue();
+		}
+		return routeCode;
 	}
 }

@@ -34,6 +34,7 @@ import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.MSConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.WxConfig;
+import com.epay.scanposp.common.constant.XFConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.DateUtil;
@@ -41,6 +42,7 @@ import com.epay.scanposp.common.utils.JsonBeanReleaseUtil;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
 import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
+import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.common.utils.constant.TranCodeConstant;
 import com.epay.scanposp.common.utils.esk.Key;
@@ -57,17 +59,17 @@ import com.epay.scanposp.entity.EpayCodeExample;
 import com.epay.scanposp.entity.EskNotice;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
-import com.epay.scanposp.entity.PayResultNotice;
-import com.epay.scanposp.entity.PayResultNoticeExample;
-import com.epay.scanposp.entity.SysCommonConfig;
-import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.MemberInfoExample.Criteria;
+import com.epay.scanposp.entity.MemberMerchantCode;
+import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayRoute;
 import com.epay.scanposp.entity.PayRouteExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
+import com.epay.scanposp.entity.SysCommonConfig;
+import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
@@ -79,6 +81,7 @@ import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.EskNoticeService;
 import com.epay.scanposp.service.MemberInfoService;
+import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.MsbillService;
@@ -89,7 +92,6 @@ import com.epay.scanposp.service.SysOfficeConfigOemService;
 import com.epay.scanposp.service.SysOfficeService;
 import com.epay.scanposp.service.TradeDetailService;
 import com.epay.scanposp.service.TradeVolumnDailyService;
-import com.epay.scanposp.thread.PayResultNoticeThread;
 import com.epay.scanposp.thread.WeixinTemplateSendThread;
 
 @Controller
@@ -146,6 +148,9 @@ public class DebitNoteController {
 	@Autowired
 	private PayRouteService payRouteService;
 	
+	@Autowired
+	private MemberMerchantCodeService memberMerchantCodeService;
+	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
 	public JSONObject pay(HttpServletRequest request) {
@@ -158,9 +163,12 @@ public class DebitNoteController {
 			result = msWxScanQrcodePay(reqDataJson, request);
 		}
 		*/
+		String routeCode = getRouteCode();
 		if ("micromessenger".equals(appClientType)) {// 微信公众号支付
-			if("ESK".equals(SysConfig.passCode)){
+			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 				result = eskWxPay(reqDataJson, request);
+			}else if(RouteCodeConstant.XF_ROUTE_CODE.equals(routeCode)){
+				result = xfWxPay(reqDataJson, request);
 			}else{
 				result = msWxPay(reqDataJson, request);
 			}
@@ -561,6 +569,16 @@ public class DebitNoteController {
 			if(null != checkResult){
 				return checkResult;
 			}
+			
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(RouteCodeConstant.ESK_ROUTE_CODE).andDelFlagEqualTo("0");
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				throw new ArgException("商户编码不存在");
+			}
+			
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			
 			// 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
 			
@@ -569,11 +587,11 @@ public class DebitNoteController {
 			debitNote.setMemberId(memberInfo.getId());
 			debitNote.setMoney(new BigDecimal(money));
 			debitNote.setOrderCode(orderCode);
-			debitNote.setRouteId(memberInfo.getWxRouteId());
+			debitNote.setRouteId(RouteCodeConstant.ESK_ROUTE_CODE);
 			debitNote.setStatus("0");
 			debitNote.setTxnType("1");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
-			debitNote.setMerchantCode(memberInfo.getWxMerchantCode());
+			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
 			debitNote.setSettleType(memberInfo.getSettleType());
 			debitNote.setRemarks(remark);
 			debitNoteService.insertSelective(debitNote);
@@ -592,7 +610,7 @@ public class DebitNoteController {
 			String aisleType = memberInfo.getAisleType();
 			if(aisleType==null||"".equals(aisleType)){
 				PayRouteExample payRouteExample=new PayRouteExample();
-				payRouteExample.createCriteria().andRouteCodeEqualTo("ESK").andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
+				payRouteExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.ESK_ROUTE_CODE).andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
 				List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
 				if(list!=null&&list.size()>0){
 					aisleType = list.get(0).getAisleType();
@@ -602,7 +620,7 @@ public class DebitNoteController {
 				}
 			}
 			JSONObject reqData = new JSONObject();
-			reqData.put("merchantCode", memberInfo.getWxMerchantCode());
+			reqData.put("merchantCode", merchantCode.getWxMerchantCode());
 			reqData.put("orderNumber", orderCode);
 			reqData.put("tranCode", tranCode);
 			reqData.put("userId", userId);
@@ -634,6 +652,215 @@ public class DebitNoteController {
 			
 			nvps.add(new BasicNameValuePair("signData", signData));
 			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("返回报文[{}]", new Object[] { respStr });
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			String resEncryptData = jsonObject.getString("Context");
+			String resEncryptKey = jsonObject.getString("encrtpKey");
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+					
+
+			// 使用base64解码商户请求报文
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("返回报文[{}]",  respJSONObject );
+			
+			resData.put("orderCode", orderCode);
+			if("S".equals(respJSONObject.getString("respType"))&&"000000".equals(respJSONObject.getString("respCode"))){
+				if(respJSONObject.containsKey("wx_json")&&!"_WX_Pay_FAILED_".equals(respJSONObject.getString("wx_json"))){
+					JSONObject wxjsapiStr=respJSONObject.getJSONObject("wx_json");
+					wxjsapiStr.put("package_str", wxjsapiStr.getString("package"));
+					resData.put("wxjsapiStr", wxjsapiStr);
+					result.put("resData", resData);
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "成功");
+					
+				}else{
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "获取微信信息失败");
+				}
+			}else{
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "调用微信支付接口返回失败("+respJSONObject.getString("respMsg")+")");
+			}
+		/*	if (respJSONObject.containsKey("resEntity")) {
+				JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
+				if (resEntity.containsKey("wxjsapiStr")) {
+					JSONObject wxjsapiStr=resEntity.getJSONObject("wxjsapiStr");
+					wxjsapiStr.put("package_str", wxjsapiStr.getString("package"));
+					resData.put("wxjsapiStr", wxjsapiStr);
+					result.put("resData", resData);
+				}
+			}*/
+
+		} catch (ArgException e) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", e.getMessage());
+			logger.info(e.getMessage());
+			return result;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		return result;
+	}
+	
+	/**
+	 * 先锋微信支付
+	 * 
+	 * @param request
+	 * @return
+	 */
+
+	public JSONObject xfWxPay(JSONObject reqDataJson, HttpServletRequest request) {
+		JSONObject result = new JSONObject();
+		JSONObject resData = new JSONObject();
+		try {
+			String money = reqDataJson.getString("money");
+			String epayCode = reqDataJson.getString("epayCode");
+			String remark = reqDataJson.getString("remark");
+//			 String userId = "2088502362301099";
+			String userId = reqDataJson.getString("userId");
+			if ("".equals(money)) {
+				throw new ArgException("请输入正确的金额");
+			}
+
+			if ("".equals(epayCode)) {
+				throw new ArgException("收款码出错");
+			}
+			
+			if(StringUtils.isNotEmpty(remark)){
+				if(remark.length() > 20){
+					throw new ArgException("备注信息超出限制");
+				}
+			}
+
+			EpayCodeExample epayCodeExample = new EpayCodeExample();
+			epayCodeExample.createCriteria().andPayCodeEqualTo(epayCode).andDelFlagEqualTo("0");
+			List<EpayCode> epayCodes = epayCodeService.selectByExample(epayCodeExample);
+			if (epayCodes == null || epayCodes.size() == 0) {
+				throw new ArgException("收款码不存在");
+			}
+
+			EpayCode payCode = epayCodes.get(0);
+			if(!"5".equals(payCode.getStatus()) && !"7".equals(payCode.getStatus())){
+				throw new ArgException("对不起,收款码不可用，如有疑问请与管理员联系");
+			}
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(payCode.getMemberId());
+			
+			if (memberInfo == null) {
+				throw new ArgException("商家不存在");
+			}
+			if(!"0".equals(memberInfo.getDelFlag())){
+				throw new ArgException("商家不存在");
+			}
+			if(!"0".equals(memberInfo.getStatus())){
+				if("4".equals(memberInfo.getStatus())){
+					throw new ArgException("该商户未进行认证，暂时无法交易");
+				}
+				throw new ArgException("商家停用，暂不可交易");
+			}
+			AccountExample accountExample = new AccountExample();
+			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+			List<Account> accounts = accountService.selectByExample(accountExample);
+			if (accounts == null || accounts.size() != 1) {
+				throw new ArgException("会员账户不存在");
+			}
+			JSONObject checkResult = checkPayLimit(memberInfo.getId(), new BigDecimal(money), memberInfo.getSingleLimit(), memberInfo.getDayLimit());
+			if(null != checkResult){
+				return checkResult;
+			}
+			// 插入一条收款记录
+			String orderCode = CommonUtil.getOrderCode();
+			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(money));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setRouteId(RouteCodeConstant.XF_ROUTE_CODE);
+			debitNote.setStatus("0");
+			debitNote.setTxnType("1");
+			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setMerchantCode(memberInfo.getWxMerchantCode());
+			debitNote.setSettleType(memberInfo.getSettleType());
+			debitNote.setRemarks(remark);
+			debitNoteService.insertSelective(debitNote);
+			// String callBack = "http://" + request.getServerName() + ":" +
+			// request.getServerPort() + request.getContextPath()+
+			// "/debitNote/msNotify";
+			String callBack = SysConfig.serverUrl + "/debitNote/xfPayNotify";
+			
+			String returnUrl = "";
+			
+			// 调用支付通道
+			String serverUrl = XFConfig.msServerUrl;
+			//PublicKey yhPubKey = null;
+			//yhPubKey = CryptoUtil.getEskRSAPublicKey();
+			//yhPubKey = CryptoUtil.getRSAPublicKey(false);
+			//PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			String tranCode = "JH_GZH_PAY";
+			String charset = "utf-8";
+			String secId = "RSA";
+			String version = "4.0.0";
+			String merchantId = "";
+			String reqSn = "";//先忽略  by linxf
+			
+			JSONObject data = new JSONObject();
+			
+			data.put("amount", (int)((new BigDecimal(money)).floatValue()*100));
+			data.put("outOrderId", orderCode);
+			data.put("productName", memberInfo.getName() + " 收款");
+			data.put("noticeUrl", callBack);
+			data.put("returnUrl", returnUrl);
+			data.put("isLimitCreditPay", "0");//是否支持信用卡 0 无限制（信用卡，借记卡） 1 不支持信用卡
+			data.put("payType", "WXPAY");
+			data.put("bizType", "200");
+			data.put("subMerchantId", memberInfo.getWxMerchantCode());
+			data.put("subMerchantName", memberInfo.getName());
+			data.put("methodVersion", "1.0");
+			data.put("merchantType", "OUT");
+			data.put("appId", XFConfig.subAppid);
+			data.put("openId", userId);
+			data.put("transCur", "156");//人民币：156
+			
+			System.out.println("待加密业务数据: "+data);
+			
+			String plainXML = data.toString();
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = MSCommonUtil.generateLenString(16);
+			byte[] keyBytes = keyStr.getBytes(charset);
+			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("service", tranCode);
+			reqData.put("secId", secId);
+			reqData.put("version", version);
+			reqData.put("reqSn", reqSn);
+			reqData.put("merchantId", merchantId);
+			reqData.put("data", encryptData);
+			System.out.println("待加密数据: "+reqData.toString());
+			//String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+			String signData = "";
+			
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("service", tranCode));
+			nvps.add(new BasicNameValuePair("secId", secId));
+			nvps.add(new BasicNameValuePair("version", version));
+			nvps.add(new BasicNameValuePair("reqSn", reqSn));
+			nvps.add(new BasicNameValuePair("merchantId", merchantId));
+			nvps.add(new BasicNameValuePair("data", encryptData));
+			nvps.add(new BasicNameValuePair("sign", signData));
 			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
 			String respStr = new String(b, charset);
 			logger.info("返回报文[{}]", new Object[] { respStr });
@@ -2130,7 +2357,8 @@ public class DebitNoteController {
 			DebitNote debitNote=debitNotes.get(0);
 			
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(debitNote.getMemberId());
-			if(!"ESK".equals(SysConfig.passCode)){
+			String routeCode = getRouteCode();
+			if(!RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
 				if (serverUrl.startsWith("https://ipay")) {
@@ -3254,7 +3482,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	public void testNotice(HttpServletRequest request,HttpServletResponse response){
 		try {
 			PayRouteExample payRouteExample=new PayRouteExample();
-			payRouteExample.createCriteria().andRouteCodeEqualTo("ESK").andTranCodeEqualTo("003").andDelFlagEqualTo("1");
+			payRouteExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.ESK_ROUTE_CODE).andTranCodeEqualTo("003").andDelFlagEqualTo("1");
 			List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
 			System.out.println(list.size());
 			
