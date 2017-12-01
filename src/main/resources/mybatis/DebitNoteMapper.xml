@@ -8,6 +8,7 @@
     <result column="member_code" jdbcType="VARCHAR" property="memberCode" />
     <result column="merchant_code" jdbcType="VARCHAR" property="merchantCode" />
     <result column="order_code" jdbcType="VARCHAR" property="orderCode" />
+    <result column="order_num_outer" jdbcType="VARCHAR" property="orderNumOuter" />
     <result column="settle_type" jdbcType="CHAR" property="settleType" />
     <result column="txn_type" jdbcType="CHAR" property="txnType" />
     <result column="trade_rate" property="tradeRate" jdbcType="DECIMAL" />
@@ -80,7 +81,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, money, member_id, member_code, merchant_code, order_code, settle_type, txn_type, trade_rate,
+    id, money, member_id, member_code, merchant_code, order_code, order_num_outer,settle_type, txn_type, trade_rate,
     status, route_id, resp_code, resp_msg, create_by, create_date, update_by, update_date, 
     remarks
   </sql>
@@ -122,13 +123,13 @@
       SELECT LAST_INSERT_ID() 
     </selectKey>
     insert into bu_debit_note (money, member_id, member_code, 
-      merchant_code, order_code, settle_type, 
+      merchant_code, order_code,order_num_outer, settle_type, 
       txn_type, trade_rate,status, route_id, 
       resp_code, resp_msg, create_by, 
       create_date, update_by, update_date, 
       remarks)
     values (#{money,jdbcType=DECIMAL}, #{memberId,jdbcType=INTEGER}, #{memberCode,jdbcType=VARCHAR}, 
-      #{merchantCode,jdbcType=VARCHAR}, #{orderCode,jdbcType=VARCHAR}, #{settleType,jdbcType=CHAR}, 
+      #{merchantCode,jdbcType=VARCHAR}, #{orderCode,jdbcType=VARCHAR},#{orderNumOuter,jdbcType=VARCHAR}, #{settleType,jdbcType=CHAR}, 
       #{txnType,jdbcType=CHAR}, #{tradeRate,jdbcType=DECIMAL},#{status,jdbcType=CHAR}, #{routeId,jdbcType=VARCHAR}, 
       #{respCode,jdbcType=VARCHAR}, #{respMsg,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, 
       #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
@@ -154,6 +155,9 @@
       </if>
       <if test="orderCode != null">
         order_code,
+      </if>
+      <if test="orderNumOuter != null">
+        order_num_outer,
       </if>
       <if test="settleType != null">
         settle_type,
@@ -207,6 +211,9 @@
       </if>
       <if test="orderCode != null">
         #{orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNumOuter != null">
+       #{orderNumOuter,jdbcType=VARCHAR},
       </if>
       <if test="settleType != null">
         #{settleType,jdbcType=CHAR},
@@ -272,6 +279,9 @@
       </if>
       <if test="record.orderCode != null">
         order_code = #{record.orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderNumOuter != null">
+        order_num_outer = #{record.orderNumOuter,jdbcType=VARCHAR},
       </if>
       <if test="record.settleType != null">
         settle_type = #{record.settleType,jdbcType=CHAR},

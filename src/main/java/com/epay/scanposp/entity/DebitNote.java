@@ -15,6 +15,8 @@ public class DebitNote {
     private String merchantCode;
 
     private String orderCode;
+    
+    private String orderNumOuter;
 
     private String settleType;
 
@@ -182,6 +184,14 @@ public class DebitNote {
 
 	public void setTradeRate(BigDecimal tradeRate) {
 		this.tradeRate = tradeRate;
+	}
+
+	public String getOrderNumOuter() {
+		return orderNumOuter;
+	}
+
+	public void setOrderNumOuter(String orderNumOuter) {
+		this.orderNumOuter = orderNumOuter;
 	}
     
     

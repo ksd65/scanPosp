@@ -515,7 +515,79 @@ public class DebitNoteExample {
             addCriterion("order_code not between", value1, value2, "orderCode");
             return (Criteria) this;
         }
+        
+        
+        
+        public Criteria andOrderNumOuterIsNull() {
+            addCriterion("order_num_outer is null");
+            return (Criteria) this;
+        }
 
+        public Criteria andOrderNumOuterIsNotNull() {
+            addCriterion("order_num_outer is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterEqualTo(String value) {
+            addCriterion("order_num_outer =", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterNotEqualTo(String value) {
+            addCriterion("order_num_outer <>", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterGreaterThan(String value) {
+            addCriterion("order_num_outer >", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterGreaterThanOrEqualTo(String value) {
+            addCriterion("order_num_outer >=", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterLessThan(String value) {
+            addCriterion("order_num_outer <", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterLessThanOrEqualTo(String value) {
+            addCriterion("order_num_outer <=", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterLike(String value) {
+            addCriterion("order_num_outer like", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterNotLike(String value) {
+            addCriterion("order_num_outer not like", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterIn(List<String> values) {
+            addCriterion("order_num_outer in", values, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterNotIn(List<String> values) {
+            addCriterion("order_num_outer not in", values, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterBetween(String value1, String value2) {
+            addCriterion("order_num_outer between", value1, value2, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterNotBetween(String value1, String value2) {
+            addCriterion("order_num_outer not between", value1, value2, "orderNumOuter");
+            return (Criteria) this;
+        }
+        
         public Criteria andSettleTypeIsNull() {
             addCriterion("settle_type is null");
             return (Criteria) this;
