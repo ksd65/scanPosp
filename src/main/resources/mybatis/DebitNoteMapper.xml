@@ -10,6 +10,7 @@
     <result column="order_code" jdbcType="VARCHAR" property="orderCode" />
     <result column="settle_type" jdbcType="CHAR" property="settleType" />
     <result column="txn_type" jdbcType="CHAR" property="txnType" />
+    <result column="trade_rate" property="tradeRate" jdbcType="DECIMAL" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="route_id" jdbcType="VARCHAR" property="routeId" />
     <result column="resp_code" jdbcType="VARCHAR" property="respCode" />
@@ -79,7 +80,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, money, member_id, member_code, merchant_code, order_code, settle_type, txn_type, 
+    id, money, member_id, member_code, merchant_code, order_code, settle_type, txn_type, trade_rate,
     status, route_id, resp_code, resp_msg, create_by, create_date, update_by, update_date, 
     remarks
   </sql>
@@ -122,13 +123,13 @@
     </selectKey>
     insert into bu_debit_note (money, member_id, member_code, 
       merchant_code, order_code, settle_type, 
-      txn_type, status, route_id, 
+      txn_type, trade_rate,status, route_id, 
       resp_code, resp_msg, create_by, 
       create_date, update_by, update_date, 
       remarks)
     values (#{money,jdbcType=DECIMAL}, #{memberId,jdbcType=INTEGER}, #{memberCode,jdbcType=VARCHAR}, 
       #{merchantCode,jdbcType=VARCHAR}, #{orderCode,jdbcType=VARCHAR}, #{settleType,jdbcType=CHAR}, 
-      #{txnType,jdbcType=CHAR}, #{status,jdbcType=CHAR}, #{routeId,jdbcType=VARCHAR}, 
+      #{txnType,jdbcType=CHAR}, #{tradeRate,jdbcType=DECIMAL},#{status,jdbcType=CHAR}, #{routeId,jdbcType=VARCHAR}, 
       #{respCode,jdbcType=VARCHAR}, #{respMsg,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, 
       #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
       #{remarks,jdbcType=VARCHAR})
@@ -159,6 +160,9 @@
       </if>
       <if test="txnType != null">
         txn_type,
+      </if>
+      <if test="tradeRate != null">
+        trade_rate,
       </if>
       <if test="status != null">
         status,
@@ -209,6 +213,9 @@
       </if>
       <if test="txnType != null">
         #{txnType,jdbcType=CHAR},
+      </if>
+      <if test="tradeRate != null">
+        #{tradeRate,jdbcType=CHAR},
       </if>
       <if test="status != null">
         #{status,jdbcType=CHAR},

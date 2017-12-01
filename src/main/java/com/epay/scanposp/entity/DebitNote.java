@@ -19,6 +19,8 @@ public class DebitNote {
     private String settleType;
 
     private String txnType;
+    
+    private BigDecimal tradeRate;
 
     private String status;
 
@@ -173,4 +175,15 @@ public class DebitNote {
     public void setRemarks(String remarks) {
         this.remarks = remarks == null ? null : remarks.trim();
     }
+
+	public BigDecimal getTradeRate() {
+		return tradeRate;
+	}
+
+	public void setTradeRate(BigDecimal tradeRate) {
+		this.tradeRate = tradeRate;
+	}
+    
+    
+    
 }

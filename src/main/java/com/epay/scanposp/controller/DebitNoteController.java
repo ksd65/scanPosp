@@ -594,6 +594,11 @@ public class DebitNoteController {
 			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
 			debitNote.setSettleType(memberInfo.getSettleType());
 			debitNote.setRemarks(remark);
+			if("0".equals(memberInfo.getSettleType())){
+				debitNote.setTradeRate(memberInfo.getT0TradeRate());
+			}else{
+				debitNote.setTradeRate(memberInfo.getT1TradeRate());
+			}
 			debitNoteService.insertSelective(debitNote);
 			// String callBack = "http://" + request.getServerName() + ":" +
 			// request.getServerPort() + request.getContextPath()+
@@ -1867,6 +1872,7 @@ public class DebitNoteController {
 					tradeDetail.setRespMsg(respJSONObject.get("respMsg").toString());
 					tradeDetail.setRouteId(debitNote.getRouteId());
 					tradeDetail.setTxnType(debitNote.getTxnType());
+					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
 					tradeDetail.setDelFlag("0");
 					tradeDetail.setCreateDate(new Date());
 					if ("S".equals(respJSONObject.get("respType")) && "000000".equals(respJSONObject.get("respCode"))) {
@@ -1913,12 +1919,12 @@ public class DebitNoteController {
 					
 					/**不发起提现时操作*/
 					if ("S".equals(respJSONObject.get("respType")) && "000000".equals(respJSONObject.get("respCode"))) {
-//						if("0".equals(debitNote.getSettleType())){
-//							tradeDetail.setSettleType("0");
-//						}else{
-//							tradeDetail.setSettleType("1");
-//						}
-						tradeDetail.setSettleType("1");
+						if("0".equals(debitNote.getSettleType())){
+							tradeDetail.setSettleType("0");
+						}else{
+							tradeDetail.setSettleType("1");
+						}
+		//				tradeDetail.setSettleType("1");
 						
 					}
 					
