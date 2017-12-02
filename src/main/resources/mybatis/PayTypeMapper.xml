@@ -3,6 +3,8 @@
 <mapper namespace="com.epay.scanposp.dao.PayTypeMapper">
   <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.PayType">
     <id column="pay_type_id" jdbcType="INTEGER" property="payTypeId" />
+    <result column="member_id" jdbcType="INTEGER" property="memberId" />
+    <result column="pay_method" jdbcType="VARCHAR" property="payMethod" />
     <result column="route_code" jdbcType="VARCHAR" property="routeCode" />
     <result column="pay_type" jdbcType="VARCHAR" property="payType" />
     <result column="aisle_type" jdbcType="VARCHAR" property="aisleType" />
@@ -71,7 +73,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    pay_type_id, route_code,pay_type, aisle_type, 
+    pay_type_id,member_id,pay_method,route_code,pay_type, aisle_type, 
     create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.PayTypeExample" resultMap="BaseResultMap">

@@ -1727,30 +1727,27 @@ public class MemberInfoController {
 			if(memberList == null || memberList.size()!=1){
 				throw new ArgException("商户不存在！");
 			}
-			String tranCode = reqDataJson.getString("tranCode");
+			String payMethod = reqDataJson.getString("payMethod");
 			MemberInfo memberInfo = memberList.get(0);
-			String aisleType = memberInfo.getAisleType();
-			String routeCode = getRouteCode();
-			if(aisleType==null||"".equals(aisleType)){
-				PayRouteExample payRouteExample=new PayRouteExample();
-				payRouteExample.createCriteria().andRouteCodeEqualTo(routeCode).andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
-				List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
-				if(list!=null&&list.size()>0){
-					aisleType = list.get(0).getAisleType();
-				}
-				if(aisleType==null||"".equals(aisleType)){
-					aisleType = "1";
-				}
-			}
+			
 			PayTypeExample payTypeExample = new PayTypeExample();
-			payTypeExample.createCriteria().andRouteCodeEqualTo(routeCode).andAisleTypeEqualTo(aisleType).andDelFlagEqualTo("0");
+			payTypeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(payMethod).andDelFlagEqualTo("0");
 			List<PayType> payTypeList = payTypeService.selectByExample(payTypeExample);
+			if(payTypeList == null || payTypeList.size() == 0){
+				payTypeExample = new PayTypeExample();
+				payTypeExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andDelFlagEqualTo("0");
+				payTypeList = payTypeService.selectByExample(payTypeExample);
+				
+			}
 			String typeStr = "";
-			if(payTypeList!=null&&payTypeList.size()>0){
-				for(int i=0;i<payTypeList.size();i++){
-					typeStr += payTypeList.get(i).getPayType()+"#";
+			if(payTypeList != null && payTypeList.size() > 0){
+				if(payTypeList!=null&&payTypeList.size()>0){
+					for(int i=0;i<payTypeList.size();i++){
+						typeStr += payTypeList.get(i).getPayType()+"#";
+					}
 				}
 			}
+			
 			resData.put("payTypeList", typeStr);
 			
 			result.put("resData", resData);

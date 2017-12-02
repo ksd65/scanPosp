@@ -15,19 +15,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.epay.scanposp.common.excep.ArgException;
-import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.entity.Bank;
 import com.epay.scanposp.entity.BankExample;
 import com.epay.scanposp.entity.BankName;
+import com.epay.scanposp.entity.BankNameExample;
 import com.epay.scanposp.entity.BankSub;
 import com.epay.scanposp.entity.BankSubExample;
 import com.epay.scanposp.entity.BankSubExample.Criteria;
-import com.epay.scanposp.entity.BankNameExample;
 import com.epay.scanposp.entity.BuAreaCode;
 import com.epay.scanposp.entity.BuAreaCodeExample;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberOpenid;
 import com.epay.scanposp.entity.MemberOpenidExample;
+import com.epay.scanposp.entity.PayType;
+import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.SysArea;
 import com.epay.scanposp.entity.SysAreaExample;
 import com.epay.scanposp.entity.SysCommonConfig;
@@ -38,6 +39,7 @@ import com.epay.scanposp.service.BankSubService;
 import com.epay.scanposp.service.BuAreaCodeService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberOpenidService;
+import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.SysAraeService;
 import com.epay.scanposp.service.SysCommonConfigService;
 
@@ -63,6 +65,9 @@ public class CommomServiceController {
 	
 	@Autowired
 	private SysCommonConfigService sysCommonConfigService;
+	
+	@Autowired
+	private PayTypeService payTypeService;
 	
 	@ResponseBody
 	@RequestMapping("/getAddrAreaList")
@@ -270,6 +275,41 @@ public class CommomServiceController {
 			return result.toString();
 		}
 	}
-	
+	@ResponseBody
+	@RequestMapping("/getRouteCode")
+	public String getRouteCode(Model model, HttpServletRequest request){
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result=new JSONObject();
+		try {
+			String payMethod = reqDataJson.getString("payMethod");
+			String payType = reqDataJson.getString("payType");
+			Integer memberId = reqDataJson.getInt("memberId");
+			String value = "";
+			PayTypeExample payTypeExample = new PayTypeExample();
+			payTypeExample.createCriteria().andMemberIdEqualTo(memberId).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
+			List<PayType> payTypeList = payTypeService.selectByExample(payTypeExample);
+			if(payTypeList == null || payTypeList.size() == 0){
+				payTypeExample = new PayTypeExample();
+				payTypeExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
+				payTypeList = payTypeService.selectByExample(payTypeExample);
+				
+			}
+			if(payTypeList != null && payTypeList.size() > 0){
+				value = payTypeList.get(0).getRouteCode();
+			}
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "获取系统配置成功");
+			result.put("resData", value);
+			System.out.println(result);
+			return result.toString();
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result.toString();
+		}
+	}
 	
 }

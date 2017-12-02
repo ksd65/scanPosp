@@ -49,9 +49,9 @@ import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
 import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
+import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.SequenseTypeConstant;
-import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.common.utils.constant.TranCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.esk.Key;
@@ -85,8 +85,8 @@ import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
-import com.epay.scanposp.entity.PayRoute;
-import com.epay.scanposp.entity.PayRouteExample;
+import com.epay.scanposp.entity.PayType;
+import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.RegisterTmp;
 import com.epay.scanposp.entity.RouteWay;
 import com.epay.scanposp.entity.RouteWayExample;
@@ -95,8 +95,6 @@ import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.StTradeDetail;
 import com.epay.scanposp.entity.StTradeDetailAll;
 import com.epay.scanposp.entity.StTradeDetailExample;
-import com.epay.scanposp.entity.SysCommonConfig;
-import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
@@ -118,6 +116,7 @@ import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayRouteService;
+import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RegisterTmpService;
 import com.epay.scanposp.service.RouteWayService;
 import com.epay.scanposp.service.RoutewayDrawService;
@@ -214,6 +213,9 @@ public class CashierDeskController {
 	
 	@Autowired
 	private MemberMerchantCodeService memberMerchantCodeService;
+	
+	@Autowired
+	private PayTypeService payTypeService;
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/getQrcodePay")
@@ -944,10 +946,22 @@ public class CashierDeskController {
 			result.put("returnMsg", "对不起，该商户暂不可用");
 			return result;
 		}
+		String payTypeStr = "";
+		if("1".equals(payType)){
+			payTypeStr = "WX";
+		}else if("2".equals(payType)){
+			payTypeStr = "ZFB";
+		}
 		
-		String routeCode = getRouteCode();
+		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_SMZF,payTypeStr);
+		String routeCode = rtMap.get("routeCode");
+		String aisleType = rtMap.get("aisleType");
 		MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
-		memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+		if(aisleType !=null &&!"".equals(aisleType)){
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andAisleTypeEqualTo(aisleType).andDelFlagEqualTo("0");
+		}else{
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+		}
 		List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
 		if (merchantCodes == null || merchantCodes.size() != 1) {
 			result.put("returnCode", "0008");
@@ -993,7 +1007,7 @@ public class CashierDeskController {
 		*/
 		
 		if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
-			result = eskScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode);
+			result = eskScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,aisleType);
 		}else{
 			result = msScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl);
 		}
@@ -1191,7 +1205,7 @@ public class CashierDeskController {
 	 * @param request
 	 * @return
 	 */
-	public JSONObject eskScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode) {
+	public JSONObject eskScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String aisleType) {
 		JSONObject result = new JSONObject();
 		JSONObject resData = new JSONObject();
 		try {
@@ -1229,9 +1243,9 @@ public class CashierDeskController {
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				debitNote.setTradeRate(memberInfo.getT0TradeRate());
+				debitNote.setTradeRate(merchantCode.getT0TradeRate());
 			}else{
-				debitNote.setTradeRate(memberInfo.getT1TradeRate());
+				debitNote.setTradeRate(merchantCode.getT1TradeRate());
 			}
 			
 			debitNoteService.insertSelective(debitNote);
@@ -1274,7 +1288,6 @@ public class CashierDeskController {
 			
 			String serverUrl = ESKConfig.msServerUrl;
 			
-			PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
 			String tranCode = "001";
 //			String tranCode = "SMZF002";
 			String charset = "utf-8";
@@ -1295,18 +1308,7 @@ public class CashierDeskController {
 				reqData.put("merchantCode", merchantCode.getJdMerchantCode());
 			}
 			
-			String aisleType = memberInfo.getAisleType();
-			if(aisleType==null||"".equals(aisleType)){
-				PayRouteExample payRouteExample=new PayRouteExample();
-				payRouteExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.ESK_ROUTE_CODE).andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
-				List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
-				if(list!=null&&list.size()>0){
-					aisleType = list.get(0).getAisleType();
-				}
-				if(aisleType==null||"".equals(aisleType)){
-					aisleType = "1";
-				}
-			}
+			
 			reqData.put("scene", "1");
 			reqData.put("tranCode", tranCode);
 			reqData.put("totalAmount", payMoney);
@@ -3840,15 +3842,26 @@ public class CashierDeskController {
 		
 	}
 	
-	private String getRouteCode(){
+	private Map<String,String> getRouteCodeAndAisleType(Integer memberId,String payMethod, String payType  ){
+		Map<String,String> map = new HashMap<String, String>();
 		String routeCode = SysConfig.passCode;
-		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
-		sysCommonConfigExample.or().andNameEqualTo(SysCommonConfigConstant.SYS_ROUTE_CODE).andDelFlagEqualTo("0");
-		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
-		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
-			routeCode = sysCommonConfig.get(0).getValue();
+		String aisleType = "";
+		PayTypeExample payTypeExample = new PayTypeExample();
+		payTypeExample.createCriteria().andMemberIdEqualTo(memberId).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
+		List<PayType> payTypeList = payTypeService.selectByExample(payTypeExample);
+		if(payTypeList == null || payTypeList.size() == 0){
+			payTypeExample = new PayTypeExample();
+			payTypeExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
+			payTypeList = payTypeService.selectByExample(payTypeExample);
+			
 		}
-		return routeCode;
+		if(payTypeList != null && payTypeList.size() > 0){
+			routeCode = payTypeList.get(0).getRouteCode();
+			aisleType = payTypeList.get(0).getAisleType();
+		}
+		map.put("routeCode", routeCode);
+		map.put("aisleType", aisleType);
+		return map;
 	}
 	
 	

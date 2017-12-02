@@ -42,8 +42,8 @@ import com.epay.scanposp.common.utils.JsonBeanReleaseUtil;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
 import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
+import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
-import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.common.utils.constant.TranCodeConstant;
 import com.epay.scanposp.common.utils.esk.Key;
 import com.epay.scanposp.common.utils.ms.CryptoUtil;
@@ -66,10 +66,10 @@ import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayRoute;
 import com.epay.scanposp.entity.PayRouteExample;
+import com.epay.scanposp.entity.PayType;
+import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
-import com.epay.scanposp.entity.SysCommonConfig;
-import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
@@ -86,6 +86,7 @@ import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.MsbillService;
 import com.epay.scanposp.service.PayRouteService;
+import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeConfigOemService;
@@ -151,6 +152,9 @@ public class DebitNoteController {
 	@Autowired
 	private MemberMerchantCodeService memberMerchantCodeService;
 	
+	@Autowired
+	private PayTypeService payTypeService;
+	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
 	public JSONObject pay(HttpServletRequest request) {
@@ -163,12 +167,57 @@ public class DebitNoteController {
 			result = msWxScanQrcodePay(reqDataJson, request);
 		}
 		*/
-		String routeCode = getRouteCode();
+		
+		String epayCode = reqDataJson.getString("epayCode");
+		if ("".equals(epayCode)) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "收款码出错");
+			return result;
+		}
+		EpayCodeExample epayCodeExample = new EpayCodeExample();
+		epayCodeExample.createCriteria().andPayCodeEqualTo(epayCode).andDelFlagEqualTo("0");
+		List<EpayCode> epayCodes = epayCodeService.selectByExample(epayCodeExample);
+		if (epayCodes == null || epayCodes.size() == 0) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "收款码不存在");
+			return result;
+		}
+		EpayCode payCode = epayCodes.get(0);
+		if(!"5".equals(payCode.getStatus()) && !"7".equals(payCode.getStatus())){
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "对不起,收款码不可用，如有疑问请与管理员联系");
+			return result;
+		}
+		MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(payCode.getMemberId());
+		
+		if (memberInfo == null) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "商家不存在");
+			return result;
+		}
+		if(!"0".equals(memberInfo.getDelFlag())){
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "商家不存在");
+			return result;
+		}
+		if(!"0".equals(memberInfo.getStatus())){
+			if("4".equals(memberInfo.getStatus())){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "该商户未进行认证，暂时无法交易");
+				return result;
+			}
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "商家停用，暂不可交易");
+			return result;
+		}
+		
 		if ("micromessenger".equals(appClientType)) {// 微信公众号支付
+			Map<String,String> rtMap = 	getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_GZHZF,PayTypeConstant.PAY_TYPE_WX);
+			String routeCode = rtMap.get("routeCode");
 			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
-				result = eskWxPay(reqDataJson, request);
+				result = eskWxPay(reqDataJson, request, memberInfo, rtMap.get("aisleType"));
 			}else if(RouteCodeConstant.XF_ROUTE_CODE.equals(routeCode)){
-				result = xfWxPay(reqDataJson, request);
+				result = xfWxPay(reqDataJson, request, memberInfo);
 			}else{
 				result = msWxPay(reqDataJson, request);
 			}
@@ -511,12 +560,11 @@ public class DebitNoteController {
 	 * @return
 	 */
 
-	public JSONObject eskWxPay(JSONObject reqDataJson, HttpServletRequest request) {
+	public JSONObject eskWxPay(JSONObject reqDataJson, HttpServletRequest request, MemberInfo memberInfo, String aisleType) {
 		JSONObject result = new JSONObject();
 		JSONObject resData = new JSONObject();
 		try {
 			String money = reqDataJson.getString("money");
-			String epayCode = reqDataJson.getString("epayCode");
 			String remark = reqDataJson.getString("remark");
 //			 String userId = "2088502362301099";
 			String userId = reqDataJson.getString("userId");
@@ -524,41 +572,12 @@ public class DebitNoteController {
 				throw new ArgException("请输入正确的金额");
 			}
 
-			if ("".equals(epayCode)) {
-				throw new ArgException("收款码出错");
-			}
-			
 			if(StringUtils.isNotEmpty(remark)){
 				if(remark.length() > 20){
 					throw new ArgException("备注信息超出限制");
 				}
 			}
 
-			EpayCodeExample epayCodeExample = new EpayCodeExample();
-			epayCodeExample.createCriteria().andPayCodeEqualTo(epayCode).andDelFlagEqualTo("0");
-			List<EpayCode> epayCodes = epayCodeService.selectByExample(epayCodeExample);
-			if (epayCodes == null || epayCodes.size() == 0) {
-				throw new ArgException("收款码不存在");
-			}
-
-			EpayCode payCode = epayCodes.get(0);
-			if(!"5".equals(payCode.getStatus()) && !"7".equals(payCode.getStatus())){
-				throw new ArgException("对不起,收款码不可用，如有疑问请与管理员联系");
-			}
-			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(payCode.getMemberId());
-			
-			if (memberInfo == null) {
-				throw new ArgException("商家不存在");
-			}
-			if(!"0".equals(memberInfo.getDelFlag())){
-				throw new ArgException("商家不存在");
-			}
-			if(!"0".equals(memberInfo.getStatus())){
-				if("4".equals(memberInfo.getStatus())){
-					throw new ArgException("该商户未进行认证，暂时无法交易");
-				}
-				throw new ArgException("商家停用，暂不可交易");
-			}
 			AccountExample accountExample = new AccountExample();
 			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
 			List<Account> accounts = accountService.selectByExample(accountExample);
@@ -571,7 +590,7 @@ public class DebitNoteController {
 			}
 			
 			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
-			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(RouteCodeConstant.ESK_ROUTE_CODE).andDelFlagEqualTo("0");
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(RouteCodeConstant.ESK_ROUTE_CODE).andAisleTypeEqualTo(aisleType).andDelFlagEqualTo("0");
 			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
 			if (merchantCodes == null || merchantCodes.size() != 1) {
 				throw new ArgException("商户编码不存在");
@@ -595,9 +614,9 @@ public class DebitNoteController {
 			debitNote.setSettleType(memberInfo.getSettleType());
 			debitNote.setRemarks(remark);
 			if("0".equals(memberInfo.getSettleType())){
-				debitNote.setTradeRate(memberInfo.getT0TradeRate());
+				debitNote.setTradeRate(merchantCode.getT0TradeRate());
 			}else{
-				debitNote.setTradeRate(memberInfo.getT1TradeRate());
+				debitNote.setTradeRate(merchantCode.getT1TradeRate());
 			}
 			debitNoteService.insertSelective(debitNote);
 			// String callBack = "http://" + request.getServerName() + ":" +
@@ -612,18 +631,7 @@ public class DebitNoteController {
 			//PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
 			String tranCode = "003";
 			String charset = "utf-8";
-			String aisleType = memberInfo.getAisleType();
-			if(aisleType==null||"".equals(aisleType)){
-				PayRouteExample payRouteExample=new PayRouteExample();
-				payRouteExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.ESK_ROUTE_CODE).andTranCodeEqualTo(tranCode).andDelFlagEqualTo("0");
-				List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
-				if(list!=null&&list.size()>0){
-					aisleType = list.get(0).getAisleType();
-				}
-				if(aisleType==null||"".equals(aisleType)){
-					aisleType = "1";
-				}
-			}
+			
 			JSONObject reqData = new JSONObject();
 			reqData.put("merchantCode", merchantCode.getWxMerchantCode());
 			reqData.put("orderNumber", orderCode);
@@ -727,12 +735,11 @@ public class DebitNoteController {
 	 * @return
 	 */
 
-	public JSONObject xfWxPay(JSONObject reqDataJson, HttpServletRequest request) {
+	public JSONObject xfWxPay(JSONObject reqDataJson, HttpServletRequest request,MemberInfo memberInfo) {
 		JSONObject result = new JSONObject();
 		JSONObject resData = new JSONObject();
 		try {
 			String money = reqDataJson.getString("money");
-			String epayCode = reqDataJson.getString("epayCode");
 			String remark = reqDataJson.getString("remark");
 //			 String userId = "2088502362301099";
 			String userId = reqDataJson.getString("userId");
@@ -740,9 +747,6 @@ public class DebitNoteController {
 				throw new ArgException("请输入正确的金额");
 			}
 
-			if ("".equals(epayCode)) {
-				throw new ArgException("收款码出错");
-			}
 			
 			if(StringUtils.isNotEmpty(remark)){
 				if(remark.length() > 20){
@@ -750,31 +754,6 @@ public class DebitNoteController {
 				}
 			}
 
-			EpayCodeExample epayCodeExample = new EpayCodeExample();
-			epayCodeExample.createCriteria().andPayCodeEqualTo(epayCode).andDelFlagEqualTo("0");
-			List<EpayCode> epayCodes = epayCodeService.selectByExample(epayCodeExample);
-			if (epayCodes == null || epayCodes.size() == 0) {
-				throw new ArgException("收款码不存在");
-			}
-
-			EpayCode payCode = epayCodes.get(0);
-			if(!"5".equals(payCode.getStatus()) && !"7".equals(payCode.getStatus())){
-				throw new ArgException("对不起,收款码不可用，如有疑问请与管理员联系");
-			}
-			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(payCode.getMemberId());
-			
-			if (memberInfo == null) {
-				throw new ArgException("商家不存在");
-			}
-			if(!"0".equals(memberInfo.getDelFlag())){
-				throw new ArgException("商家不存在");
-			}
-			if(!"0".equals(memberInfo.getStatus())){
-				if("4".equals(memberInfo.getStatus())){
-					throw new ArgException("该商户未进行认证，暂时无法交易");
-				}
-				throw new ArgException("商家停用，暂不可交易");
-			}
 			AccountExample accountExample = new AccountExample();
 			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
 			List<Account> accounts = accountService.selectByExample(accountExample);
@@ -2363,7 +2342,7 @@ public class DebitNoteController {
 			DebitNote debitNote=debitNotes.get(0);
 			
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(debitNote.getMemberId());
-			String routeCode = getRouteCode();
+			String routeCode = debitNote.getRouteId();
 			if(!RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
@@ -3470,15 +3449,26 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	
 	
 	
-	private String getRouteCode(){
+	private Map<String,String> getRouteCodeAndAisleType(Integer memberId,String payMethod, String payType  ){
+		Map<String,String> map = new HashMap<String, String>();
 		String routeCode = SysConfig.passCode;
-		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
-		sysCommonConfigExample.or().andNameEqualTo(SysCommonConfigConstant.SYS_ROUTE_CODE).andDelFlagEqualTo("0");
-		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
-		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
-			routeCode = sysCommonConfig.get(0).getValue();
+		String aisleType = "";
+		PayTypeExample payTypeExample = new PayTypeExample();
+		payTypeExample.createCriteria().andMemberIdEqualTo(memberId).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
+		List<PayType> payTypeList = payTypeService.selectByExample(payTypeExample);
+		if(payTypeList == null || payTypeList.size() == 0){
+			payTypeExample = new PayTypeExample();
+			payTypeExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
+			payTypeList = payTypeService.selectByExample(payTypeExample);
+			
 		}
-		return routeCode;
+		if(payTypeList != null && payTypeList.size() > 0){
+			routeCode = payTypeList.get(0).getRouteCode();
+			aisleType = payTypeList.get(0).getAisleType();
+		}
+		map.put("routeCode", routeCode);
+		map.put("aisleType", aisleType);
+		return map;
 	}
 	
 	

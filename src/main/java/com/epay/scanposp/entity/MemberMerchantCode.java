@@ -1,5 +1,6 @@
 package com.epay.scanposp.entity;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class MemberMerchantCode {
@@ -10,6 +11,8 @@ public class MemberMerchantCode {
 	
 	private String routeCode;
 	
+	private String aisleType;
+	
 	private String wxMerchantCode;
 	
 	private String zfbMerchantCode;
@@ -19,6 +22,14 @@ public class MemberMerchantCode {
 	private String bdMerchantCode;
 	
 	private String jdMerchantCode;
+	
+    private BigDecimal t0DrawFee;
+
+    private BigDecimal t0TradeRate;
+
+    private BigDecimal t1DrawFee;
+
+    private BigDecimal t1TradeRate;
 	
 	private String delFlag;
 	
@@ -134,6 +145,46 @@ public class MemberMerchantCode {
 
 	public void setUpdateDate(Date updateDate) {
 		this.updateDate = updateDate;
+	}
+
+	public String getAisleType() {
+		return aisleType;
+	}
+
+	public void setAisleType(String aisleType) {
+		this.aisleType = aisleType;
+	}
+
+	public BigDecimal getT0DrawFee() {
+		return t0DrawFee;
+	}
+
+	public void setT0DrawFee(BigDecimal t0DrawFee) {
+		this.t0DrawFee = t0DrawFee;
+	}
+
+	public BigDecimal getT0TradeRate() {
+		return t0TradeRate;
+	}
+
+	public void setT0TradeRate(BigDecimal t0TradeRate) {
+		this.t0TradeRate = t0TradeRate;
+	}
+
+	public BigDecimal getT1DrawFee() {
+		return t1DrawFee;
+	}
+
+	public void setT1DrawFee(BigDecimal t1DrawFee) {
+		this.t1DrawFee = t1DrawFee;
+	}
+
+	public BigDecimal getT1TradeRate() {
+		return t1TradeRate;
+	}
+
+	public void setT1TradeRate(BigDecimal t1TradeRate) {
+		this.t1TradeRate = t1TradeRate;
 	}
     
     

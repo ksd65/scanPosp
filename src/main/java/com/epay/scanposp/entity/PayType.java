@@ -6,9 +6,13 @@ public class PayType {
 	
 	private Integer payTypeId;
 	
-	private String routeCode;
+	private Integer memberId;
+	
+	private String payMethod;
 	
 	private String payType;
+	
+	private String routeCode;
 	
 	private String aisleType;
 	
@@ -93,6 +97,22 @@ public class PayType {
 
 	public void setRouteCode(String routeCode) {
 		this.routeCode = routeCode;
+	}
+
+	public Integer getMemberId() {
+		return memberId;
+	}
+
+	public void setMemberId(Integer memberId) {
+		this.memberId = memberId;
+	}
+
+	public String getPayMethod() {
+		return payMethod;
+	}
+
+	public void setPayMethod(String payMethod) {
+		this.payMethod = payMethod;
 	}
     
 	

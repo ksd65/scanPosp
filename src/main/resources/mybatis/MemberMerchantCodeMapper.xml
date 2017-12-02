@@ -5,11 +5,16 @@
     <id column="id" jdbcType="INTEGER" property="id" />
     <result column="member_id" jdbcType="INTEGER" property="memberId" />
     <result column="route_code" jdbcType="VARCHAR" property="routeCode" />
+    <result column="aisle_type" jdbcType="VARCHAR" property="aisleType" />
     <result column="wx_merchant_code" jdbcType="VARCHAR" property="wxMerchantCode" />
     <result column="zfb_merchant_code" jdbcType="VARCHAR" property="zfbMerchantCode" />
     <result column="qq_merchant_code" jdbcType="VARCHAR" property="qqMerchantCode" />
     <result column="bd_merchant_code" jdbcType="VARCHAR" property="bdMerchantCode" />
     <result column="jd_merchant_code" jdbcType="VARCHAR" property="jdMerchantCode" />
+    <result column="t0_draw_fee" jdbcType="DECIMAL" property="t0DrawFee" />
+    <result column="t0_trade_rate" jdbcType="DECIMAL" property="t0TradeRate" />
+    <result column="t1_draw_fee" jdbcType="DECIMAL" property="t1DrawFee" />
+    <result column="t1_trade_rate" jdbcType="DECIMAL" property="t1TradeRate" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
@@ -75,8 +80,8 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, member_id, route_code,wx_merchant_code, zfb_merchant_code, qq_merchant_code,bd_merchant_code,jd_merchant_code,
-    create_by, create_date, update_by, update_date,del_flag
+    id, member_id, route_code,aisle_type,wx_merchant_code, zfb_merchant_code, qq_merchant_code,bd_merchant_code,jd_merchant_code,
+    t0_draw_fee, t0_trade_rate, t1_draw_fee, t1_trade_rate,create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberMerchantCodeExample" resultMap="BaseResultMap">
     select

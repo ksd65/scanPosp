@@ -355,7 +355,77 @@ public class MemberMerchantCodeExample {
         }
 
         
+        public Criteria andAisleTypeIsNull() {
+            addCriterion("aisle_type is null");
+            return (Criteria) this;
+        }
 
+        public Criteria andAisleTypeIsNotNull() {
+            addCriterion("aisle_type is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeEqualTo(String value) {
+            addCriterion("aisle_type =", value, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeNotEqualTo(String value) {
+            addCriterion("aisle_type <>", value, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeGreaterThan(String value) {
+            addCriterion("aisle_type >", value, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeGreaterThanOrEqualTo(String value) {
+            addCriterion("aisle_type >=", value, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeLessThan(String value) {
+            addCriterion("aisle_type <", value, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeLessThanOrEqualTo(String value) {
+            addCriterion("aisle_type <=", value, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeLike(String value) {
+            addCriterion("aisle_type like", value, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeNotLike(String value) {
+            addCriterion("aisle_type not like", value, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeIn(List<String> values) {
+            addCriterion("aisle_type in", values, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeNotIn(List<String> values) {
+            addCriterion("aisle_type not in", values, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeBetween(String value1, String value2) {
+            addCriterion("aisle_type between", value1, value2, "aisleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andAisleTypeNotBetween(String value1, String value2) {
+            addCriterion("aisle_type not between", value1, value2, "aisleType");
+            return (Criteria) this;
+        }
+
+        
 
         public Criteria andCreateByIsNull() {
             addCriterion("create_by is null");
