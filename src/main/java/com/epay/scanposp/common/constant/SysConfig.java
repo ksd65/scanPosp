@@ -17,6 +17,9 @@ public class SysConfig {
  public static String prefixMemberCode;
  public static String passCode;
  public static String baseUploadFilePath;
+ public static String frontUrl;
+ public static String platPrivateKey;
+ public static String platPublicKey;
 	/**
 	 * 初始化系统配置
 	 */
@@ -34,6 +37,9 @@ public class SysConfig {
 			prefixMemberCode = configuration.getString("prefixMemberCode");
 			passCode = configuration.getString("passCode");
 			baseUploadFilePath = configuration.getString("baseUploadFilePath");
+			frontUrl = configuration.getString("frontUrl");
+			platPrivateKey = configuration.getString("platPrivateKey");
+			platPublicKey = configuration.getString("platPublicKey");
 		} catch (Exception e) {
 			throw new RuntimeException("[加载配置文件失败]", e);
 		}

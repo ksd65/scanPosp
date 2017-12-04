@@ -311,31 +311,31 @@ public class CashierDeskController {
 		if(callbackUrl == null || "".equals(callbackUrl)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "平台支付结果通知回调地址缺失");
-			return result;
+			return signReturn(result);
 		}
 		srcStr.append("callbackUrl="+callbackUrl);
 		
 		if(memberCode == null || "".equals(memberCode)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "商户号缺失");
-			return result;
+			return signReturn(result);
 		}
 		srcStr.append("&memberCode="+memberCode);
 		if(orderNum == null || "".equals(orderNum)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "平台订单号缺失");
-			return result;
+			return signReturn(result);
 		}
 		if(orderNum.length() > 32){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "订单号长度不能超过32位");
-			return result;
+			return signReturn(result);
 		}
 		srcStr.append("&orderNum="+orderNum);
 		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
 			result.put("returnCode", "0005");
 			result.put("returnMsg", "支付金额输入不正确");
-			return result;
+			return signReturn(result);
 		}
 		srcStr.append("&payMoney="+payMoney);
 		if(!"1".equals(payType) && !"2".equals(payType) 
@@ -343,18 +343,18 @@ public class CashierDeskController {
 				&& !"5".equals(payType)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "支付方式错误");
-			return result;
+			return signReturn(result);
 		}
 		srcStr.append("&payType="+payType);
 		if(signStr == null || "".equals(signStr)){ // 联调先屏蔽20171017 by linxf
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "缺少签名信息");
-			return result;
+			return signReturn(result);
 		}
 		
 		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3", payType, srcStr.toString(), signStr, callbackUrl);
 		
-		return result;
+		return signReturn(result);
 	}
 	
 	@RequestMapping("/cashierDesk/msPayNotify")
@@ -1357,15 +1357,14 @@ public class CashierDeskController {
 			logger.info("返回报文[{}]",  respJSONObject );
 //			resData.put("orderCode", orderCode);     //暂不回传我方的订单编码
 			if (respJSONObject.containsKey("qrCode")) {//民生传回qrCode时 不一定是S状态
-				resData.put("qrCode", SecurityUtil.base64Encode(respJSONObject.get("qrCode").toString()));
-				result.put("resData", resData);
+				result.put("qrCode", SecurityUtil.base64Encode(respJSONObject.get("qrCode").toString()));
+				//result.put("resData", resData);
 				result.put("returnCode", "0000");
 				result.put("returnMsg", "成功");
 			}else{
 				result.put("returnCode", "0003");
 				result.put("returnMsg", "MS-"+respJSONObject.getString("respCode")+ ":" +respJSONObject.getString("respMsg"));
 			}
-			
 		} catch (ArgException e) {
 			result.put("returnCode", "0096");
 			result.put("returnMsg", e.getMessage());
@@ -3879,25 +3878,25 @@ public class CashierDeskController {
 			if(memberCode == null || "".equals(memberCode)){
 				result.put("returnCode", "0007");
 				result.put("returnMsg", "商户号缺失");
-				return result;
+				return signReturn(result);
 			}
 			srcStr.append("memberCode="+memberCode);
 			if(orderNum == null || "".equals(orderNum)){
 				result.put("returnCode", "0007");
 				result.put("returnMsg", "平台订单号缺失");
-				return result;
+				return signReturn(result);
 			}
 			if(orderNum.length() > 32){
 				result.put("returnCode", "0007");
 				result.put("returnMsg", "订单号长度不能超过32位");
-				return result;
+				return signReturn(result);
 			}
 			srcStr.append("&orderNum="+orderNum);
 			
 			if(signStr == null || "".equals(signStr)){ 
 				result.put("returnCode", "0007");
 				result.put("returnMsg", "缺少签名信息");
-				return result;
+				return signReturn(result);
 			}
 			MemberInfoExample memberInfoExample = new MemberInfoExample();
 			memberInfoExample.or().andCodeEqualTo(memberCode).andDelFlagEqualTo("0");
@@ -3905,18 +3904,18 @@ public class CashierDeskController {
 			if(null == memberInfoList || memberInfoList.size() == 0){
 				result.put("returnCode", "0001");
 				result.put("returnMsg", "商户信息不存在");
-				return result;
+				return signReturn(result);
 			}
 			MemberInfo memberInfo = memberInfoList.get(0);
 			if(!"0".equals(memberInfo.getStatus())){
 				if("4".equals(memberInfo.getStatus())){
 					result.put("returnCode", "0011");
 					result.put("returnMsg", "该商户未进行认证，暂时无法交易");
-					return result;
+					return signReturn(result);
 				}
 				result.put("returnCode", "0008");
 				result.put("returnMsg", "对不起，该商户暂不可用");
-				return result;
+				return signReturn(result);
 			}
 			
 			EpayCodeExample epayCodeExample = new EpayCodeExample();
@@ -3928,7 +3927,7 @@ public class CashierDeskController {
 			if(null == epayCodeList || epayCodeList.size() == 0){
 				result.put("returnCode", "0008");
 				result.put("returnMsg", "对不起，该商户暂不可用");
-				return result;
+				return signReturn(result);
 			}
 			
 			
@@ -3938,7 +3937,7 @@ public class CashierDeskController {
 			if(null == sysOfficeList || sysOfficeList.size() == 0){
 				result.put("returnCode", "0008");
 				result.put("returnMsg", "该商户暂未支持收银台功能，请确认后重试");
-				return result;
+				return signReturn(result);
 			}
 			
 			
@@ -3947,7 +3946,7 @@ public class CashierDeskController {
 			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
-				return result;
+				return signReturn(result);
 			}
 			
 			
@@ -4102,20 +4101,24 @@ public class CashierDeskController {
 			result.put("returnCode", "4004");
 			result.put("returnMsg", e.getMessage());
 			logger.info(e.getMessage());
-			return result;
+			return signReturn(result);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 			result.put("returnCode", "4004");
 			result.put("returnMsg", "请求失败");
-			return result;
+			return signReturn(result);
 		}
 		result.put("returnCode", "0000");
 		result.put("returnMsg", "成功");
-		return result;
+		return signReturn(result);
 	}
 	
-	
+	private JSONObject signReturn(JSONObject result){
+		String rtSrc = StringUtil.orderedKey(result);
+		result.put("signStr", EpaySignUtil.sign(SysConfig.platPrivateKey, rtSrc));
+		return result;
+	}
 	
 	
 	
