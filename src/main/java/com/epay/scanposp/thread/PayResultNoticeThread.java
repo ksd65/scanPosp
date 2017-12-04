@@ -10,6 +10,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.entity.PayResultNotice;
@@ -76,7 +77,7 @@ public class PayResultNoticeThread implements Runnable{
 			//应答描述
 			payNoticeJson.put("resultMsg", payResultNotice.getResultMessage());
 			srcStr.append("&resultMsg="+payResultNotice.getResultMessage());
-			String signStr = EpaySignUtil.sign(sysOffice.getPrivateKeyRsa(), srcStr.toString());
+			String signStr = EpaySignUtil.sign(SysConfig.platPrivateKey, srcStr.toString());
 			payNoticeJson.put("signStr", signStr);
 			String callBackUrl = payResultNotice.getReturnUrl();
 			String ret = "";
