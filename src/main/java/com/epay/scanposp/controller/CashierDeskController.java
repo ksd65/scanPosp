@@ -737,6 +737,8 @@ public class CashierDeskController {
 					}
 					if(respJSONObject.containsKey("payTime") && null != respJSONObject.getString("payTime")){
 						msResultNotice.setPayTime(respJSONObject.getString("payTime"));
+					}else{
+						msResultNotice.setPayTime(DateUtil.getDateTimeStr(dateSimpleDateFormat.parse(respTime)));
 					}
 					if(respJSONObject.containsKey("settleDate") && null != respJSONObject.getString("settleDate")){
 						msResultNotice.setBalanceDate(respJSONObject.getString("settleDate"));
