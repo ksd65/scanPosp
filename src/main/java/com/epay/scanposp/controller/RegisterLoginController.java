@@ -43,6 +43,7 @@ import com.epay.scanposp.common.utils.FileUtil;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
+import com.epay.scanposp.common.utils.constant.ESKPayWayConstant;
 import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.SequenseTypeConstant;
@@ -818,8 +819,12 @@ public class RegisterLoginController {
 		JSONObject result=new JSONObject();
 		try {
 			String verifyCode=reqDataJson.getString("verifyCode");
-			RegisterTmp registerTmp=(RegisterTmp) JSONObject.toBean(reqDataJson.getJSONObject("registerTmp"), RegisterTmp.class);
+			String aisleType=reqDataJson.getString("aisleType");
 			
+			RegisterTmp registerTmp=(RegisterTmp) JSONObject.toBean(reqDataJson.getJSONObject("registerTmp"), RegisterTmp.class);
+			if("4".equals(aisleType)){
+				registerTmp.setSettleType("1");
+			}
 			//直接根据用户信息表进行校验
 			MemberInfoExample memberInfoExample = new MemberInfoExample();
 			memberInfoExample.or().andCertNbrEqualTo(registerTmp.getCertNbr()).andStatusNotEqualTo("1");
@@ -879,26 +884,29 @@ public class RegisterLoginController {
 			Date nowDate = new Date();
 			registerTmp.setCreateDate(nowDate);
 			registerTmp.setUpdateDate(nowDate);
-			
-//			BankSubExample bankSubExample = new BankSubExample();
-//			bankSubExample.or().andBankIdEqualTo(Integer.parseInt(registerTmp.getBankId())).andSubIdEqualTo(registerTmp.getSubId());
-//			List<BankSub> bankSubList = bankSubService.selectByExample(bankSubExample);
-//			if(null != bankSubList && bankSubList.size()>0){
-//				registerTmp.setBankOpen(bankSubList.get(0).getSubName());
-//			}else{
-//				result.put("returnCode", "4004");
-//				result.put("returnMsg", "银行支行信息错误");
-//				return result.toString();
-//			}
-//			//联行号
-//			String bankType = bankSubList.get(0).getSubId();
+			//联行号
+			String bankType = "";
+			if("4".equals(aisleType)){
+				BankSubExample bankSubExample = new BankSubExample();
+				bankSubExample.or().andBankIdEqualTo(Integer.parseInt(registerTmp.getBankId())).andSubIdEqualTo(registerTmp.getSubId());
+				List<BankSub> bankSubList = bankSubService.selectByExample(bankSubExample);
+				if(null != bankSubList && bankSubList.size()>0){
+					registerTmp.setBankOpen(bankSubList.get(0).getSubName());
+				}else{
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "银行支行信息错误");
+					return result.toString();
+				}
+				//联行号
+				bankType = bankSubList.get(0).getSubId();
+			}
 //			String bankName = bankSubList.get(0).getSubName();
 			//by linxf  没有选择银行 所以屏蔽
 			KbinExample kbinExample = new KbinExample();
 			kbinExample.or().andBankCodeEqualTo(registerTmp.getBankId());
 			List<Kbin> bankList = kbinService.selectByExample(kbinExample);
 			if(null != bankList && bankList.size()>0){
-				registerTmp.setBankOpen(bankList.get(0).getBankName());
+				//registerTmp.setBankOpen(bankList.get(0).getBankName());
 				boolean isKbin = false;
 				for(Kbin kbin : bankList){
 					if(registerTmp.getAccountNumber().startsWith(kbin.getKbin())){
@@ -1002,8 +1010,8 @@ public class RegisterLoginController {
 					return result.toString();
 				}
 			}
-			String bankType = "";//D+0不送此参数
-			String bankName = "";//bankList.get(0).getBankName();
+			//String bankType = "";//D+0不送此参数
+			String bankName = bankList.get(0).getBankName();
 			registerTmp.setWxMemberCode("w"+commonService.getNextSequenceVal(SequenseTypeConstant.WXMEMBERCODE));
 			registerTmp.setZfbMemberCode("z"+commonService.getNextSequenceVal(SequenseTypeConstant.ZFBMEMBERCODE));
 			registerTmp.setQqMemberCode("q"+commonService.getNextSequenceVal(SequenseTypeConstant.QQMEMBERCODE));
@@ -1209,15 +1217,16 @@ public class RegisterLoginController {
 				result.put("returnMsg", "经营类别配置信息缺失");
 				return result.toString();
 			}
-			
-			JSONObject picObj = this.uploadCert(memberInfo);
-			
-			if(!"0000".equals(picObj.getString("returnCode"))){
-				return picObj.toString();
+			String picOrderNo = "";
+			if(!"4".equals(aisleType)){
+				JSONObject picObj = this.uploadCert(memberInfo);
+				
+				if(!"0000".equals(picObj.getString("returnCode"))){
+					return picObj.toString();
+				}
+				
+				picOrderNo = picObj.getString("orderNumber");
 			}
-			
-			String picOrderNo = picObj.getString("orderNumber");
-			
 			
 			String wxMerchantCode = null;
 			String zfbMerchantCode = null;
@@ -1225,19 +1234,40 @@ public class RegisterLoginController {
 			String bdMerchantCode = null;
 			String jdMerchantCode = null;
 			String channelMerchantCode=null;
-			JSONObject wxPayAccount = this.registerEskAccount(MSPayWayConstant.WXPAY, memberInfo , businessCategory,bankType,bankName,picOrderNo,registerTmp.getBankArea());
-			if("0000".equals(wxPayAccount.getString("returnCode"))){
-				//wxMerchantCode = wxPayAccount.getString("merchantCode");
-			//	channelMerchantCode=wxPayAccount.getString("channelMerchantCode");
-			//	if(channelMerchantCode!=null && !channelMerchantCode.equals("")){
-				//	memberInfo.setWxChannelMerchantCode(channelMerchantCode);
-				//}
-				memberInfo.setOrderNo(wxPayAccount.getString("orderNumber"));
-				memberInfo.setWxStatus("0");//0审核中，1审核通过
+			if("4".equals(aisleType)){
+				JSONObject wxPayAccount = this.registerEskAccount(ESKPayWayConstant.ZFBZF, memberInfo , businessCategory,bankName,picOrderNo,registerTmp.getBankArea(),
+						registerTmp.getBankOpen(),registerTmp.getSubId(),bankType,aisleType,"");
+				if("0000".equals(wxPayAccount.getString("returnCode"))){
+					//wxMerchantCode = wxPayAccount.getString("merchantCode");
+				//	channelMerchantCode=wxPayAccount.getString("channelMerchantCode");
+				//	if(channelMerchantCode!=null && !channelMerchantCode.equals("")){
+					//	memberInfo.setWxChannelMerchantCode(channelMerchantCode);
+					//}
+					memberInfo.setOrderNo(wxPayAccount.getString("orderNumber"));
+					memberInfo.setWxStatus("0");//0审核中，1审核通过
+				}else{
+					return wxPayAccount.toString();
+			//		memberInfo.setWxStatus("4");//注册不成功
+				}
 			}else{
-				return wxPayAccount.toString();
-		//		memberInfo.setWxStatus("4");//注册不成功
+				JSONObject wxPayAccount = this.registerEskAccount(ESKPayWayConstant.WXPAY, memberInfo , businessCategory,bankName,picOrderNo,registerTmp.getBankArea(),
+						registerTmp.getBankOpen(),registerTmp.getSubId(),bankType,aisleType,"");
+				if("0000".equals(wxPayAccount.getString("returnCode"))){
+					//wxMerchantCode = wxPayAccount.getString("merchantCode");
+				//	channelMerchantCode=wxPayAccount.getString("channelMerchantCode");
+				//	if(channelMerchantCode!=null && !channelMerchantCode.equals("")){
+					//	memberInfo.setWxChannelMerchantCode(channelMerchantCode);
+					//}
+					memberInfo.setOrderNo(wxPayAccount.getString("orderNumber"));
+					memberInfo.setWxStatus("0");//0审核中，1审核通过
+				}else{
+					return wxPayAccount.toString();
+			//		memberInfo.setWxStatus("4");//注册不成功
+				}
 			}
+			
+			
+			
 			
 			
 			/*
@@ -1294,7 +1324,7 @@ public class RegisterLoginController {
 			memberBank.setSubId(registerTmp.getSubId());
 			memberBank.setProvince(registerTmp.getProvince());
 			memberBank.setCity(registerTmp.getCity());
-			memberBank.setBankOpen(registerTmp.getBankOpen());
+			memberBank.setBankOpen(bankName);
 			memberBank.setAccountName(registerTmp.getAccountName());
 			memberBank.setAccountNumber(memberInfo.getCardNbr());
 			memberBank.setSettleType(memberInfo.getSettleType());
@@ -3158,7 +3188,7 @@ public class RegisterLoginController {
 	
 	
 	
-	public JSONObject registerEskAccount(String payWay ,MemberInfo memberInfo ,BusinessCategory businessCategory ,String bankType ,String bankName ,String picOrderNo,String bankOpen) {
+	public JSONObject registerEskAccount(String payWay ,MemberInfo memberInfo ,BusinessCategory businessCategory ,String bankName ,String picOrderNo,String bankArea,String openBank,String bankBranchNo,String bankNum,String aisleType,String oriOrderNumber) {
 		
 		JSONObject result = new JSONObject();
 		//String reqMsgId=CommonUtil.getOrderCode();
@@ -3179,24 +3209,14 @@ public class RegisterLoginController {
 				return result;
 			}
 			String categoryVal = "";
-			String cooperator = "";
 			
 			
-			if(MSPayWayConstant.WXPAY.equals(payWay)){
+			if(ESKPayWayConstant.WXPAY.equals(payWay)){
 				merchantId = memberInfo.getWxMemberCode();
 				categoryVal = businessCategory.getWxCategoryId();
-			}else if(MSPayWayConstant.ZFBZF.equals(payWay)){
+			}else if(ESKPayWayConstant.ZFBZF.equals(payWay)){
 				merchantId = memberInfo.getZfbMemberCode();
 				categoryVal = businessCategory.getZfbCategoryId();
-			}else if(MSPayWayConstant.QQZF.equals(payWay)){
-				merchantId = memberInfo.getQqMemberCode();
-				categoryVal = businessCategory.getQqCategoryId();
-			}else if(MSPayWayConstant.BDZF.equals(payWay)){
-				merchantId = memberInfo.getBdMemberCode();
-				categoryVal = businessCategory.getBdCategoryId();
-			}else if(MSPayWayConstant.JDZF.equals(payWay)){
-				merchantId = memberInfo.getJdMemberCode();
-				categoryVal = businessCategory.getJdCategoryId();
 			}
 			
 			String callBack = SysConfig.serverUrl + "/registerLogin/eskExamNotify";
@@ -3208,37 +3228,64 @@ public class RegisterLoginController {
 			JSONObject reqData = new JSONObject();
 			reqData.put("orderNumber", orderCode);
 			reqData.put("tranCode", tranCode);
-			reqData.put("imgOrderNumber", picOrderNo);
-			
+			if(!"4".equals(aisleType)){
+				reqData.put("imgOrderNumber", picOrderNo);
+			}
+			if("4".equals(aisleType)){
+				reqData.put("oriOrderNumber", oriOrderNumber);
+				reqData.put("apiShopType", "4");
+				reqData.put("merchantCategory", "PERSON");
+				reqData.put("openBank", openBank);//支行名称
+				reqData.put("bankName", bankName);//总行名称
+				reqData.put("bankBranchNo", bankBranchNo);//支行联行号
+				reqData.put("bankNum", bankNum);//总行联号
+			}
 			reqData.put("phone", memberInfo.getMobilePhone());
 			reqData.put("contatctNumber", memberInfo.getMobilePhone());
+			reqData.put("contactName", memberInfo.getContact());
 			reqData.put("contactType", memberInfo.getContactType());
 			reqData.put("realName", memberInfo.getContact());
 			reqData.put("cardType", "1");
 			reqData.put("cardNo", memberInfo.getCardNbr());
-			reqData.put("settlement", "D0");//写死D0
+			if("4".equals(aisleType)){
+				reqData.put("settlement", "T1");
+			}else{
+				reqData.put("settlement", "D0");//写死D0
+			}
+			
 			reqData.put("certType", "00");
 			reqData.put("certNo", memberInfo.getCertNbr() );
 			reqData.put("mobile", memberInfo.getMobilePhone());
-			reqData.put("location", bankOpen);
+			reqData.put("location", bankArea);
 			reqData.put("shopName", memberInfo.getName() );
 			reqData.put("cmer", memberInfo.getName());//by linxf先写商户名称
 			reqData.put("cmerShort", memberInfo.getShortName());
 			reqData.put("businessId", categoryVal);
-			reqData.put("isCorp", "N");
+		//	if("4".equals(aisleType)){
+		//		reqData.put("isCorp", "Y");
+		//	}else{
+				reqData.put("isCorp", "N");
+		//	}
+			
 			double tradeRate = memberInfo.getT0TradeRate().doubleValue();
 			if(tradeRate > 0.006){
 				tradeRate = 0.006;
 			}
+			
 			reqData.put("wxRate", tradeRate);
 			reqData.put("aliRate", tradeRate);//by linxf 先一样
-			
-			reqData.put("channelCode", "WXPAY");
+			if("4".equals(aisleType)){
+				reqData.put("wxRate", "0.006");
+				reqData.put("aliRate", "0.006");
+				reqData.put("t1drawFee", memberInfo.getT1DrawFee().doubleValue()*100);
+				reqData.put("t1tradeRate", memberInfo.getT1TradeRate().doubleValue());
+			}
+			reqData.put("channelCode", payWay);
 			
 			reqData.put("email", memberInfo.getEmail());
 			reqData.put("businessType", "NATIONAL_LEGAL_MERGE");
 			reqData.put("business", memberInfo.getBusLicenceNbr());
-			
+			reqData.put("licenseExpired", "20200101");
 			
 			reqData.put("ProviceCode", memberInfo.getProvince());
 			reqData.put("ctityCode", memberInfo.getCity());
@@ -3320,8 +3367,6 @@ public class RegisterLoginController {
 		return result;
 	
 	}
-	
-	
 	
 	
 	
