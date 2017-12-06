@@ -3283,7 +3283,7 @@ public class RegisterLoginController {
 			reqData.put("channelCode", payWay);
 			
 			reqData.put("email", memberInfo.getEmail());
-			reqData.put("businessType", "NATIONAL_LEGAL_MERGE");
+			reqData.put("businessType", "NATIONAL_LEGAL");
 			reqData.put("business", memberInfo.getBusLicenceNbr());
 			reqData.put("licenseExpired", "20200101");
 			
@@ -3334,7 +3334,7 @@ public class RegisterLoginController {
 			
 			
 			
-			
+		//	JSONObject respJSONObject =null;
 			
 			
 			if("000000".equals(respJSONObject.getString("respCode"))){
