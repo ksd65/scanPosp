@@ -3038,9 +3038,20 @@ public class RegisterLoginController {
 			result.put("returnCode", "4004");
 			result.put("returnMsg", "账户不存在");
 		}else{
-			MemberOpenidExample memberOpenidExample = new MemberOpenidExample();
-			memberOpenidExample.or().andMemberIdEqualTo(memberID);
-			memberOpenidService.deleteByExample(memberOpenidExample);
+			String userAgentType = "";
+			if(reqDataJson.containsKey("userAgentType")){
+				userAgentType = reqDataJson.getString("userAgentType");
+			}
+			if("micromessenger".equals(userAgentType)){
+				MemberOpenidExample memberOpenidExample = new MemberOpenidExample();
+				memberOpenidExample.or().andMemberIdEqualTo(memberID);
+				memberOpenidService.deleteByExample(memberOpenidExample);
+			}else if("alipay".equals(userAgentType)){
+				MemberAliOpenidExample memberOpenidExample = new MemberAliOpenidExample();
+				memberOpenidExample.or().andMemberIdEqualTo(memberID);
+				memberAliOpenidService.deleteByExample(memberOpenidExample);
+			}
+			
 			result.put("returnCode", "0000");
 			result.put("returnMsg", "登出成功");
 		}
