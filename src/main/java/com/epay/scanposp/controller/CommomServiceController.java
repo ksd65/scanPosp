@@ -24,6 +24,8 @@ import com.epay.scanposp.entity.BankSubExample;
 import com.epay.scanposp.entity.BankSubExample.Criteria;
 import com.epay.scanposp.entity.BuAreaCode;
 import com.epay.scanposp.entity.BuAreaCodeExample;
+import com.epay.scanposp.entity.MemberAliOpenid;
+import com.epay.scanposp.entity.MemberAliOpenidExample;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberOpenid;
 import com.epay.scanposp.entity.MemberOpenidExample;
@@ -37,6 +39,7 @@ import com.epay.scanposp.service.BankNameService;
 import com.epay.scanposp.service.BankService;
 import com.epay.scanposp.service.BankSubService;
 import com.epay.scanposp.service.BuAreaCodeService;
+import com.epay.scanposp.service.MemberAliOpenidService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.PayTypeService;
@@ -68,6 +71,9 @@ public class CommomServiceController {
 	
 	@Autowired
 	private PayTypeService payTypeService;
+	
+	@Autowired
+	private MemberAliOpenidService memberAliOpenidService;
 	
 	@ResponseBody
 	@RequestMapping("/getAddrAreaList")
@@ -240,6 +246,40 @@ public class CommomServiceController {
 		}else{
 			resData.put("loginFlag", 0);
 			result.put("returnMsg", "不存在微信登录记录");
+		}
+		result.put("resData", resData);
+		return result.toString();
+	}
+	
+	/**
+	 * 检查用户是否在支付宝登陆过  即判断是否可免登陆
+	 * @param model
+	 * @param request
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/checkAliAutoLogin")
+	public String checkAliAutoLogin(Model model, HttpServletRequest request) {
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result=new JSONObject();
+		JSONObject resData=new JSONObject();
+		String openid = reqDataJson.getString("openid");
+		MemberAliOpenidExample memberAliOpenidExample = new MemberAliOpenidExample();
+		memberAliOpenidExample.or().andOpenidEqualTo(openid);
+		List<MemberAliOpenid> memberOpenidList = memberAliOpenidService.selectByExample(memberAliOpenidExample);
+		result.put("returnCode", "0000");
+		if(memberOpenidList.size()>0){
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(memberOpenidList.get(0).getMemberId());
+			memberAliOpenidExample = new MemberAliOpenidExample();
+			memberAliOpenidExample.or().andMemberIdEqualTo(memberOpenidList.get(0).getMemberId()).andOpenidNotEqualTo(openid);
+			memberAliOpenidService.deleteByExample(memberAliOpenidExample);
+			result.put("returnMsg", "存在支付宝登录信息");
+			resData.put("memberInfo", memberInfo);
+			resData.put("loginFlag", 1);
+		}else{
+			resData.put("loginFlag", 0);
+			result.put("returnMsg", "不存在支付宝登录记录");
 		}
 		result.put("resData", resData);
 		return result.toString();

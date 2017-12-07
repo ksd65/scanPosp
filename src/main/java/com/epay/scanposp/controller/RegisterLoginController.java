@@ -67,6 +67,8 @@ import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
 import com.epay.scanposp.entity.Kbin;
 import com.epay.scanposp.entity.KbinExample;
+import com.epay.scanposp.entity.MemberAliOpenid;
+import com.epay.scanposp.entity.MemberAliOpenidExample;
 import com.epay.scanposp.entity.MemberBank;
 import com.epay.scanposp.entity.MemberBankExample;
 import com.epay.scanposp.entity.MemberInfo;
@@ -97,6 +99,7 @@ import com.epay.scanposp.service.BusinessCategoryService;
 import com.epay.scanposp.service.CommonService;
 import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.KbinService;
+import com.epay.scanposp.service.MemberAliOpenidService;
 import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberOpenidService;
@@ -179,6 +182,9 @@ public class RegisterLoginController {
 	
 	@Resource
 	private MerchantManagerController merchantManagerController;
+	
+	@Autowired
+	private MemberAliOpenidService memberAliOpenidService;
 	
 	@ResponseBody
 	@RequestMapping("/toRegister")
@@ -2919,7 +2925,14 @@ public class RegisterLoginController {
 			String routeCode = getRouteCode();
 			String loginCode=reqDataJson.getString("loginCode");
 			String password=reqDataJson.getString("password");
-			String userOpenID=reqDataJson.getString("userOpenID");
+			String userOpenID="";
+			if(reqDataJson.containsKey("userOpenID")){
+				userOpenID = reqDataJson.getString("userOpenID");
+			}
+			String userAliOpenID="";
+			if(reqDataJson.containsKey("userAliOpenID")){
+				userAliOpenID = reqDataJson.getString("userAliOpenID");
+			}
 			if("".equals(loginCode) || !ValidateUtil.isMbPhone(loginCode)){
 				throw new ArgException("手机号格式不正确");
 			}
@@ -2974,6 +2987,18 @@ public class RegisterLoginController {
 						memberOpenid.setCreateBy("1");
 						memberOpenid.setCreateDate(new Date());
 						memberOpenidService.insertSelective(memberOpenid);
+					}
+					
+					if(!"".equals(userAliOpenID) && null != userAliOpenID){
+						MemberAliOpenidExample memberAliOpenidExample = new MemberAliOpenidExample();
+						memberAliOpenidExample.or().andMemberIdEqualTo(memberInfo.getId());
+						memberAliOpenidService.deleteByExample(memberAliOpenidExample);
+						MemberAliOpenid memberAliOpenid = new MemberAliOpenid();
+						memberAliOpenid.setMemberId(memberInfo.getId());
+						memberAliOpenid.setOpenid(userAliOpenID);
+						memberAliOpenid.setCreateBy("1");
+						memberAliOpenid.setCreateDate(new Date());
+						memberAliOpenidService.insertSelective(memberAliOpenid);
 					}
 					
 					result.put("returnCode", "0000");
