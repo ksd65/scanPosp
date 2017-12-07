@@ -5,7 +5,7 @@ import java.util.ResourceBundle;
 
 import com.epay.scanposp.common.utils.EnvironmentUtil;
 
-public class ESKConfig {
+public class SDConfig {
 	public static String rsaPublicKeyFilePath4httpsipay;
 	public static String rsaPublicKeyFilePath;
 	public static String rsaPrivateKeyFilePath;
@@ -29,7 +29,7 @@ public class ESKConfig {
 	public static String jsDomain;
 	static {
 		//生产环境参数
-		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "esk_config");
+		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "sd_config");
 		//测试环境参数
 //		ResourceBundle bundle = PropertyResourceBundle.getBundle("mskeytest/ms_config");
 		rsaPublicKeyFilePath = bundle.getString("rsaPublicKeyFilePath");
@@ -53,5 +53,6 @@ public class ESKConfig {
 		yhPublicKey=bundle.getString("yhPublicKey");
 		privateKey=bundle.getString("privateKey");
 		jsDomain=bundle.getString("jsDomain");
+		
 	}
 }
