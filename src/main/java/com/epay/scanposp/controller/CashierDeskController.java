@@ -92,6 +92,8 @@ import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
+import com.epay.scanposp.entity.MemberMerchantKey;
+import com.epay.scanposp.entity.MemberMerchantKeyExample;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayResultNotice;
@@ -124,6 +126,7 @@ import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberBindAccService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
+import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayRouteService;
@@ -227,6 +230,9 @@ public class CashierDeskController {
 	
 	@Autowired
 	private MemberMerchantCodeService memberMerchantCodeService;
+	
+	@Autowired
+	private MemberMerchantKeyService memberMerchantKeyService;
 	
 	@Autowired
 	private PayTypeService payTypeService;
@@ -936,7 +942,17 @@ public class CashierDeskController {
                 String res = com.epay.scanposp.common.utils.swift.XmlUtils.toXml(map);
                 logger.info("ftPayNotify通知内容[{}]" + res);
                 if(map.containsKey("sign")){
-                    if(!SignUtils.checkParam(map, FTConfig.privateKey)){
+                	String merCode = map.get("mch_id");
+                	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+                    memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.FT_ROUTE_CODE).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+                    List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+                    if(keyList == null || keyList.size()!=1){
+                    	res = "商户私钥未配置";
+                        respString = "fail";
+                        response.getWriter().write(respString);
+                		return;
+                    }
+                    if(!SignUtils.checkParam(map, keyList.get(0).getPrivateKey())){
                         res = "验证签名不通过";
                         respString = "fail";
                     }else{
@@ -1159,6 +1175,8 @@ public class CashierDeskController {
 			payTypeStr = "WX";
 		}else if("2".equals(payType)){
 			payTypeStr = "ZFB";
+		}else if("3".equals(payType)){
+			payTypeStr = "QQ";
 		}
 		
 		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_SMZF,payTypeStr);
@@ -1677,7 +1695,14 @@ public class CashierDeskController {
 			
 			String serverUrl = FTConfig.msServerUrl;
 			
-			String tranCode = "pay.weixin.native";
+			String tranCode = "";
+			if("1".equals(payType)){
+				tranCode = "pay.weixin.native";
+			}else if("2".equals(payType)){
+				tranCode = "pay.alipay.native";
+			}else if("3".equals(payType)){
+				tranCode = "pay.tenpay.native";
+			}
 			String charset = "UTF-8";
 			
 			SortedMap<String,String> reqMap = new TreeMap<String, String>();
@@ -1685,18 +1710,19 @@ public class CashierDeskController {
 			reqMap.put("version", "2.0");
 			reqMap.put("charset", charset);
 			reqMap.put("sign_type", "MD5");
-			reqMap.put("service", tranCode);
+			String merCode = "";
 			if("1".equals(payType)){
-				reqMap.put("mch_id", merchantCode.getWxMerchantCode());
+				merCode = merchantCode.getWxMerchantCode();
 			}else if("2".equals(payType)){
-				reqMap.put("mch_id", merchantCode.getZfbMerchantCode());
+				merCode = merchantCode.getZfbMerchantCode();
 			}else if("3".equals(payType)){
-				reqMap.put("mch_id", merchantCode.getQqMerchantCode());
+				merCode = merchantCode.getQqMerchantCode();
 			}else if("4".equals(payType)){
-				reqMap.put("mch_id", merchantCode.getBdMerchantCode());
+				merCode = merchantCode.getBdMerchantCode();
 			}else if("5".equals(payType)){
-				reqMap.put("mch_id", merchantCode.getJdMerchantCode());
+				merCode = merchantCode.getJdMerchantCode();
 			}
+			reqMap.put("mch_id", merCode);
 			reqMap.put("out_trade_no", orderCode);
 			reqMap.put("body", memberInfo.getName() + " 收款");
 			reqMap.put("total_fee", String.valueOf((int)((new BigDecimal(payMoney)).floatValue()*100)));
@@ -1708,7 +1734,16 @@ public class CashierDeskController {
             StringBuilder buf = new StringBuilder((params.size() +1) * 10);
             SignUtils.buildPayParams(buf,params,false);
             String preStr = buf.toString();
-            String sign = MD5.sign(preStr, "&key=" + FTConfig.privateKey, "utf-8");
+            
+            MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+            memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.FT_ROUTE_CODE).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+            List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+            if(keyList == null || keyList.size()!=1){
+            	result.put("returnCode", "0003");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+            }
+            String sign = MD5.sign(preStr, "&key=" + keyList.get(0).getPrivateKey(), "utf-8");
             reqMap.put("sign", sign);
             
             String reqStr = com.epay.scanposp.common.utils.swift.XmlUtils.parseXML(reqMap);
@@ -1734,7 +1769,7 @@ public class CashierDeskController {
                     res = com.epay.scanposp.common.utils.swift.XmlUtils.toXml(resultMap);
                     logger.info("返回报文[{}]", new Object[] { res });
                     if("0".equals(resultMap.get("status"))){
-                    	if(!SignUtils.checkParam(resultMap, FTConfig.privateKey)){
+                    	if(!SignUtils.checkParam(resultMap, keyList.get(0).getPrivateKey())){
                             result.put("returnCode", "0003");
             				result.put("returnMsg", "验证签名不通过");
                         }else{

@@ -1643,15 +1643,15 @@ public class DebitNoteController {
 			resData.put("orderCode", orderCode);
 			if("S".equals(respJSONObject.getString("respType"))&&"000000".equals(respJSONObject.getString("respCode"))){
 				
-				if(respJSONObject.containsKey("channelNo")){
-					resData.put("channelNo", respJSONObject.get("channelNo"));
+				if(respJSONObject.containsKey("OrderNo")){
+					resData.put("channelNo", respJSONObject.get("OrderNo"));
 					result.put("resData", resData);
 					result.put("returnCode", "0000");
 					result.put("returnMsg", "成功");
 					
 				}else{
 					result.put("returnCode", "4004");
-					result.put("returnMsg", "获取微信信息失败");
+					result.put("returnMsg", "获取支付宝支付信息失败");
 				}
 			}else{
 				result.put("returnCode", "4004");
