@@ -12,4 +12,6 @@ public class RouteCodeConstant {
 	
 	public static String SD_ROUTE_CODE = "1005";//杉德
 	
+	public static String SLF_ROUTE_CODE = "1006";//随乐付
+	
 }
