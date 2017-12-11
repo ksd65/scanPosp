@@ -36,13 +36,8 @@ public class FTConfig {
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "ft_config");
 		//测试环境参数
 //		ResourceBundle bundle = PropertyResourceBundle.getBundle("mskeytest/ms_config");
-		rsaPublicKeyFilePath = bundle.getString("rsaPublicKeyFilePath");
-		rsaPublicKeyFilePath4httpsipay = bundle.getString("rsaPublicKeyFilePath4httpsipay");
-		rsaPrivateKeyFilePath = bundle.getString("rsaPrivateKeyFilePath");
 		msServerUrl = bundle.getString("msServerUrl");
 		shopServerUrl = bundle.getString("shopServerUrl");
-		cooperator_t0 = bundle.getString("cooperator_t0");
-		cooperator_t1 = bundle.getString("cooperator_t1");
 		subAppid = bundle.getString("subAppid");
 		userIDJF=bundle.getString("userIDJF");
 		userIDWJF=bundle.getString("userIDWJF");

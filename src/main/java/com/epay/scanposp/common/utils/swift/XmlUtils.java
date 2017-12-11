@@ -85,6 +85,21 @@ public class XmlUtils {
         sb.append("</xml>");
         return sb.toString();
     }
+    
+    public static String parseXML(Map<String, String> parameters) {
+        StringBuffer sb = new StringBuffer();
+        Set es = parameters.entrySet();
+        Iterator it = es.iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = (Map.Entry)it.next();
+            String k = (String)entry.getKey();
+            String v = (String)entry.getValue();
+            if (null != v && !"".equals(v) ) {
+                sb.append("<" + k + ">" + parameters.get(k) + "</" + k + ">\n");
+            }
+        }
+        return sb.toString();
+    }
 
     /**
      * 从request中获得参数Map，并返回可读的Map
