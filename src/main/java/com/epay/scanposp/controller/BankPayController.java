@@ -313,7 +313,7 @@ public class BankPayController {
 			debitNote.setMoney(new BigDecimal(payMoney));
 			debitNote.setOrderCode(orderCode);
 			debitNote.setOrderNumOuter(orderNumOuter);
-			debitNote.setRouteId(RouteCodeConstant.FT_ROUTE_CODE);
+			debitNote.setRouteId(RouteCodeConstant.SLF_ROUTE_CODE);
 			debitNote.setStatus("0");
 			debitNote.setTxnType("6");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());

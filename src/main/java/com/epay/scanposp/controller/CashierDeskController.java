@@ -67,6 +67,10 @@ import com.epay.scanposp.common.utils.esk.Key;
 import com.epay.scanposp.common.utils.ms.CryptoUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
+import com.epay.scanposp.common.utils.slf.MerchantClient;
+import com.epay.scanposp.common.utils.slf.vo.DeductInfo;
+import com.epay.scanposp.common.utils.slf.vo.QueryRequest;
+import com.epay.scanposp.common.utils.slf.vo.QueryResponse;
 import com.epay.scanposp.common.utils.swift.MD5;
 import com.epay.scanposp.common.utils.swift.SignUtils;
 import com.epay.scanposp.entity.Account;
@@ -4467,6 +4471,66 @@ public class CashierDeskController {
 					}
 					
 				}
+			}else if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
+				
+				MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+				memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+				
+				List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+				if(merchantCodes == null || merchantCodes.size()!=1){
+					result.put("returnCode", "0008");
+					result.put("returnMsg", "商户号不存在");
+					return signReturn(result);
+				}
+				String merchantCode = merchantCodes.get(0).getWxMerchantCode();
+				
+				MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merchantCode).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		            result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return result;
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+				
+				
+				QueryRequest queryRequest = new QueryRequest();
+				queryRequest.setMerchantId(merchantCode);
+				queryRequest.setMerchantOrderId(debitNote.getOrderCode());
+				MerchantClient client = new MerchantClient(merchantCode);
+				String merchantCertPath = MerchantClient.configPath + merchantKey.getPrivateKey();
+				com.epay.scanposp.common.utils.slf.SecurityUtil.merchantCertPath = merchantCertPath;
+				com.epay.scanposp.common.utils.slf.SecurityUtil.init(merchantCertPath,merchantKey.getPrivateKeyPassword());
+				
+				QueryResponse queryResponse = client.sendQueryRequest(queryRequest);
+				//System.out.println(queryResponse.getXml());
+				if("000".equals(queryResponse.getRespCode())){
+					List<DeductInfo> deductList = queryResponse.getDeductList();
+					if(deductList!=null && deductList.size()>0){
+						DeductInfo deductInfo = deductList.get(0);
+						if("01".equals(deductInfo.getPayStatus())){
+							result.put("oriRespType", "S");
+							result.put("oriRespCode", "000000");
+							result.put("oriRespMsg", deductInfo.getPayDesc());
+							result.put("totalAmount", String.valueOf(Float.parseFloat(deductInfo.getPayAmt())/100.0));
+
+						}else if("02".equals(deductInfo.getPayStatus())){
+							result.put("oriRespType", "E");
+							result.put("oriRespCode", "000002");
+							result.put("oriRespMsg", deductInfo.getPayDesc());
+						}else if("00".equals(deductInfo.getPayStatus())){
+							result.put("oriRespType", "R");
+							result.put("oriRespCode", "000001");
+							result.put("oriRespMsg", deductInfo.getPayDesc());
+						}
+					}
+				}else{
+					result.put("returnCode", "0004");
+					result.put("returnMsg", "第三方订单查询失败:"+queryResponse.getRespDesc());
+					return result;
+				}
+				
 			}else{
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
