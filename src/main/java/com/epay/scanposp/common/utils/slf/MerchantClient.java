@@ -40,15 +40,11 @@ import com.sun.org.apache.xml.internal.security.utils.Base64;
  * @author xmobo 
   */
 public class MerchantClient {
-	private static String configPath = "";
+	public static String configPath = "";
 	/**
 	 * 支付平台证书路径
 	 */
 	public static String transCertPath = "";
-	/**
-	 * 商户证书路径
-	 */
-	public static String merchantCertPath = "";
 	/**
 	 * 支付平台商户交易网址
 	 */
@@ -66,10 +62,6 @@ public class MerchantClient {
 	 */
 	public String merchantId = "";
 	/**
-	 * 商户交易通知接口地址
-	 */
-	public static String merchantPayNotifyURL = "";
-	/**
 	 * 商户代收付通知接口地址
 	 */
 	public static String receivePayNotifyUrl = "";
@@ -77,14 +69,6 @@ public class MerchantClient {
 	 * 商户前台下单地址
 	 */
 	public static String merchantFrontEndUrl = "";
-	/**
-	 * 商户证书文件
-	 */
-	public static String merchantCertFile = "";
-	/**
-	 * 商户证书密码
-	 */
-	public static String merchantCertPassword = "";
 	/**
 	 * 调试开关
 	 */
@@ -152,20 +136,14 @@ public class MerchantClient {
 			payURL = bundle.getString("PayURL");
 			trustCertFile = bundle.getString("TrustCertFile");
 			version = bundle.getString("Version");
-			merchantPayNotifyURL = bundle.getString("MerchantPayNotifyURL");
 			receivePayNotifyUrl = bundle.getString("ReceivePayNotifyUrl");
 			merchantFrontEndUrl = bundle.getString("MerchantFrontEndUrl");
-			merchantCertFile = bundle.getString("MerchantCertFile");
-			merchantCertPassword = bundle.getString("MerchantCertPassword");
 			debug = bundle.getString("Debug");
 			transCertPath = configPath + trustCertFile;
-			merchantCertPath = configPath + merchantCertFile;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		SecurityUtil.merchantCertPath = merchantCertPath;
 		SecurityUtil.transCertPath = transCertPath;
-		SecurityUtil.init(merchantCertPath,merchantCertPassword);
 		System.out.println();
 	}
 	/**
@@ -176,12 +154,8 @@ public class MerchantClient {
 		temp=temp+"payURL="+payURL+"\n";
 		temp=temp+"trustCertFile="+trustCertFile+"\n";
 		temp=temp+"merchantId="+merchantId+"\n";
-		temp=temp+"merchantPayNotifyURL="+merchantPayNotifyURL+"\n";
 		temp=temp+"merchantFrontEndUrl="+merchantFrontEndUrl+"\n";
-		temp=temp+"merchantCertFile	="+merchantCertFile	+"\n";
-		temp=temp+"merchantCertPassword="+merchantCertPassword+"\n";
 		temp=temp+"transCertPath="+transCertPath+"\n";
-		temp=temp+"merchantCertPath="+merchantCertPath+"\n";
 		return temp;
 	}
 	/**
@@ -859,9 +833,6 @@ public class MerchantClient {
 			throw new Exception("订单描述非法");
 		}
 		try {
-			if(request.getMerchantPayNotifyUrl().length() == 0) {
-				request.setMerchantPayNotifyUrl(merchantPayNotifyURL);				
-			}
 			if(request.getMerchantPayNotifyUrl().length() == 0 
 				|| request.getMerchantPayNotifyUrl().length() > 200
 				|| !request.getMerchantPayNotifyUrl().toLowerCase().trim().startsWith("http"))
@@ -955,9 +926,6 @@ public class MerchantClient {
 			throw new Exception("订单描述非法");
 		}
 		try {
-			if(request.getMerchantPayNotifyUrl().length() == 0) {
-				request.setMerchantPayNotifyUrl(merchantPayNotifyURL);				
-			}
 			if(request.getMerchantPayNotifyUrl().length() == 0 
 				|| request.getMerchantPayNotifyUrl().length() > 200
 				|| !request.getMerchantPayNotifyUrl().toLowerCase().trim().startsWith("http"))
@@ -1027,9 +995,6 @@ public class MerchantClient {
 			throw new Exception("订单描述非法");
 		}
 		try {
-			if(request.getMerchantPayNotifyUrl().length() == 0) {
-				request.setMerchantPayNotifyUrl(merchantPayNotifyURL);				
-			}
 			if(request.getMerchantPayNotifyUrl().length() == 0 
 				|| request.getMerchantPayNotifyUrl().length() > 200
 				|| !request.getMerchantPayNotifyUrl().toLowerCase().trim().startsWith("http"))
@@ -1072,9 +1037,6 @@ public class MerchantClient {
 			throw new Exception("订单描述非法");
 		}
 		try {
-			if(request.getMerchantPayNotifyUrl().length() == 0) {
-				request.setMerchantPayNotifyUrl(merchantPayNotifyURL);				
-			}
 			if(request.getMerchantPayNotifyUrl().length() == 0 
 				|| request.getMerchantPayNotifyUrl().length() > 200
 				|| !request.getMerchantPayNotifyUrl().toLowerCase().trim().startsWith("http"))

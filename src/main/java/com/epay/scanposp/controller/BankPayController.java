@@ -33,6 +33,7 @@ import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.slf.MerchantClient;
+import com.epay.scanposp.common.utils.slf.SecurityUtil;
 import com.epay.scanposp.common.utils.slf.vo.DeductInfo;
 import com.epay.scanposp.common.utils.slf.vo.OrderRequest;
 import com.epay.scanposp.common.utils.slf.vo.PaymentNotifyResponse;
@@ -64,6 +65,7 @@ import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
+import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayTypeService;
@@ -112,6 +114,9 @@ public class BankPayController {
 	
 	@Resource
 	private MsResultNoticeService msResultNoticeService;
+	
+	@Autowired
+	private MemberMerchantKeyService memberMerchantKeyService;
 	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/toPay")
@@ -344,9 +349,22 @@ public class BankPayController {
 			// String callBack = "http://" + request.getServerName() + ":" +
 			// request.getServerPort() + request.getContextPath()+
 			// "/debitNote/msNotify";
-			String callBack = SysConfig.serverUrl + "/cashierDesk/slfPayNotify";
+			String callBack = SysConfig.serverUrl + "/bankPay/slfPayNotify";
 			
-			System.out.println("-------------通知地址------" + callBack + "------------");
+			
+			//System.out.println("-------------通知地址------" + callBack + "------------");
+			
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.SLF_ROUTE_CODE).andMerchantCodeEqualTo(merchantCode.getWxMerchantCode()).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0003");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+			
 			
 			SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 			
@@ -356,11 +374,17 @@ public class BankPayController {
 			orderRequest.setMerchantOrderAmt(String.valueOf((int)((new BigDecimal(payMoney)).floatValue()*100)));
 			orderRequest.setMerchantOrderDesc(memberInfo.getName() + " 收款");
 			orderRequest.setMerchantPayNotifyUrl(callBack);
-			orderRequest.setAccountType("1");//B2C：0 借记卡，1 贷记卡  B2B：4 对公账户
+			orderRequest.setMerchantFrontEndUrl(SLFConfig.merchantFrontEndUrl);
+			orderRequest.setAccountType("0");//B2C：0 借记卡，1 贷记卡  B2B：4 对公账户
 			orderRequest.setOrderTime(format.format(new Date()));
 			orderRequest.setRptType("1");//收款方式 定值1
 			orderRequest.setPayMode("0");//付款类型 0 初次支付 1 重复支付，当前支持 0
-			String msg = new MerchantClient(merchantCode.getWxMerchantCode()).sendOrderRequest(orderRequest);
+			
+			MerchantClient client = new MerchantClient(merchantCode.getWxMerchantCode());
+			String merchantCertPath = MerchantClient.configPath + merchantKey.getPrivateKey();
+			SecurityUtil.merchantCertPath = merchantCertPath;
+			SecurityUtil.init(merchantCertPath,merchantKey.getPrivateKeyPassword());
+			String msg = client.sendOrderRequest(orderRequest);
 			
 			result.put("msg", msg);
 			result.put("payUrl", SLFConfig.payURL);
@@ -377,7 +401,7 @@ public class BankPayController {
 	}
 	
 	
-	@RequestMapping("/cashierDesk/slfPayNotify")
+	@RequestMapping("/bankPay/slfPayNotify")
 	public void slfPayNotify(HttpServletRequest request,HttpServletResponse response) {
 		String respString = "success";
 		MerchantClient merchant = new MerchantClient();

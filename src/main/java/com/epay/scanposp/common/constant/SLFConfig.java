@@ -11,13 +11,14 @@ import com.epay.scanposp.common.utils.EnvironmentUtil;
  */
 public class SLFConfig {
 	public static String payURL;
-	
+	public static String merchantFrontEndUrl;
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "slf_config");
 		//测试环境参数
 //		ResourceBundle bundle = PropertyResourceBundle.getBundle("mskeytest/ms_config");
 		payURL = bundle.getString("PayURL");
+		merchantFrontEndUrl = bundle.getString("MerchantFrontEndUrl");
 		
 	}
 }

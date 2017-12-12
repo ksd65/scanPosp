@@ -86,7 +86,7 @@ public class MerchantXmlUtil {
 			root.setAttribute("merchantPayNotifyUrl", request.getMerchantPayNotifyUrl().trim());
 		}
 		if(request.getMerchantFrontEndUrl() != null && request.getMerchantFrontEndUrl().trim().length() > 0){
-		//	root.setAttribute("merchantFrontEndUrl", request.getMerchantFrontEndUrl().trim());
+			root.setAttribute("merchantFrontEndUrl", request.getMerchantFrontEndUrl().trim());
 		}
 		if(request.getUserMobileNo() != null && request.getUserMobileNo().length() > 0){
 			root.setAttribute("userMobileNo", request.getUserMobileNo());
@@ -136,7 +136,7 @@ public class MerchantXmlUtil {
 	 */	
 	protected String certPayRequestToXml(CertPayRequest request) {
 		//if(request.getMerchantId().length() == 0)request.setMerchantId(new MerchantClient().merchantId);
-		if(request.getMerchantPayNotifyUrl().length() == 0)request.setMerchantPayNotifyUrl(MerchantClient.merchantPayNotifyURL);
+		//if(request.getMerchantPayNotifyUrl().length() == 0)request.setMerchantPayNotifyUrl(MerchantClient.merchantPayNotifyURL);
 		if(request.getMerchantFrontEndUrl().length() == 0)request.setMerchantFrontEndUrl(MerchantClient.merchantFrontEndUrl);
 		document = builder.newDocument();
 		Element root = document.createElement("message");
@@ -175,7 +175,7 @@ public class MerchantXmlUtil {
 	 */	
 	protected String weiXinScanRequestToXml(WeiXinScanRequest request) {
 		//if(request.getMerchantId().length() == 0)request.setMerchantId(new MerchantClient().merchantId);
-		if(request.getMerchantPayNotifyUrl().length() == 0)request.setMerchantPayNotifyUrl(MerchantClient.merchantPayNotifyURL);
+		//if(request.getMerchantPayNotifyUrl().length() == 0)request.setMerchantPayNotifyUrl(MerchantClient.merchantPayNotifyURL);
 		document = builder.newDocument();
 		Element root = document.createElement("message");
 		root.setAttribute("application", request.getApplication());
@@ -205,7 +205,7 @@ public class MerchantXmlUtil {
 	 */	
 	protected String certPayH5RequestToXml(CertPayH5Request request) {
 		//if(request.getMerchantId().length() == 0)request.setMerchantId(new MerchantClient().merchantId);
-		if(request.getMerchantPayNotifyUrl().length() == 0)request.setMerchantPayNotifyUrl(MerchantClient.merchantPayNotifyURL);
+		//if(request.getMerchantPayNotifyUrl().length() == 0)request.setMerchantPayNotifyUrl(MerchantClient.merchantPayNotifyURL);
 		if(request.getMerchantFrontEndUrl().length() == 0)request.setMerchantFrontEndUrl(MerchantClient.merchantFrontEndUrl);
 		document = builder.newDocument();
 		Element root = document.createElement("message");

@@ -7,6 +7,7 @@
     <result column="merchant_code" jdbcType="VARCHAR" property="merchantCode" />
     <result column="private_key" jdbcType="VARCHAR" property="privateKey" />
     <result column="public_key" jdbcType="VARCHAR" property="publicKey" />
+    <result column="private_key_password" jdbcType="VARCHAR" property="privateKeyPassword" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
@@ -72,7 +73,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, route_code,merchant_code, private_key, public_key,
+    id, route_code,merchant_code, private_key, public_key,private_key_password,
     create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberMerchantKeyExample" resultMap="BaseResultMap">

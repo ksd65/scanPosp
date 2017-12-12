@@ -12,8 +12,8 @@ import java.util.Enumeration;
 
 import com.sun.org.apache.xml.internal.security.utils.Base64;
 
-class SecurityUtil {
-	protected static String merchantCertPath = "";
+public class SecurityUtil {
+	public static String merchantCertPath = "";
 	protected static String transCertPath = null;
 	private static RSAPrivateKey privateKey = null;
 	private static RSAPublicKey publicKey = null;
@@ -23,9 +23,8 @@ class SecurityUtil {
 	 * @param certPath 证书路径
 	 * @param certPassword 证书密码
 	 */
-	protected static void init(String certPath, String certPassword) {
-		try {System.out.println("私钥地址====="+certPath);
-		System.out.println("私钥密码====="+certPassword);
+	public static void init(String certPath, String certPassword) {
+		try {
 			KeyStore ks = KeyStore.getInstance("PKCS12");
 			FileInputStream fis = new FileInputStream(certPath);
 			char[] nPassword = null;

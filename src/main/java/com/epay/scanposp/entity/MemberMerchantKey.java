@@ -14,6 +14,8 @@ public class MemberMerchantKey {
 	
 	private String publicKey;
 	
+	private String privateKeyPassword;
+	
 	private String delFlag;
 	
 	private String createBy;
@@ -104,6 +106,14 @@ public class MemberMerchantKey {
 
 	public void setUpdateDate(Date updateDate) {
 		this.updateDate = updateDate;
+	}
+
+	public String getPrivateKeyPassword() {
+		return privateKeyPassword;
+	}
+
+	public void setPrivateKeyPassword(String privateKeyPassword) {
+		this.privateKeyPassword = privateKeyPassword;
 	}
 
 	
