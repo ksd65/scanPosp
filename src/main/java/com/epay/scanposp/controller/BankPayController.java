@@ -279,11 +279,11 @@ public class BankPayController {
 		SysOffice sysOffice = sysOfficeList.get(0);
 //		String singedStr = EpaySignUtil.sign(sysOffice.getPrivateKeyRsa(), signOrginalStr);
 //		System.out.println(singedStr);  
-/*		if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
+		if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
 			result.put("returnCode", "0004");
 			result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 			return result;
-		}*/
+		}
 		
 		//校验交易额是否超出限制
 	    /*

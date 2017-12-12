@@ -86,7 +86,7 @@ public class MerchantXmlUtil {
 			root.setAttribute("merchantPayNotifyUrl", request.getMerchantPayNotifyUrl().trim());
 		}
 		if(request.getMerchantFrontEndUrl() != null && request.getMerchantFrontEndUrl().trim().length() > 0){
-			root.setAttribute("merchantFrontEndUrl", request.getMerchantFrontEndUrl().trim());
+		//	root.setAttribute("merchantFrontEndUrl", request.getMerchantFrontEndUrl().trim());
 		}
 		if(request.getUserMobileNo() != null && request.getUserMobileNo().length() > 0){
 			root.setAttribute("userMobileNo", request.getUserMobileNo());
