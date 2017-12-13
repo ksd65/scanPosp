@@ -37,7 +37,6 @@ import com.epay.scanposp.common.utils.slf.SecurityUtil;
 import com.epay.scanposp.common.utils.slf.vo.DeductInfo;
 import com.epay.scanposp.common.utils.slf.vo.OrderRequest;
 import com.epay.scanposp.common.utils.slf.vo.PaymentNotifyResponse;
-import com.epay.scanposp.common.utils.swift.SignUtils;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
 import com.epay.scanposp.entity.DebitNote;
@@ -315,7 +314,7 @@ public class BankPayController {
 			debitNote.setOrderNumOuter(orderNumOuter);
 			debitNote.setRouteId(RouteCodeConstant.SLF_ROUTE_CODE);
 			debitNote.setStatus("0");
-			debitNote.setTxnType("6");
+			debitNote.setTxnType("8");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
 			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
 			
