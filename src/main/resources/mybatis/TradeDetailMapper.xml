@@ -23,6 +23,7 @@
     <result column="t1_routeway_draw" property="t1RoutewayDraw" jdbcType="DECIMAL" />
     <result column="order_code" property="orderCode" jdbcType="VARCHAR" />
     <result column="order_num_outer" property="orderNumOuter" jdbcType="VARCHAR" />
+    <result column="txn_method" jdbcType="VARCHAR" property="txnMethod" />
     <result column="txn_type" property="txnType" jdbcType="CHAR" />
     <result column="pt_serial_no" property="ptSerialNo" jdbcType="VARCHAR" />
     <result column="req_date" property="reqDate" jdbcType="VARCHAR" />
@@ -108,7 +109,7 @@
     id, txn_date, member_id, member_code, merchant_code, money, member_trade_rate, member_draw_fee, 
     member_settle_money, d0_money, d0_member_fee, d0_member_draw, d0_routeway_fee, d0_routeway_draw, 
     t1_money, t1_member_fee, t1_member_draw, t1_routeway_fee, t1_routeway_draw, order_code, 
-    order_num_outer, txn_type, pt_serial_no, req_date, resp_date, resp_type, resp_code, 
+    order_num_outer,txn_method, txn_type, pt_serial_no, req_date, resp_date, resp_type, resp_code, 
     resp_msg, card_type, route_id, pay_time, balance_date, channel_no, settle_type, interface_type, 
     platform_type, settle_cancel_flag, create_by, create_date, update_by, update_date, 
     remarks, del_flag
@@ -245,6 +246,9 @@
       <if test="orderNumOuter != null" >
         order_num_outer,
       </if>
+      <if test="txnMethod != null">
+        txn_method,
+      </if>
       <if test="txnType != null" >
         txn_type,
       </if>
@@ -372,6 +376,9 @@
       </if>
       <if test="orderNumOuter != null" >
         #{orderNumOuter,jdbcType=VARCHAR},
+      </if>
+      <if test="txnMethod != null">
+        #{txnMethod,jdbcType=VARCHAR},
       </if>
       <if test="txnType != null" >
         #{txnType,jdbcType=CHAR},

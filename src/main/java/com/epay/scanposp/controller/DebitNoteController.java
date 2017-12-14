@@ -488,6 +488,7 @@ public class DebitNoteController {
 			debitNote.setOrderCode(orderCode);
 			debitNote.setRouteId(memberInfo.getWxRouteId());
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_GZHZF);
 			debitNote.setTxnType("1");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
 			debitNote.setMerchantCode(memberInfo.getWxMerchantCode());
@@ -649,6 +650,7 @@ public class DebitNoteController {
 			debitNote.setOrderCode(orderCode);
 			debitNote.setRouteId(RouteCodeConstant.ESK_ROUTE_CODE);
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_GZHZF);
 			debitNote.setTxnType("1");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
 			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
@@ -815,6 +817,7 @@ public class DebitNoteController {
 			debitNote.setOrderCode(orderCode);
 			debitNote.setRouteId(RouteCodeConstant.XF_ROUTE_CODE);
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_GZHZF);
 			debitNote.setTxnType("1");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
 			debitNote.setMerchantCode(memberInfo.getWxMerchantCode());
@@ -1004,6 +1007,7 @@ public class DebitNoteController {
 			debitNote.setOrderCode(orderCode);
 			debitNote.setRouteId(RouteCodeConstant.SD_ROUTE_CODE);
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_GZHZF);
 			debitNote.setTxnType("1");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
 			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
@@ -1413,6 +1417,7 @@ public class DebitNoteController {
 			debitNote.setOrderCode(orderCode);
 			debitNote.setRouteId(memberInfo.getZfbRouteId());
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_GZHZF);
 			debitNote.setTxnType("2");
 			debitNote.setMemberCode(memberInfo.getZfbMemberCode());
 			debitNote.setMerchantCode(memberInfo.getZfbMerchantCode());
@@ -1563,6 +1568,7 @@ public class DebitNoteController {
 			debitNote.setOrderCode(orderCode);
 			debitNote.setRouteId(RouteCodeConstant.ESK_ROUTE_CODE);
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_GZHZF);
 			debitNote.setTxnType("2");
 			debitNote.setMemberCode(memberInfo.getZfbMemberCode());
 			debitNote.setMerchantCode(merchantCode.getZfbMerchantCode());
@@ -2102,6 +2108,7 @@ public class DebitNoteController {
 					tradeDetail.setRespCode(respJSONObject.get("respCode").toString());
 					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
 					tradeDetail.setRespMsg(respJSONObject.get("respMsg").toString());
+					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
 					tradeDetail.setRouteId(debitNote.getRouteId());
 					tradeDetail.setTxnType(debitNote.getTxnType());
 					tradeDetail.setRemarks(debitNote.getRemarks());
@@ -2287,6 +2294,7 @@ public class DebitNoteController {
 					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
 					tradeDetail.setRespMsg(respJSONObject.get("respMsg").toString());
 					tradeDetail.setRouteId(debitNote.getRouteId());
+					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
 					tradeDetail.setTxnType(debitNote.getTxnType());
 					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
 					tradeDetail.setDelFlag("0");

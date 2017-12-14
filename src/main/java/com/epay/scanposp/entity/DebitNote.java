@@ -19,6 +19,8 @@ public class DebitNote {
     private String orderNumOuter;
 
     private String settleType;
+    
+    private String txnMethod;
 
     private String txnType;
     
@@ -192,6 +194,14 @@ public class DebitNote {
 
 	public void setOrderNumOuter(String orderNumOuter) {
 		this.orderNumOuter = orderNumOuter;
+	}
+
+	public String getTxnMethod() {
+		return txnMethod;
+	}
+
+	public void setTxnMethod(String txnMethod) {
+		this.txnMethod = txnMethod;
 	}
     
     

@@ -10,6 +10,7 @@
     <result column="order_code" jdbcType="VARCHAR" property="orderCode" />
     <result column="order_num_outer" jdbcType="VARCHAR" property="orderNumOuter" />
     <result column="settle_type" jdbcType="CHAR" property="settleType" />
+    <result column="txn_method" jdbcType="VARCHAR" property="txnMethod" />
     <result column="txn_type" jdbcType="CHAR" property="txnType" />
     <result column="trade_rate" property="tradeRate" jdbcType="DECIMAL" />
     <result column="status" jdbcType="CHAR" property="status" />
@@ -81,7 +82,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, money, member_id, member_code, merchant_code, order_code, order_num_outer,settle_type, txn_type, trade_rate,
+    id, money, member_id, member_code, merchant_code, order_code, order_num_outer,settle_type,txn_method, txn_type, trade_rate,
     status, route_id, resp_code, resp_msg, create_by, create_date, update_by, update_date, 
     remarks
   </sql>
@@ -162,6 +163,9 @@
       <if test="settleType != null">
         settle_type,
       </if>
+      <if test="txnMethod != null">
+        txn_method,
+      </if>
       <if test="txnType != null">
         txn_type,
       </if>
@@ -217,6 +221,9 @@
       </if>
       <if test="settleType != null">
         #{settleType,jdbcType=CHAR},
+      </if>
+      <if test="txnMethod != null">
+        #{txnMethod,jdbcType=VARCHAR},
       </if>
       <if test="txnType != null">
         #{txnType,jdbcType=CHAR},

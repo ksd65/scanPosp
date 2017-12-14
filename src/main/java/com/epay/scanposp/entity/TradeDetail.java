@@ -45,6 +45,8 @@ public class TradeDetail {
     private String orderCode;
 
     private String orderNumOuter;
+    
+    private String txnMethod;
 
     private String txnType;
 
@@ -436,4 +438,14 @@ public class TradeDetail {
     public void setDelFlag(String delFlag) {
         this.delFlag = delFlag == null ? null : delFlag.trim();
     }
+
+	public String getTxnMethod() {
+		return txnMethod;
+	}
+
+	public void setTxnMethod(String txnMethod) {
+		this.txnMethod = txnMethod;
+	}
+    
+    
 }

@@ -453,6 +453,7 @@ public class CashierDeskController {
 					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
 					tradeDetail.setRespMsg(respJSONObject.get("respMsg").toString());
 					tradeDetail.setRouteId(debitNote.getRouteId());
+					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
 					tradeDetail.setTxnType(debitNote.getTxnType());
 					tradeDetail.setDelFlag("0");
 					tradeDetail.setCreateDate(new Date());
@@ -729,6 +730,7 @@ public class CashierDeskController {
 					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
 					tradeDetail.setRespMsg(respJSONObject.get("respMsg").toString());
 					tradeDetail.setRouteId(debitNote.getRouteId());
+					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
 					tradeDetail.setTxnType(debitNote.getTxnType());
 					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
 					tradeDetail.setDelFlag("0");
@@ -1009,6 +1011,7 @@ public class CashierDeskController {
                     					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
                     					tradeDetail.setRespMsg(map.get("pay_info"));
                     					tradeDetail.setRouteId(debitNote.getRouteId());
+                    					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
                     					tradeDetail.setTxnType(debitNote.getTxnType());
                     					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
                     					tradeDetail.setDelFlag("0");
@@ -1268,6 +1271,7 @@ public class CashierDeskController {
 			debitNote.setOrderCode(orderCode);
 			debitNote.setRouteId(memberInfo.getZfbRouteId());
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_SMZF);
 			if("1".equals(payType)){
 				debitNote.setTxnType("1");
 				debitNote.setMemberCode(memberInfo.getWxMemberCode());
@@ -1452,6 +1456,7 @@ public class CashierDeskController {
 			debitNote.setOrderNumOuter(orderNumOuter);
 			debitNote.setRouteId(RouteCodeConstant.ESK_ROUTE_CODE);
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_SMZF);
 			if("1".equals(payType)){
 				debitNote.setTxnType("1");
 				debitNote.setMemberCode(memberInfo.getWxMemberCode());
@@ -1631,6 +1636,7 @@ public class CashierDeskController {
 			debitNote.setOrderNumOuter(orderNumOuter);
 			debitNote.setRouteId(RouteCodeConstant.FT_ROUTE_CODE);
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_SMZF);
 			if("1".equals(payType)){
 				debitNote.setTxnType("1");
 				debitNote.setMemberCode(memberInfo.getWxMemberCode());
@@ -1726,6 +1732,7 @@ public class CashierDeskController {
 			}else if("5".equals(payType)){
 				merCode = merchantCode.getJdMerchantCode();
 			}
+			reqMap.put("sign_agentno", FTConfig.agentId);
 			reqMap.put("mch_id", merCode);
 			reqMap.put("out_trade_no", orderCode);
 			reqMap.put("body", memberInfo.getName() + " 收款");
@@ -1739,15 +1746,16 @@ public class CashierDeskController {
             SignUtils.buildPayParams(buf,params,false);
             String preStr = buf.toString();
             
-            MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+   /*         MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
             memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.FT_ROUTE_CODE).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
             List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
             if(keyList == null || keyList.size()!=1){
             	result.put("returnCode", "0003");
 				result.put("returnMsg", "商户私钥未配置");
 				return result;
-            }
-            String sign = MD5.sign(preStr, "&key=" + keyList.get(0).getPrivateKey(), "utf-8");
+            }*/
+            //String sign = MD5.sign(preStr, "&key=" + keyList.get(0).getPrivateKey(), "utf-8");
+            String sign = MD5.sign(preStr, "&key=" + FTConfig.privateKey, "utf-8");
             reqMap.put("sign", sign);
             
             String reqStr = com.epay.scanposp.common.utils.swift.XmlUtils.parseXML(reqMap);
@@ -1773,7 +1781,7 @@ public class CashierDeskController {
                     res = com.epay.scanposp.common.utils.swift.XmlUtils.toXml(resultMap);
                     logger.info("返回报文[{}]", new Object[] { res });
                     if("0".equals(resultMap.get("status"))){
-                    	if(!SignUtils.checkParam(resultMap, keyList.get(0).getPrivateKey())){
+                    	if(!SignUtils.checkParam(resultMap, FTConfig.privateKey)){
                             result.put("returnCode", "0003");
             				result.put("returnMsg", "验证签名不通过");
                         }else{

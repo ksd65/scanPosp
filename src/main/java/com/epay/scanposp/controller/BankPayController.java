@@ -37,12 +37,16 @@ import com.epay.scanposp.common.utils.slf.SecurityUtil;
 import com.epay.scanposp.common.utils.slf.vo.DeductInfo;
 import com.epay.scanposp.common.utils.slf.vo.OrderRequest;
 import com.epay.scanposp.common.utils.slf.vo.PaymentNotifyResponse;
+import com.epay.scanposp.common.utils.slf.vo.ReceivePayRequest;
+import com.epay.scanposp.common.utils.slf.vo.ReceivePayResponse;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
 import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
+import com.epay.scanposp.entity.MemberBank;
+import com.epay.scanposp.entity.MemberBankExample;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberMerchantCode;
@@ -62,6 +66,7 @@ import com.epay.scanposp.entity.TradeDetailExample;
 import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.EpayCodeService;
+import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
@@ -117,9 +122,12 @@ public class BankPayController {
 	@Autowired
 	private MemberMerchantKeyService memberMerchantKeyService;
 	
+	@Autowired
+	private MemberBankService memberBankService;
+	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/toPay")
-	public JSONObject getQrcodePay(HttpServletRequest request,HttpServletResponse response){
+	public JSONObject toPay(HttpServletRequest request,HttpServletResponse response){
 		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
 		String payMoney = reqDataJson.getString("payMoney");
@@ -314,6 +322,7 @@ public class BankPayController {
 			debitNote.setOrderNumOuter(orderNumOuter);
 			debitNote.setRouteId(RouteCodeConstant.SLF_ROUTE_CODE);
 			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_YL);
 			debitNote.setTxnType("8");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
 			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
@@ -468,6 +477,7 @@ public class BankPayController {
             					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
             					tradeDetail.setRespMsg(deductInfo.getPayDesc());
             					tradeDetail.setRouteId(debitNote.getRouteId());
+            					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
             					tradeDetail.setTxnType(debitNote.getTxnType());
             					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
             					tradeDetail.setDelFlag("0");
@@ -576,6 +586,141 @@ public class BankPayController {
 			logger.error(e.getMessage());
 		}
 
+	}
+	
+	
+	@ResponseBody
+	@RequestMapping("/api/bankPay/receivePay")
+	public JSONObject receivePay(HttpServletRequest request,HttpServletResponse response){
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		String payMoney = reqDataJson.getString("payMoney");
+		String memberId = reqDataJson.getString("memberId");
+		JSONObject result = new JSONObject();
+		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
+			result.put("returnCode", "0005");
+			result.put("returnMsg", "支付金额输入不正确");
+			return result;
+		}
+		
+		if(memberId == null || "".equals(memberId)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户Id缺失");
+			return result;
+		}
+		
+		try{
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(Integer.parseInt(memberId));
+			if(memberInfo == null){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户不存在");
+				return result;
+			}
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(RouteCodeConstant.SLF_ROUTE_CODE).andDelFlagEqualTo("0");
+			
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			
+			MemberBankExample memberBankExample = new MemberBankExample();
+			memberBankExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+			List<MemberBank> memberBanks = memberBankService.selectByExample(memberBankExample);
+			if (memberBanks == null || memberBanks.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，银行卡号未配置");
+				return result;
+			}
+			MemberBank memberBank = memberBanks.get(0);
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.SLF_ROUTE_CODE).andMerchantCodeEqualTo(merchantCode.getWxMerchantCode()).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0003");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+			
+			String orderCode = CommonUtil.getOrderCode();
+			String callBack = SysConfig.serverUrl + "/bankPay/receivePayNotify";
+			
+			ReceivePayRequest receivePayRequest = new ReceivePayRequest();
+			receivePayRequest.setApplication("ReceivePay");
+			receivePayRequest.setVersion("1.0.1");
+			receivePayRequest.setMerchantId(merchantCode.getWxMerchantCode());
+			receivePayRequest.setTranId(orderCode);
+			receivePayRequest.setReceivePayNotifyUrl(callBack); 
+			receivePayRequest.setReceivePayType("1");//0 收款，1 付款
+			receivePayRequest.setTimestamp(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+			receivePayRequest.setAccountProp("0");//0 对私，4 对公
+			receivePayRequest.setBankGeneralName(memberBank.getBankOpen());
+			receivePayRequest.setAccNo(memberBank.getAccountNumber());
+			receivePayRequest.setAccName(memberBank.getAccountName());
+			receivePayRequest.setAmount(String.valueOf((int)((new BigDecimal(payMoney)).floatValue()*100)));
+			receivePayRequest.setCredentialType("01");//证件类型  01 身份证，对私必填
+	
+			receivePayRequest.setCredentialNo(memberInfo.getCertNbr());
+			receivePayRequest.setTel(memberInfo.getMobilePhone());
+			//receivePayRequest.setSummary(new String(request.getParameter("summary").getBytes("ISO8859-1"),"utf-8"));
+			
+			MerchantClient client = new MerchantClient(merchantCode.getWxMerchantCode());
+			String merchantCertPath = MerchantClient.configPath + merchantKey.getPrivateKey();
+			SecurityUtil.merchantCertPath = merchantCertPath;
+			SecurityUtil.init(merchantCertPath,merchantKey.getPrivateKeyPassword());
+			System.out.println(receivePayRequest.toString());
+			//ReceivePayResponse receivePayResponse = new ReceivePayResponse();
+			ReceivePayResponse receivePayResponse = client.receivePayRequest(receivePayRequest);
+			System.out.println(receivePayResponse.toString());
+			if("000".equals(receivePayResponse.getRespCode())){
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "请求成功");
+			}else{
+				result.put("returnCode", "0001");
+				result.put("returnMsg", receivePayResponse.getRespDesc());
+			}
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	@RequestMapping("/bankPay/receivePayNotify")
+	public void receivePayNotify(HttpServletRequest request,HttpServletResponse response) {
+		String respString = "success";
+		MerchantClient merchant = new MerchantClient();
+		InputStream is = null;
+		try {
+			StringBuffer notifyResultStr = new StringBuffer("");
+			is = request.getInputStream();
+			byte[] b = new byte[1024];
+			int len = -1;
+			while((len = is.read(b)) != -1){
+				notifyResultStr.append(new String(b,0,len,"utf-8"));
+			}
+			logger.info("receivePayNotify回调通知返回报文[{}]",  notifyResultStr );
+			
+			ReceivePayResponse pnResponse = merchant
+					.parseReceivePayNotify(notifyResultStr.toString());
+			
+			
+			logger.info("receivePayNotify解密回调通知报文[{}]",  pnResponse );
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		try {
+			response.getWriter().write(respString);
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
 	}
 	
 	

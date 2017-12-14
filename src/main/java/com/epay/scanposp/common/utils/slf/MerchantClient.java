@@ -714,7 +714,7 @@ public class MerchantClient {
 			e.printStackTrace();
 			throw new Exception("手机号非法");
 		}
-		if(request.getSummary().length() > 256) throw new Exception("备注非法");
+	//	if(request.getSummary().length() > 256) throw new Exception("备注非法");
 	}
 	
 	/**
