@@ -25,6 +25,9 @@
     <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
     <result column="remarks" property="remarks" jdbcType="VARCHAR" />
     <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+    <result column="audit_status" property="auditStatus" jdbcType="VARCHAR" />
+    <result column="audit_by" property="auditBy" jdbcType="VARCHAR" />
+    <result column="audit_date" property="auditDate" jdbcType="TIMESTAMP" />
   </resultMap>
   <sql id="Example_Where_Clause" >
     <where >
@@ -87,7 +90,7 @@
   <sql id="Base_Column_List" >
     id, member_id, member_code, merchant_code, member_trade_rate, money, order_code, pt_serial_no, req_date, 
     resp_date, resp_type, resp_code, resp_msg, drawAmount, drawFee, tradeFee, settle_date, 
-    create_by, create_date, update_by, update_date, remarks, del_flag
+    create_by, create_date, update_by, update_date, remarks, del_flag,audit_status,audit_by,audit_date
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.RoutewayDrawExample" >
     select
@@ -132,7 +135,7 @@
       resp_code, resp_msg, drawAmount, 
       drawFee, tradeFee, settle_date, 
       create_by, create_date, update_by, 
-      update_date, remarks, del_flag
+      update_date, remarks, del_flag,audit_status,audit_by,audit_date
       )
     values (#{memberId,jdbcType=INTEGER}, #{memberCode,jdbcType=VARCHAR}, #{merchantCode,jdbcType=VARCHAR}, 
       #{memberTradeRate,jdbcType=DECIMAL},#{money,jdbcType=DECIMAL}, #{orderCode,jdbcType=VARCHAR}, #{ptSerialNo,jdbcType=VARCHAR}, 
@@ -140,7 +143,8 @@
       #{respCode,jdbcType=VARCHAR}, #{respMsg,jdbcType=VARCHAR}, #{drawamount,jdbcType=DECIMAL}, 
       #{drawfee,jdbcType=DECIMAL}, #{tradefee,jdbcType=DECIMAL}, #{settleDate,jdbcType=VARCHAR}, 
       #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, 
-      #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR}
+      #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, #{delFlag,jdbcType=CHAR},
+      #{auditStatus,jdbcType=VARCHAR}, #{auditBy,jdbcType=VARCHAR},#{auditDate,jdbcType=TIMESTAMP}
       )
   </insert>
   <insert id="insertSelective" parameterType="com.epay.scanposp.entity.RoutewayDraw" >
@@ -215,6 +219,15 @@
       <if test="delFlag != null" >
         del_flag,
       </if>
+      <if test="auditStatus != null" >
+        audit_status,
+      </if>
+      <if test="auditBy != null" >
+        audit_by,
+      </if>
+      <if test="auditDate != null" >
+        audit_date,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="memberId != null" >
@@ -282,6 +295,15 @@
       </if>
       <if test="delFlag != null" >
         #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="auditStatus != null" >
+        #{auditStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="auditBy != null" >
+        #{auditBy,jdbcType=VARCHAR},
+      </if>
+      <if test="auditDate != null" >
+        #{auditDate,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
@@ -363,10 +385,20 @@
       <if test="record.delFlag != null" >
         del_flag = #{record.delFlag,jdbcType=CHAR},
       </if>
+      <if test="record.auditStatus != null" >
+        audit_status = #{record.auditStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.auditBy != null" >
+        audit_by = #{record.auditBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.auditDate != null" >
+        audit_date = #{record.auditDate,jdbcType=TIMESTAMP},
+      </if>
     </set>
     <if test="_parameter != null" >
       <include refid="Update_By_Example_Where_Clause" />
     </if>
+    
   </update>
   <update id="updateByExample" parameterType="map" >
     update bu_routeway_draw
@@ -392,7 +424,10 @@
       update_by = #{record.updateBy,jdbcType=VARCHAR},
       update_date = #{record.updateDate,jdbcType=TIMESTAMP},
       remarks = #{record.remarks,jdbcType=VARCHAR},
-      del_flag = #{record.delFlag,jdbcType=CHAR}
+      del_flag = #{record.delFlag,jdbcType=CHAR},
+      audit_status = #{record.auditStatus,jdbcType=VARCHAR},
+      audit_by = #{record.auditBy,jdbcType=VARCHAR},
+      audit_date = #{record.auditDate,jdbcType=TIMESTAMP}
     <if test="_parameter != null" >
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -466,6 +501,15 @@
       <if test="delFlag != null" >
         del_flag = #{delFlag,jdbcType=CHAR},
       </if>
+      <if test="auditStatus != null" >
+        audit_status = #{auditStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="auditBy != null" >
+        audit_by = #{auditBy,jdbcType=VARCHAR},
+      </if>
+      <if test="auditDate != null" >
+        audit_date = #{auditDate,jdbcType=TIMESTAMP},
+      </if>
     </set>
     where id = #{id,jdbcType=INTEGER}
   </update>
@@ -492,7 +536,10 @@
       update_by = #{updateBy,jdbcType=VARCHAR},
       update_date = #{updateDate,jdbcType=TIMESTAMP},
       remarks = #{remarks,jdbcType=VARCHAR},
-      del_flag = #{delFlag,jdbcType=CHAR}
+      del_flag = #{delFlag,jdbcType=CHAR},
+      audit_status = #{auditStatus,jdbcType=VARCHAR},
+      audit_by = #{auditBy,jdbcType=VARCHAR},
+      audit_date = #{auditDate,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=INTEGER}
   </update>
 </mapper>

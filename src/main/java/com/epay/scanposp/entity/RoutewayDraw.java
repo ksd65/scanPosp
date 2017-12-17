@@ -49,6 +49,12 @@ public class RoutewayDraw {
     private String remarks;
 
     private String delFlag;
+    
+    private String auditStatus;
+    
+    private String auditBy;
+
+    private Date auditDate;
 
     public Integer getId() {
         return id;
@@ -234,4 +240,30 @@ public class RoutewayDraw {
     public void setDelFlag(String delFlag) {
         this.delFlag = delFlag;
     }
+
+	public String getAuditStatus() {
+		return auditStatus;
+	}
+
+	public void setAuditStatus(String auditStatus) {
+		this.auditStatus = auditStatus;
+	}
+
+	public String getAuditBy() {
+		return auditBy;
+	}
+
+	public void setAuditBy(String auditBy) {
+		this.auditBy = auditBy;
+	}
+
+	public Date getAuditDate() {
+		return auditDate;
+	}
+
+	public void setAuditDate(Date auditDate) {
+		this.auditDate = auditDate;
+	}
+    
+    
 }

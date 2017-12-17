@@ -45,6 +45,7 @@ import com.epay.scanposp.common.utils.SignUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.WxMessageUtil;
 import com.epay.scanposp.common.utils.XmlUtil;
+import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.entity.Bank;
 import com.epay.scanposp.entity.BankName;
@@ -354,10 +355,54 @@ public class MemberInfoController {
 			
 			// 今天未提现总额
 			Double unDrawMoneyCount = tradeMoneyCountToday - drawMoneyCount;
-
+			
+			
+			paramMap = new HashMap<String, Object>();
+			paramMap.put("memberId", reqDataJson.getInt("memberId"));
+			//交易总额
+			Double tradeMoneyCountAll = commonService.countTransactionMoneyByCondition(paramMap);
+			tradeMoneyCountAll = tradeMoneyCountAll == null ? 0 : tradeMoneyCountAll;
+			//已提现总额
+			Double drawMoneyCountAll = commonService.countDrawMoneyByCondition(paramMap);
+			drawMoneyCountAll = drawMoneyCountAll == null ? 0 : drawMoneyCountAll;
+			
+			//待审核提现金额
+			paramMap.put("auditStatus", "1");
+			Double waitAuditMoneyCountAll = commonService.countMoneyByCondition(paramMap);
+			waitAuditMoneyCountAll = waitAuditMoneyCountAll == null ? 0 : waitAuditMoneyCountAll;
+			//提现中的金额
+			paramMap.put("auditStatus", "2");
+			paramMap.put("respType", "R");
+			Double ingMoneyCountAll = commonService.countMoneyByCondition(paramMap);
+			ingMoneyCountAll = ingMoneyCountAll == null ? 0 : ingMoneyCountAll;
+			
+			int week = DateUtil.getWeek();
+			if(week==2||week==3||week==4||week==5){
+				end = dateFormatLong.parse(DateUtil.getBeforeDate(1) + " 23:59:59");
+			}else if(week==6){
+				end = dateFormatLong.parse(DateUtil.getBeforeDate(2) + " 23:59:59");
+			}else if(week==0||week==1){
+				end = dateFormatLong.parse(DateUtil.getBeforeDate(3) + " 23:59:59");
+			}
+			
+			//随乐付交易总额
+			paramMap = new HashMap<String, Object>();
+			paramMap.put("memberId", reqDataJson.getInt("memberId"));
+			paramMap.put("routeId", RouteCodeConstant.SLF_ROUTE_CODE);
+			paramMap.put("endDate", df.format(end));
+			Double tradeMoneyCountSLF = commonService.countTransactionMoneyByCondition(paramMap);
+			tradeMoneyCountSLF = tradeMoneyCountSLF == null ? 0 : tradeMoneyCountSLF;
+			
+			// 可提现总额
+			Double canDrawMoneyCount = tradeMoneyCountSLF - drawMoneyCountAll - waitAuditMoneyCountAll - ingMoneyCountAll;
+			
 			resData.put("unDrawMoneyCount", new DecimalFormat("0.00").format(unDrawMoneyCount));
 			resData.put("drawMoneyCount", new DecimalFormat("0.00").format(drawMoneyCount));
 			resData.put("tradeMoneyCountToday", new DecimalFormat("0.00").format(tradeMoneyCountToday));
+			
+			resData.put("tradeMoneyCountAll", new DecimalFormat("0.00").format(tradeMoneyCountAll));
+			resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
+			resData.put("canDrawMoneyCount", new DecimalFormat("0.00").format(canDrawMoneyCount));
 			resData.put("memberInfo", memberInfo);
 			result.put("resData", resData);
 			result.put("returnCode", "0000");
@@ -507,6 +552,104 @@ public class MemberInfoController {
 		}
 	}
 
+	
+	@ResponseBody
+	@RequestMapping("/drawCommit")
+	public String drawCommit(Model model, HttpServletRequest request) {
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result = new JSONObject();
+		SimpleDateFormat dateFormatLong = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+		try{
+			int memberId = reqDataJson.getInt("memberId");
+			String drawMoney = reqDataJson.getString("drawMoney");
+			if("".equals(drawMoney)){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "提现金额为空");
+				return result.toString();
+			}
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(memberId);
+
+			if (null == memberInfo ) {
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "商户信息不存在");
+				return result.toString();
+			}
+			
+			MemberBankExample memberBankExample = new MemberBankExample();
+			memberBankExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+			List<MemberBank> memberBanks = memberBankService.selectByExample(memberBankExample);
+			if (memberBanks == null || memberBanks.size() != 1) {
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "提现银行卡号未配置，无法提现");
+				return result.toString();
+			}
+			
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("memberId", memberId);
+			//已提现总额
+			Double drawMoneyCountAll = commonService.countDrawMoneyByCondition(paramMap);
+			drawMoneyCountAll = drawMoneyCountAll == null ? 0 : drawMoneyCountAll;
+			
+			//待审核提现金额
+			paramMap.put("auditStatus", "1");
+			Double waitAuditMoneyCountAll = commonService.countMoneyByCondition(paramMap);
+			waitAuditMoneyCountAll = waitAuditMoneyCountAll == null ? 0 : waitAuditMoneyCountAll;
+			//提现中的金额
+			paramMap.put("auditStatus", "2");
+			paramMap.put("respType", "R");
+			Double ingMoneyCountAll = commonService.countMoneyByCondition(paramMap);
+			ingMoneyCountAll = ingMoneyCountAll == null ? 0 : ingMoneyCountAll;
+			
+			
+			Date end = null;
+			int week = DateUtil.getWeek();
+			if(week==2||week==3||week==4||week==5){
+				end = dateFormatLong.parse(DateUtil.getBeforeDate(1) + " 23:59:59");
+			}else if(week==6){
+				end = dateFormatLong.parse(DateUtil.getBeforeDate(2) + " 23:59:59");
+			}else if(week==0||week==1){
+				end = dateFormatLong.parse(DateUtil.getBeforeDate(3) + " 23:59:59");
+			}
+			
+			//随乐付交易总额
+			paramMap = new HashMap<String, Object>();
+			paramMap.put("memberId", memberId);
+			paramMap.put("routeId", RouteCodeConstant.SLF_ROUTE_CODE);
+			paramMap.put("endDate", df.format(end));
+			Double tradeMoneyCountSLF = commonService.countTransactionMoneyByCondition(paramMap);
+			tradeMoneyCountSLF = tradeMoneyCountSLF == null ? 0 : tradeMoneyCountSLF;
+			
+			// 可提现总额
+			Double canDrawMoneyCount = tradeMoneyCountSLF - drawMoneyCountAll - waitAuditMoneyCountAll - ingMoneyCountAll;
+			if(Double.parseDouble(drawMoney)>canDrawMoneyCount){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "提现金额大于可提现金额，无法提现");
+				return result.toString();
+			}
+			
+			RoutewayDraw routewayDraw=new RoutewayDraw();
+			routewayDraw.setCreateDate(new Date());
+			routewayDraw.setDelFlag("0");
+			routewayDraw.setMemberCode(memberInfo.getCode());
+			routewayDraw.setMemberId(memberId);
+			routewayDraw.setMoney(new BigDecimal(drawMoney));
+			routewayDraw.setAuditStatus("1");
+			routewayDrawService.insertSelective(routewayDraw);
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "提交成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result.toString();
+		}
+		return JsonBeanReleaseUtil.beanToJson(result, "yyyy-MM-dd HH:mm:ss");
+	}
+	
+	
+	
 	@ResponseBody
 	@RequestMapping("/transactionLog")
 	public String transactionLog(Model model, HttpServletRequest request) {
@@ -730,8 +873,8 @@ public class MemberInfoController {
 
 			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
 			RoutewayDrawExample.Criteria routewayDrawCriteria = routewayDrawExample.createCriteria();
-			routewayDrawCriteria.andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId)
-					.andRespTypeNotEqualTo("R");
+			routewayDrawCriteria.andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId);
+					//.andRespTypeNotEqualTo("R");
 			int drawCnt = routewayDrawService.countByExample(routewayDrawExample);
 			routewayDrawExample.setOrderByClause("create_date desc");
 			routewayDrawExample.setLimitSize(reqDataJson.getInt("limitSize"));
@@ -1776,5 +1919,9 @@ public class MemberInfoController {
 			routeCode = sysCommonConfig.get(0).getValue();
 		}
 		return routeCode;
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(DateUtil.getBeforeDate(2));
 	}
 }

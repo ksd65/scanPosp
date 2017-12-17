@@ -10,6 +10,7 @@ public interface CommonServiceMapper {
 	public Double countTransactionMoneyByCondition(Map<String,Object> paramMap);
 	public Double countTransactionMoneyByConditionHis(Map<String,Object> paramMap);
 	public Double countDrawMoneyByCondition(Map<String,Object> paramMap);
+	public Double countMoneyByCondition(Map<String,Object> paramMap);
 	public Double countUnDrawMoneyByCondition(Map<String,Object> paramMap);
 	public Integer moveToHis(Map<String, Object> paramMap);
 	public Double countMlDrawMoneyByCondition(Map<String, Object> paramMap);

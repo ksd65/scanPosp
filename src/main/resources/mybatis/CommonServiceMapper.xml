@@ -164,6 +164,9 @@
 	      	<if test="txnType != null" >
 	        	AND a.txn_type = #{txnType}
 	      	</if>
+	      	<if test="routeId != null" >
+	        	AND a.route_id = #{routeId}
+	      	</if>
 			UNION ALL
 			SELECT
 			<include refid="ml_trade_detail"></include>
@@ -241,6 +244,29 @@
       	</if>
 		<if test="wxOrZfb != null" >
         	AND member_code like #{wxOrZfb}
+      	</if>
+  	</select>
+  	
+  	<select id="countMoneyByCondition" parameterType="java.util.Map" resultType="java.lang.Double">
+  		SELECT SUM(money) money FROM bu_routeway_draw 
+		WHERE 1=1 
+		<if test="memberId != null" >
+			AND member_id = #{memberId,jdbcType=INTEGER} 
+		</if>
+		<if test="startDate != null" >
+        	AND create_date &gt;= #{startDate}
+      	</if>
+		<if test="endDate != null" >
+        	AND create_date &lt;= #{endDate}
+      	</if>
+		<if test="wxOrZfb != null" >
+        	AND member_code like #{wxOrZfb}
+      	</if>
+      	<if test="auditStatus != null" >
+        	AND audit_status = #{auditStatus}
+      	</if>
+      	<if test="respType != null" >
+        	AND resp_type = #{respType}
       	</if>
   	</select>
   	

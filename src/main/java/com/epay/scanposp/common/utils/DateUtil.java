@@ -165,7 +165,27 @@ public class DateUtil {
 	        ret = sourcedate.compareTo(tragetdate);
 	        return ret;
 	    }
-	
+	/**
+	 * 返回星期   周天返回0 周一返回1 周二返回2  
+	 * @return
+	 */
+	public static int getWeek(){
+		Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        int w = cal.get(Calendar.DAY_OF_WEEK);
+        return w-1;
+	}
+	/**
+	 * 返回当前日期的前n天 
+	 * @param n
+	 * @return
+	 */
+	public static String getBeforeDate(int n){
+		Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, -n);    //得到前n天
+        String  date = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+        return date;
+	}
 	
 	public static void main(String[] args) {
 		String fmt = "yyyyMMddHHmmss";

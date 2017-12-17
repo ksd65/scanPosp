@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.sf.json.JSONObject;
 
+import org.apache.commons.collections.list.TransformedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ import com.epay.scanposp.common.utils.slf.SecurityUtil;
 import com.epay.scanposp.common.utils.slf.vo.DeductInfo;
 import com.epay.scanposp.common.utils.slf.vo.OrderRequest;
 import com.epay.scanposp.common.utils.slf.vo.PaymentNotifyResponse;
+import com.epay.scanposp.common.utils.slf.vo.ReceivePay;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayRequest;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayResponse;
 import com.epay.scanposp.entity.Account;
@@ -59,6 +61,8 @@ import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.PayType;
 import com.epay.scanposp.entity.PayTypeExample;
+import com.epay.scanposp.entity.RoutewayDraw;
+import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
@@ -73,6 +77,7 @@ import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayTypeService;
+import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
 import com.epay.scanposp.service.TradeDetailService;
@@ -125,11 +130,15 @@ public class BankPayController {
 	@Autowired
 	private MemberBankService memberBankService;
 	
+	@Autowired
+	private RoutewayDrawService routewayDrawService;
+	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/toPay")
 	public JSONObject toPay(HttpServletRequest request,HttpServletResponse response){
 		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		System.out.println("请求参数==="+reqDataJson.toString());
 		String payMoney = reqDataJson.getString("payMoney");
 		String orderNum = reqDataJson.getString("orderNum");
 		String memberCode = reqDataJson.getString("memberCode");
@@ -590,12 +599,73 @@ public class BankPayController {
 	
 	
 	@ResponseBody
-	@RequestMapping("/api/bankPay/receivePay")
-	public JSONObject receivePay(HttpServletRequest request,HttpServletResponse response){
+	@RequestMapping("/api/bankPay/draw")
+	public JSONObject draw(HttpServletRequest request,HttpServletResponse response){
 		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
-		String payMoney = reqDataJson.getString("payMoney");
+		
+		
+		String drawId = reqDataJson.getString("drawId");
 		String memberId = reqDataJson.getString("memberId");
+		JSONObject result = new JSONObject();
+		
+		try{
+			if(memberId == null || "".equals(memberId)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "商户Id缺失");
+				return result;
+			}
+			if(drawId == null || "".equals(drawId)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "提现记录Id缺失");
+				return result;
+			}
+			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
+			routewayDrawExample.createCriteria().andIdEqualTo(Integer.parseInt(drawId)).andMemberIdEqualTo(Integer.parseInt(memberId)).andDelFlagEqualTo("0");
+			List<RoutewayDraw> drawList = routewayDrawService.selectByExample(routewayDrawExample);
+			if(drawList==null || drawList.size()!=1){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "提现记录不存在");
+				return result;
+			}
+			RoutewayDraw draw = drawList.get(0);
+			JSONObject obj = receivePay(memberId,String.valueOf(draw.getMoney()));
+			if("0000".equals(obj.getString("returnCode"))){
+				draw.setRespType("R");
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "成功");
+			}else{
+				draw.setRespType("E");
+				draw.setRespMsg(obj.getString("returnMsg"));
+				if(obj.containsKey("respCode")){
+					draw.setRespCode(obj.getString("respCode"));
+				}
+				result.put("returnCode", "0007");
+				result.put("returnMsg", obj.getString("returnMsg"));
+			}
+			if(obj.containsKey("orderCode")){
+				draw.setOrderCode(obj.getString("orderCode"));
+				draw.setPtSerialNo(obj.getString("orderCode"));
+			}
+			if(obj.containsKey("merchantCode")){
+				draw.setMerchantCode(obj.getString("merchantCode"));
+			}
+			
+			if(obj.containsKey("reqDate")){
+				draw.setReqDate(obj.getString("reqDate"));
+			}
+			draw.setUpdateDate(new Date());
+			routewayDrawService.updateByPrimaryKey(draw);
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	
+	public JSONObject receivePay(String memberId,String payMoney){
 		JSONObject result = new JSONObject();
 		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
 			result.put("returnCode", "0005");
@@ -650,6 +720,7 @@ public class BankPayController {
 			String orderCode = CommonUtil.getOrderCode();
 			String callBack = SysConfig.serverUrl + "/bankPay/receivePayNotify";
 			
+			String reqDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 			ReceivePayRequest receivePayRequest = new ReceivePayRequest();
 			receivePayRequest.setApplication("ReceivePay");
 			receivePayRequest.setVersion("1.0.1");
@@ -657,7 +728,7 @@ public class BankPayController {
 			receivePayRequest.setTranId(orderCode);
 			receivePayRequest.setReceivePayNotifyUrl(callBack); 
 			receivePayRequest.setReceivePayType("1");//0 收款，1 付款
-			receivePayRequest.setTimestamp(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+			receivePayRequest.setTimestamp(reqDate);
 			receivePayRequest.setAccountProp("0");//0 对私，4 对公
 			receivePayRequest.setBankGeneralName(memberBank.getBankOpen());
 			receivePayRequest.setAccNo(memberBank.getAccountNumber());
@@ -683,7 +754,12 @@ public class BankPayController {
 			}else{
 				result.put("returnCode", "0001");
 				result.put("returnMsg", receivePayResponse.getRespDesc());
+				result.put("respCode", receivePayResponse.getRespCode());
+				result.put("respMsg", receivePayResponse.getRespDesc());
 			}
+			result.put("orderCode", orderCode);
+			result.put("merchantCode", merchantCode.getWxMerchantCode());
+			result.put("reqDate", reqDate);
 		}catch(Exception e){
 			logger.error(e.getMessage());
 			result.put("returnCode", "0096");
@@ -712,6 +788,34 @@ public class BankPayController {
 			
 			
 			logger.info("receivePayNotify解密回调通知报文[{}]",  pnResponse );
+			
+			String orderCode = pnResponse.getTranId();
+			if(orderCode != null && !"".equals(orderCode)){
+				RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
+				routewayDrawExample.createCriteria().andOrderCodeEqualTo(orderCode).andDelFlagEqualTo("0");
+				List<RoutewayDraw> drawList = routewayDrawService.selectByExample(routewayDrawExample);
+				if(drawList==null || drawList.size()!=1){
+					return;
+				}
+				RoutewayDraw draw = drawList.get(0);
+				List<ReceivePay> list =  pnResponse.getTranList();
+				if(list!=null && list.size()>0){
+					String code = list.get(0).getRespCode();
+					if("000".equals(code)){
+						draw.setRespType("S");
+						draw.setDrawamount(draw.getMoney());
+					}else{
+						draw.setRespType("E");
+					}
+					draw.setRespCode(code);
+					draw.setRespMsg(list.get(0).getRespDesc());
+					draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+					routewayDrawService.updateByPrimaryKey(draw);
+				}
+				
+			}
+			
+			
 		}catch(Exception e){
 			e.printStackTrace();
 		}
