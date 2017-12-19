@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.sf.json.JSONObject;
 
-import org.apache.commons.collections.list.TransformedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -803,7 +802,7 @@ public class BankPayController {
 					String code = list.get(0).getRespCode();
 					if("000".equals(code)){
 						draw.setRespType("S");
-						draw.setDrawamount(draw.getMoney());
+					//	draw.setDrawamount(draw.getMoney());
 					}else{
 						draw.setRespType("E");
 					}
@@ -826,6 +825,8 @@ public class BankPayController {
 			logger.error(e.getMessage());
 		}
 	}
+	
+	
 	
 	
 	private Map<String,String> getRouteCodeAndAisleType(Integer memberId,String payMethod, String payType  ){

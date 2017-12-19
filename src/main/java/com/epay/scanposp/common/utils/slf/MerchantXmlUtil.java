@@ -647,6 +647,7 @@ public class MerchantXmlUtil {
 				else if (nodeitm.getNodeName().equals("timestamp")) response.setTimestamp(value);
 				else if (nodeitm.getNodeName().equals("respCode")) response.setRespCode(value);
 				else if (nodeitm.getNodeName().equals("respDesc")) response.setRespDesc(value);
+				else if (nodeitm.getNodeName().equals("tranId")) response.setTranId(value);
 			}
 			NodeList messageChildList = document.getFirstChild().getChildNodes();
 			for(int i = 0; i<messageChildList.getLength(); i++){
