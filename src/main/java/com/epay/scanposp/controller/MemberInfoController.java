@@ -391,11 +391,12 @@ public class MemberInfoController {
 			paramMap.put("respType", "R");
 			Double ingMoneyCountAll = commonService.countMoneyByCondition(paramMap);
 			ingMoneyCountAll = ingMoneyCountAll == null ? 0 : ingMoneyCountAll;
-			//提现失败的金额
+			//当天提现失败的金额
 			paramMap.put("auditStatus", "2");
 			paramMap.put("respType", "E");
-			Double drawFailMoneyCountAll = commonService.countMoneyByCondition(paramMap);
-			drawFailMoneyCountAll = drawFailMoneyCountAll == null ? 0 : drawFailMoneyCountAll;
+			paramMap.put("respDate", df.format(new Date()));
+			Double drawFailMoneyCountToday = commonService.countMoneyByCondition(paramMap);
+			drawFailMoneyCountToday = drawFailMoneyCountToday == null ? 0 : drawFailMoneyCountToday;
 			
 			Double drawPercent = 0.7;//D0 70%
 			
@@ -440,10 +441,10 @@ public class MemberInfoController {
 			Double canDrawToday = tradeMoneyCountSLF * drawPercent * (1-tradeRate);//当天可提现的金额
 			Double balanceToday = tradeMoneyCountSLF * (1-tradeRate);//当天交易账户余额
 			Double balanceHis = account.getBalance().doubleValue() + account.getW0Balance().doubleValue() + account.getW5Balance().doubleValue() + account.getW6Balance().doubleValue();//历史账户余额
-			Double balance = balanceHis + balanceToday - drawMoneyCountToday;//总账户余额
+			Double balance = balanceHis + balanceToday - drawMoneyCountToday - drawFailMoneyCountToday;//总账户余额
 			
 			//可提现总额
-			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(account.getBalance().doubleValue() + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll - drawFailMoneyCountAll));
+			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(account.getBalance().doubleValue() + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll - drawFailMoneyCountToday));
 			
 			
 			resData.put("balance", new DecimalFormat("0.00").format(balance));
