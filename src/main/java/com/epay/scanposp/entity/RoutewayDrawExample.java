@@ -994,7 +994,79 @@ public class RoutewayDrawExample {
             addCriterion("resp_msg not between", value1, value2, "respMsg");
             return (Criteria) this;
         }
+        
+        
+        
+        public Criteria andAuditStatusIsNull() {
+            addCriterion("audit_status is null");
+            return (Criteria) this;
+        }
 
+        public Criteria andAuditStatusIsNotNull() {
+            addCriterion("audit_status is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusEqualTo(String value) {
+            addCriterion("audit_status =", value, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusNotEqualTo(String value) {
+            addCriterion("audit_status <>", value, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusGreaterThan(String value) {
+            addCriterion("audit_status >", value, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusGreaterThanOrEqualTo(String value) {
+            addCriterion("audit_status >=", value, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusLessThan(String value) {
+            addCriterion("audit_status <", value, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusLessThanOrEqualTo(String value) {
+            addCriterion("audit_status <=", value, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusLike(String value) {
+            addCriterion("audit_status like", value, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusNotLike(String value) {
+            addCriterion("audit_status not like", value, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusIn(List<String> values) {
+            addCriterion("audit_status in", values, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusNotIn(List<String> values) {
+            addCriterion("audit_status not in", values, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusBetween(String value1, String value2) {
+            addCriterion("audit_status between", value1, value2, "auditStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andAuditStatusNotBetween(String value1, String value2) {
+            addCriterion("audit_status not between", value1, value2, "auditStatus");
+            return (Criteria) this;
+        }
+        
         public Criteria andDrawamountIsNull() {
             addCriterion("drawAmount is null");
             return (Criteria) this;

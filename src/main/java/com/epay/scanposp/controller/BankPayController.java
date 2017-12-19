@@ -628,7 +628,7 @@ public class BankPayController {
 				return result;
 			}
 			RoutewayDraw draw = drawList.get(0);
-			JSONObject obj = receivePay(memberId,String.valueOf(draw.getMoney()));
+			JSONObject obj = receivePay(memberId,String.valueOf(draw.getMoney().doubleValue()-1));
 			if("0000".equals(obj.getString("returnCode"))){
 				draw.setRespType("R");
 				result.put("returnCode", "0000");

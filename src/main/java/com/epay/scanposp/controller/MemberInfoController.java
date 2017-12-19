@@ -972,23 +972,56 @@ public class MemberInfoController {
 			RoutewayDrawExample.Criteria routewayDrawCriteria = routewayDrawExample.createCriteria();
 			routewayDrawCriteria.andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId);
 					//.andRespTypeNotEqualTo("R");
-			int drawCnt = routewayDrawService.countByExample(routewayDrawExample);
+			int drawCnt = routewayDrawService.countByExample(routewayDrawExample);//提现记录数
+			
+			
 			routewayDrawExample.setOrderByClause("create_date desc");
 			routewayDrawExample.setLimitSize(reqDataJson.getInt("limitSize"));
 			routewayDrawExample.setLimitStart(reqDataJson.getInt("limitStart"));
 
 			List<RoutewayDraw> routewayDraws = routewayDrawService.selectByExample(routewayDrawExample);
+			
+			routewayDrawExample = new RoutewayDrawExample();
+			routewayDrawExample.createCriteria().andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId).andRespTypeEqualTo("S");
+			int drawSuccessCnt = routewayDrawService.countByExample(routewayDrawExample);//提现成功记录数
+			
+			routewayDrawExample = new RoutewayDrawExample();
+			routewayDrawExample.createCriteria().andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId).andRespTypeEqualTo("E");
+			int drawFailCnt = routewayDrawService.countByExample(routewayDrawExample);//提现失败记录数
+			
 
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("memberId", reqDataJson.getInt("memberId"));
 			paramMap.put("startDate", dateFormatLong.format(startDate));
 			paramMap.put("endDate", dateFormatLong.format(endDate));
-			Double moneyCount = commonService.countDrawMoneyByCondition(paramMap);
+			Double moneyCount = commonService.countDrawMoneyByCondition(paramMap);//提现金额
 			moneyCount = moneyCount == null ? 0 : moneyCount;
+			
+			paramMap = new HashMap<String, Object>();
+			paramMap.put("memberId", reqDataJson.getInt("memberId"));
+			paramMap.put("startDate", dateFormatLong.format(startDate));
+			paramMap.put("endDate", dateFormatLong.format(endDate));
+			paramMap.put("respType", "S");
+			Double moneySuccessCount = commonService.countDrawMoneyByCondition(paramMap);//提现成功金额
+			moneySuccessCount = moneySuccessCount == null ? 0 : moneySuccessCount;
+			
+			paramMap = new HashMap<String, Object>();
+			paramMap.put("memberId", reqDataJson.getInt("memberId"));
+			paramMap.put("startDate", dateFormatLong.format(startDate));
+			paramMap.put("endDate", dateFormatLong.format(endDate));
+			paramMap.put("respType", "E");
+			Double moneyFailCount = commonService.countDrawMoneyByCondition(paramMap);//提现失败金额
+			moneyFailCount = moneyFailCount == null ? 0 : moneyFailCount;
+			
+			
 			DecimalFormat df = new DecimalFormat("0.00");
 			resData.put("draws", routewayDraws);
 			resData.put("drawCnt", drawCnt);
 			resData.put("moneyCount", df.format(moneyCount));
+			resData.put("drawSuccessCnt", drawSuccessCnt);
+			resData.put("moneySuccessCount", df.format(moneySuccessCount));
+			resData.put("drawFailCnt", drawFailCnt);
+			resData.put("moneyFailCount", df.format(moneyFailCount));
 			result.put("resData", resData);
 			result.put("returnCode", "0000");
 		} catch (ArgException e) {
