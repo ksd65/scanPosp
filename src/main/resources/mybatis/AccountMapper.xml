@@ -6,6 +6,9 @@
     <result column="member_id" property="memberId" jdbcType="INTEGER" />
     <result column="balance" property="balance" jdbcType="DECIMAL" />
     <result column="freeze_money" property="freezeMoney" jdbcType="DECIMAL" />
+    <result column="w5_balance" property="w5Balance" jdbcType="DECIMAL" />
+    <result column="w6_balance" property="w6Balance" jdbcType="DECIMAL" />
+    <result column="w0_balance" property="w0Balance" jdbcType="DECIMAL" />
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
     <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
     <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
@@ -72,7 +75,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, member_id, balance, freeze_money, create_by, create_date, update_by, update_date, 
+    id, member_id, balance, freeze_money,w5_balance,w6_balance,w0_balance, create_by, create_date, update_by, update_date, 
     remarks, del_flag
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.AccountExample" >

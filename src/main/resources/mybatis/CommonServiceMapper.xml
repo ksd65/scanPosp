@@ -245,6 +245,12 @@
 		<if test="wxOrZfb != null" >
         	AND member_code like #{wxOrZfb}
       	</if>
+      	<if test="respType != null" >
+        	AND resp_type = #{respType}
+      	</if>
+      	<if test="respDate != null" >
+        	AND LEFT(resp_date,8)= #{respDate}
+      	</if>
   	</select>
   	
   	<select id="countMoneyByCondition" parameterType="java.util.Map" resultType="java.lang.Double">

@@ -11,6 +11,12 @@ public class Account {
     private BigDecimal balance;
 
     private BigDecimal freezeMoney;
+    
+    private BigDecimal w5Balance;
+    
+    private BigDecimal w6Balance;
+    
+    private BigDecimal w0Balance;
 
     private String createBy;
 
@@ -103,4 +109,30 @@ public class Account {
     public void setDelFlag(String delFlag) {
         this.delFlag = delFlag == null ? null : delFlag.trim();
     }
+
+	public BigDecimal getW5Balance() {
+		return w5Balance;
+	}
+
+	public void setW5Balance(BigDecimal w5Balance) {
+		this.w5Balance = w5Balance;
+	}
+
+	public BigDecimal getW6Balance() {
+		return w6Balance;
+	}
+
+	public void setW6Balance(BigDecimal w6Balance) {
+		this.w6Balance = w6Balance;
+	}
+
+	public BigDecimal getW0Balance() {
+		return w0Balance;
+	}
+
+	public void setW0Balance(BigDecimal w0Balance) {
+		this.w0Balance = w0Balance;
+	}
+    
+    
 }
