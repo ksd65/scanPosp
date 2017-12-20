@@ -8,7 +8,9 @@
     <result column="merchant_code" property="merchantCode" jdbcType="VARCHAR" />
     <result column="member_trade_rate" property="memberTradeRate" jdbcType="DECIMAL" />
     <result column="money" property="money" jdbcType="DECIMAL" />
+    <result column="draw_type" property="drawType" jdbcType="VARCHAR" />
     <result column="order_code" property="orderCode" jdbcType="VARCHAR" />
+    <result column="order_num_outer" property="orderNumOuter" jdbcType="VARCHAR" />
     <result column="pt_serial_no" property="ptSerialNo" jdbcType="VARCHAR" />
     <result column="req_date" property="reqDate" jdbcType="VARCHAR" />
     <result column="resp_date" property="respDate" jdbcType="VARCHAR" />
@@ -28,6 +30,11 @@
     <result column="audit_status" property="auditStatus" jdbcType="VARCHAR" />
     <result column="audit_by" property="auditBy" jdbcType="VARCHAR" />
     <result column="audit_date" property="auditDate" jdbcType="TIMESTAMP" />
+    <result column="bank_name" property="bankName" jdbcType="VARCHAR" />
+    <result column="bank_account" property="bankAccount" jdbcType="VARCHAR" />
+    <result column="account_name" property="accountName" jdbcType="VARCHAR" />
+    <result column="cert_no" property="certNo" jdbcType="VARCHAR" />
+    <result column="tel" property="tel" jdbcType="VARCHAR" />
   </resultMap>
   <sql id="Example_Where_Clause" >
     <where >
@@ -88,9 +95,10 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, member_id, member_code, merchant_code, member_trade_rate, money, order_code, pt_serial_no, req_date, 
+    id, member_id, member_code, merchant_code, member_trade_rate, money, draw_type,order_code, pt_serial_no,order_num_outer, req_date, 
     resp_date, resp_type, resp_code, resp_msg, drawAmount, drawFee, tradeFee, settle_date, 
-    create_by, create_date, update_by, update_date, remarks, del_flag,audit_status,audit_by,audit_date
+    create_by, create_date, update_by, update_date, remarks, del_flag,audit_status,audit_by,audit_date,
+    bank_name,bank_account,account_name,cert_no,tel
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.RoutewayDrawExample" >
     select
@@ -228,6 +236,28 @@
       <if test="auditDate != null" >
         audit_date,
       </if>
+      
+      <if test="drawType != null" >
+        draw_type,
+      </if>
+      <if test="orderNumOuter != null" >
+        order_num_outer,
+      </if>
+      <if test="bankName != null" >
+        bank_name,
+      </if>
+      <if test="bankAccount != null" >
+        bank_account,
+      </if>
+      <if test="accountName != null" >
+        account_name,
+      </if>
+      <if test="certNo != null" >
+        cert_no,
+      </if>
+      <if test="tel != null" >
+        tel,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="memberId != null" >
@@ -304,6 +334,28 @@
       </if>
       <if test="auditDate != null" >
         #{auditDate,jdbcType=TIMESTAMP},
+      </if>
+      
+      <if test="drawType != null" >
+        #{drawType,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNumOuter != null" >
+        #{orderNumOuter,jdbcType=VARCHAR},
+      </if>
+      <if test="bankName != null" >
+        #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankAccount != null" >
+        #{bankAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="accountName != null" >
+        #{accountName,jdbcType=VARCHAR},
+      </if>
+      <if test="certNo != null" >
+        #{certNo,jdbcType=VARCHAR},
+      </if>
+      <if test="tel != null" >
+        #{tel,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>
@@ -539,7 +591,14 @@
       del_flag = #{delFlag,jdbcType=CHAR},
       audit_status = #{auditStatus,jdbcType=VARCHAR},
       audit_by = #{auditBy,jdbcType=VARCHAR},
-      audit_date = #{auditDate,jdbcType=TIMESTAMP}
+      audit_date = #{auditDate,jdbcType=TIMESTAMP},
+      draw_type = #{drawType,jdbcType=VARCHAR},
+      order_num_outer = #{orderNumOuter,jdbcType=VARCHAR},
+      bank_name = #{bankName,jdbcType=VARCHAR},
+      bank_account = #{bankAccount,jdbcType=VARCHAR},
+      account_name = #{accountName,jdbcType=VARCHAR},
+      cert_no = #{certNo,jdbcType=VARCHAR},
+      tel = #{tel,jdbcType=VARCHAR}
     where id = #{id,jdbcType=INTEGER}
   </update>
 </mapper>

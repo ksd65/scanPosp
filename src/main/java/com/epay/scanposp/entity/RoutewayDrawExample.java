@@ -1716,6 +1716,150 @@ public class RoutewayDrawExample {
             addCriterion("del_flag not between", value1, value2, "delFlag");
             return (Criteria) this;
         }
+        
+        
+        public Criteria andOrderNumOuterIsNull() {
+            addCriterion("order_num_outer is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterIsNotNull() {
+            addCriterion("order_num_outer is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterEqualTo(String value) {
+            addCriterion("order_num_outer =", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterNotEqualTo(String value) {
+            addCriterion("order_num_outer <>", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterGreaterThan(String value) {
+            addCriterion("order_num_outer >", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterGreaterThanOrEqualTo(String value) {
+            addCriterion("order_num_outer >=", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterLessThan(String value) {
+            addCriterion("order_num_outer <", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterLessThanOrEqualTo(String value) {
+            addCriterion("order_num_outer <=", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterLike(String value) {
+            addCriterion("order_num_outer like", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterNotLike(String value) {
+            addCriterion("order_num_outer not like", value, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterIn(List<String> values) {
+            addCriterion("order_num_outer in", values, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterNotIn(List<String> values) {
+            addCriterion("order_num_outer not in", values, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterBetween(String value1, String value2) {
+            addCriterion("order_num_outer between", value1, value2, "orderNumOuter");
+            return (Criteria) this;
+        }
+
+        public Criteria andOrderNumOuterNotBetween(String value1, String value2) {
+            addCriterion("order_num_outer not between", value1, value2, "orderNumOuter");
+            return (Criteria) this;
+        }
+        
+        
+        public Criteria andDrawTypeIsNull() {
+            addCriterion("draw_type is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeIsNotNull() {
+            addCriterion("draw_type is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeEqualTo(String value) {
+            addCriterion("draw_type =", value, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeNotEqualTo(String value) {
+            addCriterion("draw_type <>", value, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeGreaterThan(String value) {
+            addCriterion("draw_type >", value, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeGreaterThanOrEqualTo(String value) {
+            addCriterion("draw_type >=", value, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeLessThan(String value) {
+            addCriterion("draw_type <", value, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeLessThanOrEqualTo(String value) {
+            addCriterion("draw_type <=", value, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeLike(String value) {
+            addCriterion("draw_type like", value, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeNotLike(String value) {
+            addCriterion("draw_type not like", value, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeIn(List<String> values) {
+            addCriterion("draw_type in", values, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeNotIn(List<String> values) {
+            addCriterion("draw_type not in", values, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeBetween(String value1, String value2) {
+            addCriterion("draw_type between", value1, value2, "drawType");
+            return (Criteria) this;
+        }
+
+        public Criteria andDrawTypeNotBetween(String value1, String value2) {
+            addCriterion("draw_type not between", value1, value2, "drawType");
+            return (Criteria) this;
+        }
+        
+        
     }
 
     public static class Criteria extends GeneratedCriteria {

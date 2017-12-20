@@ -248,6 +248,9 @@
       	<if test="respType != null" >
         	AND resp_type = #{respType}
       	</if>
+      	<if test="drawType != null" >
+        	AND draw_type = #{drawType}
+      	</if>
       	<if test="respDate != null" >
         	AND LEFT(resp_date,8)= #{respDate}
       	</if>
@@ -273,6 +276,12 @@
       	</if>
       	<if test="respType != null" >
         	AND resp_type = #{respType}
+      	</if>
+      	<if test="drawType != null" >
+        	AND draw_type = #{drawType}
+      	</if>
+      	<if test="respDate != null" >
+        	AND LEFT(resp_date,8)= #{respDate}
       	</if>
   	</select>
   	

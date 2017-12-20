@@ -55,6 +55,20 @@ public class RoutewayDraw {
     private String auditBy;
 
     private Date auditDate;
+    
+    private String drawType;
+    
+    private String orderNumOuter;
+    
+    private String bankName;
+    
+    private String bankAccount;
+    
+    private String accountName;
+    
+    private String certNo;
+    
+    private String tel;
 
     public Integer getId() {
         return id;
@@ -263,6 +277,62 @@ public class RoutewayDraw {
 
 	public void setAuditDate(Date auditDate) {
 		this.auditDate = auditDate;
+	}
+
+	public String getDrawType() {
+		return drawType;
+	}
+
+	public void setDrawType(String drawType) {
+		this.drawType = drawType;
+	}
+
+	public String getOrderNumOuter() {
+		return orderNumOuter;
+	}
+
+	public void setOrderNumOuter(String orderNumOuter) {
+		this.orderNumOuter = orderNumOuter;
+	}
+
+	public String getBankName() {
+		return bankName;
+	}
+
+	public void setBankName(String bankName) {
+		this.bankName = bankName;
+	}
+
+	public String getBankAccount() {
+		return bankAccount;
+	}
+
+	public void setBankAccount(String bankAccount) {
+		this.bankAccount = bankAccount;
+	}
+
+	public String getAccountName() {
+		return accountName;
+	}
+
+	public void setAccountName(String accountName) {
+		this.accountName = accountName;
+	}
+
+	public String getCertNo() {
+		return certNo;
+	}
+
+	public void setCertNo(String certNo) {
+		this.certNo = certNo;
+	}
+
+	public String getTel() {
+		return tel;
+	}
+
+	public void setTel(String tel) {
+		this.tel = tel;
 	}
     
     
