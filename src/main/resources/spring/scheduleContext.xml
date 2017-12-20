@@ -95,7 +95,7 @@
 		</property>
 		<!-- 触发器时间设置 -->
 		<property name="cronExpression">
-			<value>0 5 15 * * ?</value>
+			<value>0 5 0 * * ?</value>
 		</property>
 	</bean>
 	
