@@ -282,6 +282,9 @@
     update bu_account
     set member_id = #{memberId,jdbcType=INTEGER},
       balance = #{balance,jdbcType=DECIMAL},
+      w5_balance = #{w5Balance,jdbcType=DECIMAL},
+      w6_balance = #{w6Balance,jdbcType=DECIMAL},
+      w0_balance = #{w0Balance,jdbcType=DECIMAL},
       freeze_money = #{freezeMoney,jdbcType=DECIMAL},
       create_by = #{createBy,jdbcType=VARCHAR},
       create_date = #{createDate,jdbcType=TIMESTAMP},

@@ -180,10 +180,13 @@ public class DateUtil {
 	 * @param n
 	 * @return
 	 */
-	public static String getBeforeDate(int n){
+	public static String getBeforeDate(int n,String format){
+		if(format == null ||"".equals(format)){
+			format = "yyyy-MM-dd";
+		}
 		Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, -n);    //得到前n天
-        String  date = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+        String  date = new SimpleDateFormat(format).format(calendar.getTime());
         return date;
 	}
 	

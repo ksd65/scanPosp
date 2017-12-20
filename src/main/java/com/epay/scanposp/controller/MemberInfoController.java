@@ -2057,6 +2057,6 @@ public class MemberInfoController {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(DateUtil.getBeforeDate(2));
+		//System.out.println(DateUtil.getBeforeDate(2));
 	}
 }

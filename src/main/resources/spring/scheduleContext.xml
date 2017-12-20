@@ -22,6 +22,8 @@
 				 <ref local="drawResultNoticeTiggerBean" />			 
 				 <ref local="PayResultNoticeTriggerBean" />
 				 <ref local="mlPayResultNoticeTiggerBean" />-->
+				 <ref local="queryReceivePayResultNoticeTriggerBean" />
+				 <ref local="accountBalanceTiggerBean" />
 			 </list>
 		</property>
 		<property name="quartzProperties">
@@ -73,6 +75,48 @@
 		<!-- 触发器时间设置 -->
 		<property name="cronExpression">
 			<value>0 0/5 * * * ?</value>
+		</property>
+	</bean>
+	
+	<!-- 触发器时间设置 -->
+	<bean id="accountBalanceTiggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.AccountBalanceTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>accountBalance</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 5 15 * * ?</value>
+		</property>
+	</bean>
+	
+	<!-- 触发器时间设置 -->
+	<bean id="queryReceivePayResultNoticeTriggerBean" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		lazy-init="false">
+		<!-- 任务调度类 -->
+		<property name="jobDetail">
+			<bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean"
+				lazy-init="false">
+				<property name="targetObject">
+					<bean class="com.epay.scanposp.tigger.QueryReceivePayResultNoticeTigger" />
+				</property>
+				<property name="targetMethod">
+					<value>dealReceivePayResultNotice</value>
+				</property>
+			</bean>
+		</property>
+		<!-- 触发器时间设置 -->
+		<property name="cronExpression">
+			<value>0 0/1 * * * ?</value>
 		</property>
 	</bean>
 	
