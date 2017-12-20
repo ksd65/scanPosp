@@ -684,11 +684,12 @@ public class MemberInfoController {
 			paramMap.put("respType", "R");
 			Double ingMoneyCountAll = commonService.countMoneyByCondition(paramMap);
 			ingMoneyCountAll = ingMoneyCountAll == null ? 0 : ingMoneyCountAll;
-			//提现失败的金额
+			//当天提现失败的金额
 			paramMap.put("auditStatus", "2");
 			paramMap.put("respType", "E");
-			Double drawFailMoneyCountAll = commonService.countMoneyByCondition(paramMap);
-			drawFailMoneyCountAll = drawFailMoneyCountAll == null ? 0 : drawFailMoneyCountAll;
+			paramMap.put("respDate", df.format(new Date()));
+			Double drawFailMoneyCountToday = commonService.countMoneyByCondition(paramMap);
+			drawFailMoneyCountToday = drawFailMoneyCountToday == null ? 0 : drawFailMoneyCountToday;
 			
 			Double drawPercent = 0.7;//D0 70%
 			
@@ -714,7 +715,7 @@ public class MemberInfoController {
 			Double canDrawToday = tradeMoneyCountSLF * drawPercent * (1-tradeRate);//当天可提现的金额
 			
 			//可提现总额
-			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(account.getBalance().doubleValue() + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll - drawFailMoneyCountAll));
+			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(account.getBalance().doubleValue() + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll - drawFailMoneyCountToday));
 			
 			if(Double.parseDouble(drawMoney)>canDrawMoneyCount){
 				result.put("returnCode", "4004");
@@ -971,7 +972,7 @@ public class MemberInfoController {
 
 			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
 			RoutewayDrawExample.Criteria routewayDrawCriteria = routewayDrawExample.createCriteria();
-			routewayDrawCriteria.andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId);
+			routewayDrawCriteria.andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId).andDrawTypeEqualTo("1");
 					//.andRespTypeNotEqualTo("R");
 			int drawCnt = routewayDrawService.countByExample(routewayDrawExample);//提现记录数
 			
@@ -983,11 +984,11 @@ public class MemberInfoController {
 			List<RoutewayDraw> routewayDraws = routewayDrawService.selectByExample(routewayDrawExample);
 			
 			routewayDrawExample = new RoutewayDrawExample();
-			routewayDrawExample.createCriteria().andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId).andRespTypeEqualTo("S");
+			routewayDrawExample.createCriteria().andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId).andRespTypeEqualTo("S").andDrawTypeEqualTo("1");
 			int drawSuccessCnt = routewayDrawService.countByExample(routewayDrawExample);//提现成功记录数
 			
 			routewayDrawExample = new RoutewayDrawExample();
-			routewayDrawExample.createCriteria().andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId).andRespTypeEqualTo("E");
+			routewayDrawExample.createCriteria().andCreateDateBetween(startDate, endDate).andMemberIdEqualTo(memberId).andRespTypeEqualTo("E").andDrawTypeEqualTo("1");
 			int drawFailCnt = routewayDrawService.countByExample(routewayDrawExample);//提现失败记录数
 			
 
@@ -995,6 +996,7 @@ public class MemberInfoController {
 			paramMap.put("memberId", reqDataJson.getInt("memberId"));
 			paramMap.put("startDate", dateFormatLong.format(startDate));
 			paramMap.put("endDate", dateFormatLong.format(endDate));
+			paramMap.put("drawType", "1");
 			Double moneyCount = commonService.countDrawMoneyByCondition(paramMap);//提现金额
 			moneyCount = moneyCount == null ? 0 : moneyCount;
 			
@@ -1003,6 +1005,7 @@ public class MemberInfoController {
 			paramMap.put("startDate", dateFormatLong.format(startDate));
 			paramMap.put("endDate", dateFormatLong.format(endDate));
 			paramMap.put("respType", "S");
+			paramMap.put("drawType", "1");
 			Double moneySuccessCount = commonService.countDrawMoneyByCondition(paramMap);//提现成功金额
 			moneySuccessCount = moneySuccessCount == null ? 0 : moneySuccessCount;
 			
@@ -1011,6 +1014,7 @@ public class MemberInfoController {
 			paramMap.put("startDate", dateFormatLong.format(startDate));
 			paramMap.put("endDate", dateFormatLong.format(endDate));
 			paramMap.put("respType", "E");
+			paramMap.put("drawType", "1");
 			Double moneyFailCount = commonService.countDrawMoneyByCondition(paramMap);//提现失败金额
 			moneyFailCount = moneyFailCount == null ? 0 : moneyFailCount;
 			
