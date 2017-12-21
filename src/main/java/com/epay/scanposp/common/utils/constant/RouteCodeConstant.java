@@ -14,4 +14,6 @@ public class RouteCodeConstant {
 	
 	public static String SLF_ROUTE_CODE = "1006";//随乐付
 	
+	public static String TB_ROUTE_CODE = "1007";//提呗
+	
 }

@@ -5,11 +5,13 @@ import java.math.BigDecimal;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -30,40 +32,22 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.MSConfig;
 import com.epay.scanposp.common.constant.SDConfig;
 import com.epay.scanposp.common.constant.SysConfig;
+import com.epay.scanposp.common.constant.TBConfig;
 import com.epay.scanposp.common.constant.WxConfig;
 import com.epay.scanposp.common.constant.XFConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.EnvironmentUtil;
+import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.JsonBeanReleaseUtil;
 import com.epay.scanposp.common.utils.SecurityUtil;
+import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
 import com.epay.scanposp.common.utils.constant.MSPayWayConstant;
 import com.epay.scanposp.common.utils.constant.PayTypeConstant;
@@ -77,6 +61,7 @@ import com.epay.scanposp.common.utils.sand.SandpayClient;
 import com.epay.scanposp.common.utils.sand.SandpayRequestHead;
 import com.epay.scanposp.common.utils.sand.util.CertUtil;
 import com.epay.scanposp.common.utils.sand.util.PacketTool;
+import com.epay.scanposp.common.utils.tb.SignUtil;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
 import com.epay.scanposp.entity.BusinessCategory;
@@ -92,6 +77,8 @@ import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
+import com.epay.scanposp.entity.PayResultNotice;
+import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.PayRoute;
 import com.epay.scanposp.entity.PayRouteExample;
 import com.epay.scanposp.entity.PayType;
@@ -118,6 +105,7 @@ import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.MsbillService;
+import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayRouteService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayDrawService;
@@ -187,6 +175,9 @@ public class DebitNoteController {
 	
 	@Autowired
 	private PayTypeService payTypeService;
+	
+	@Resource
+	private PayResultNoticeService payResultNoticeService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -3886,6 +3877,304 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		return result;
 		
 	}
+	
+	
+	@ResponseBody
+	@RequestMapping("/api/debitNote/wxH5Pay")
+	public JSONObject wxH5Pay(HttpServletRequest request,HttpServletResponse response){
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		System.out.println("请求参数==="+reqDataJson.toString());
+		String payMoney = reqDataJson.getString("payMoney");
+		String orderNum = reqDataJson.getString("orderNum");
+		String memberCode = reqDataJson.getString("memberCode");
+		String callbackUrl = reqDataJson.getString("callbackUrl");
+		String sceneInfo = reqDataJson.getString("sceneInfo");
+		String ip = reqDataJson.getString("ip");
+		
+		String signStr = reqDataJson.getString("signStr");
+		
+		StringBuilder srcStr = new StringBuilder();
+		JSONObject result = new JSONObject();
+		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
+			result.put("returnCode", "0005");
+			result.put("returnMsg", "支付金额输入不正确");
+			return result;
+		}
+		if(callbackUrl == null || "".equals(callbackUrl)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "平台支付结果通知回调地址缺失");
+			return result;
+		}
+		srcStr.append("callbackUrl="+callbackUrl);
+		
+		if(ip == null || "".equals(ip)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "IP缺失");
+			return result;
+		}
+		srcStr.append("&ip="+ip);
+		
+		if(memberCode == null || "".equals(memberCode)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户号缺失");
+			return result;
+		}
+		srcStr.append("&memberCode="+memberCode);
+		
+		if(orderNum == null || "".equals(orderNum)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户订单号缺失");
+			return result;
+		}
+		if(orderNum.length() > 32){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "订单号长度不能超过32位");
+			return result;
+		}
+		srcStr.append("&orderNum="+orderNum);
+		srcStr.append("&payMoney="+payMoney);
+		
+		if(sceneInfo == null || "".equals(sceneInfo)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "场景信息缺失");
+			return result;
+		}
+		srcStr.append("&sceneInfo="+sceneInfo);
+		
+		if(signStr == null || "".equals(signStr)){ 
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "缺少签名信息");
+			return result;
+		}
+		
+		
+		
+		result = validMemberInfoForH5(memberCode, orderNum, payMoney, "3",  srcStr.toString(), signStr, callbackUrl,sceneInfo,ip);
+		
+		return result;
+	}
+	
+	public JSONObject validMemberInfoForH5(String memberCode,String orderNum,String payMoney,String platformType,String signOrginalStr,String signedStr,String callbackUrl,String sceneInfo,String ip){
+		JSONObject result = new JSONObject();
+		
+		MemberInfoExample memberInfoExample = new MemberInfoExample();
+		memberInfoExample.or().andCodeEqualTo(memberCode).andDelFlagEqualTo("0");
+		List<MemberInfo> memberInfoList = memberInfoService.selectByExample(memberInfoExample);
+		if(null == memberInfoList || memberInfoList.size() == 0){
+			result.put("returnCode", "0001");
+			result.put("returnMsg", "商户信息不存在");
+			return result;
+		}
+		MemberInfo memberInfo = memberInfoList.get(0);
+		if(!"0".equals(memberInfo.getStatus())){
+			if("4".equals(memberInfo.getStatus())){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "该商户未进行认证，暂时无法交易");
+				return result;
+			}
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，该商户暂不可用");
+			return result;
+		}
+		
+		AccountExample accountExample = new AccountExample();
+		accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+		List<Account> accounts = accountService.selectByExample(accountExample);
+		if (accounts == null || accounts.size() != 1) {
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "会员账户不存在");
+			return result;
+		}
+		
+		EpayCodeExample epayCodeExample = new EpayCodeExample();
+		List<String> values = new ArrayList<String>();
+		values.add("5");
+		values.add("7");
+		epayCodeExample.or().andMemberIdEqualTo(memberInfo.getId()).andStatusIn(values);
+		List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
+		if(null == epayCodeList || epayCodeList.size() == 0){
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，该商户暂不可用");
+			return result;
+		}
+		
+		
+		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_H5,PayTypeConstant.PAY_TYPE_WX);
+		String routeCode = rtMap.get("routeCode");
+		String aisleType = rtMap.get("aisleType");
+		MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+		if(aisleType !=null &&!"".equals(aisleType)){
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andAisleTypeEqualTo(aisleType).andDelFlagEqualTo("0");
+		}else{
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+		}
+		List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+		if (merchantCodes == null || merchantCodes.size() != 1) {
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，商户编码不存在");
+			return result;
+		}
+		
+		MemberMerchantCode merchantCode = merchantCodes.get(0);
+		
+		SysOfficeExample sysOfficeExample = new SysOfficeExample();
+		sysOfficeExample.or().andIdEqualTo(epayCodeList.get(0).getOfficeId()).andAgtTypeEqualTo("3");
+		List<SysOffice> sysOfficeList = sysOfficeService.selectByExample(sysOfficeExample);
+		if(null == sysOfficeList || sysOfficeList.size() == 0){
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "该商户暂未支持收银台功能，请确认后重试");
+			return result;
+		}
+		
+		PayResultNoticeExample payResultNoticeExample = new PayResultNoticeExample();
+		payResultNoticeExample.or().andMemberCodeEqualTo(memberCode).andOrderNumOuterEqualTo(orderNum).andStatusNotEqualTo("1");
+		List<PayResultNotice> PayResultNoticeList = payResultNoticeService.selectByExample(payResultNoticeExample);
+		if(null != PayResultNoticeList && PayResultNoticeList.size() > 0){
+			result.put("returnCode", "0002");
+			result.put("returnMsg", "该笔订单已支付，请勿重复支付");
+			return result;
+		}
+		
+		SysOffice sysOffice = sysOfficeList.get(0);
+//		String singedStr = EpaySignUtil.sign(sysOffice.getPrivateKeyRsa(), signOrginalStr);
+//		System.out.println(singedStr);  
+	/*	if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
+			result.put("returnCode", "0004");
+			result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
+			return result;
+		}*/
+		
+		//校验交易额是否超出限制
+	    /*
+		JSONObject checkResult = checkPayLimit(memberInfo.getId(), new BigDecimal(payMoney), memberInfo.getSingleLimit(), memberInfo.getDayLimit());
+		if(null != checkResult){
+			return checkResult;
+		}
+		*/
+		
+		if(RouteCodeConstant.TB_ROUTE_CODE.equals(routeCode)){
+			result = h5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode );
+			result.put("routeCode", routeCode);
+		}
+		
+		return result;
+	}
+	
+	
+	public JSONObject h5Pay(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String sceneInfo,String ip,String callbackUrl,MemberMerchantCode merchantCode) {
+		JSONObject result = new JSONObject();
+		try {
+			// 插入一条收款记录
+			String orderCode = CommonUtil.getOrderCode();
+			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(payMoney));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setOrderNumOuter(orderNumOuter);
+			debitNote.setRouteId(RouteCodeConstant.TB_ROUTE_CODE);
+			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
+			debitNote.setTxnType("1");
+			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
+			
+			debitNote.setSettleType(memberInfo.getSettleType());
+			if("0".equals(memberInfo.getSettleType())){
+				debitNote.setTradeRate(merchantCode.getT0TradeRate());
+			}else{
+				debitNote.setTradeRate(merchantCode.getT1TradeRate());
+			}
+			
+			debitNoteService.insertSelective(debitNote);
+			
+			PayResultNotice payResultNotice = new PayResultNotice();
+			payResultNotice.setOrderCode(debitNote.getOrderCode());
+			payResultNotice.setOrderNumOuter(orderNumOuter);
+			payResultNotice.setPayMoney(debitNote.getMoney());
+			payResultNotice.setMemberCode(memberInfo.getCode());
+			payResultNotice.setPayType("1");
+			
+			payResultNotice.setReturnUrl(callbackUrl);
+			payResultNotice.setStatus("1");
+			payResultNotice.setCreateDate(new Date());
+			payResultNotice.setPlatformType(platformType);
+			if("3".equals(platformType)){
+				payResultNotice.setInterfaceType("2");
+			}else{
+				payResultNotice.setInterfaceType("1");
+			}
+			payResultNoticeService.insertSelective(payResultNotice);
+			
+			// String callBack = "http://" + request.getServerName() + ":" +
+			// request.getServerPort() + request.getContextPath()+
+			// "/debitNote/msNotify";
+			String callBack = SysConfig.serverUrl + "/debitNote/tbWxH5PayNotify";
+			
+			
+			//System.out.println("-------------通知地址------" + callBack + "------------");
+			
+			
+			
+			
+			TreeMap<String, String> map = new TreeMap<>();
+	        map.put("app_id",TBConfig.agentId);
+	        map.put("method","openapi.payment.order.h5");
+	        map.put("format","json");
+	        map.put("sign_method","md5");
+	        map.put("nonce",new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+	        map.put("version","1.0");
+	        
+	        HashMap<String, Object> content = new HashMap<String, Object>();
+	        content.put("merchant_order_sn", orderCode);
+	        content.put("mchid", merchantCode.getWxMerchantCode());
+	        content.put("total_fee",payMoney);
+	       // content.put("store_id",TestConstants.storeId);
+	        content.put("scene_info",sceneInfo);
+	        content.put("ip",ip);
+	        content.put("call_back_url", callBack);
+	        
+	        String bizContent = JSON.toJSONString(content);
+
+	        map.put("biz_content",bizContent);
+
+	        String secret = TBConfig.privateKey;
+	        String sign = SignUtil.createSign(map, secret);
+	        map.put("sign",sign);
+	        logger.info("H5支付请求报文[{}]", new Object[] { JSON.toJSONString(map) });
+	        String resultMsg = HttpUtil.sendPostRequest(TBConfig.msServerUrl, JSON.toJSONString(map));
+	        logger.info("H5返回请求报文[{}]", new Object[] { resultMsg });
+	        
+	        com.alibaba.fastjson.JSONObject resultObj = com.alibaba.fastjson.JSONObject.parseObject(resultMsg);
+	        String result_code = resultObj.getString("result_code");
+	        if("200".equals(result_code)){
+	        	com.alibaba.fastjson.JSONObject data = (com.alibaba.fastjson.JSONObject)resultObj.get("data");
+	        	String payUrl = data.getString("payUrl");
+	        	result.put("payUrl", payUrl);
+	        	result.put("returnCode", "0000");
+				result.put("returnMsg", "成功");
+	        }else{
+	        	result.put("returnCode", "0009");
+				result.put("returnMsg", resultObj.getString("result_message"));
+	        }
+	        
+			
+			
+        } catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
+	
+	
+	
+	
+	
 	
 	
 	

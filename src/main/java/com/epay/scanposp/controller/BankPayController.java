@@ -358,7 +358,7 @@ public class BankPayController {
 			payResultNotice.setOrderNumOuter(orderNumOuter);
 			payResultNotice.setPayMoney(debitNote.getMoney());
 			payResultNotice.setMemberCode(memberInfo.getCode());
-			payResultNotice.setPayType("6");
+			payResultNotice.setPayType("8");
 			
 			payResultNotice.setReturnUrl(callbackUrl);
 			payResultNotice.setStatus("1");
@@ -1016,7 +1016,8 @@ public class BankPayController {
 			
 			SysOffice sysOffice = sysOfficeList.get(0);
 //			String singedStr = EpaySignUtil.sign(sysOffice.getPrivateKeyRsa(), signOrginalStr);
-//			System.out.println(singedStr);  
+			System.out.println(signedStr); 
+			System.out.println(signOrginalStr);
 			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
