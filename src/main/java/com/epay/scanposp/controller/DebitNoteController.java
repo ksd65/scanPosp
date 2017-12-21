@@ -4188,17 +4188,18 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			String result_message = request.getParameter("result_message");
 			String sign = request.getParameter("sign");
 			String data = request.getParameter("data");
-			Map<String, Object> rtmap = new HashMap<String, Object>();
+			TreeMap<String, Object> rtmap = new TreeMap<String, Object>();
+			rtmap.put("data", data);
 			rtmap.put("result_code", result_code);
 			rtmap.put("result_message", result_message);
 			rtmap.put("sign", sign);
-			rtmap.put("data", data);
 			logger.info("tbWxH5PayNotify解密回调返回报文[{}]",  JSON.toJSONString(rtmap) );
 			rtmap.remove("sign");
 			String mySign = SignUtil.createSign(rtmap, TBConfig.privateKey);
 			if (!sign.equals(mySign)){
 				res = "验证签名不通过";
                 respString = "fail";
+                logger.info(res);
             }else{
                 JSONObject map = JSONObject.fromObject(data);
             	String reqMsgId = map.getString("merchant_order_sn");
@@ -4226,8 +4227,9 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
     					tradeDetail.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
     					tradeDetail.setMemberId(debitNote.getMemberId());
     					tradeDetail.setMerchantCode(debitNote.getMerchantCode());
-    					
-    					tradeDetail.setChannelNo(map.getString("platform_order_no"));
+    					if(map.containsKey("trade_no")){
+    						tradeDetail.setChannelNo(map.getString("trade_no"));
+    					}
     					tradeDetail.setMemberCode(debitNote.getMemberCode());
     					tradeDetail.setMoney(debitNote.getMoney());
     					tradeDetail.setPayTime(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
@@ -4258,10 +4260,12 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
     					MsResultNotice msResultNotice = new MsResultNotice();
     					msResultNotice.setMoney(new BigDecimal(map.getString("total_fee")));
     					msResultNotice.setOrderCode(reqMsgId);
-    					msResultNotice.setPtSerialNo(map.getString("platform_order_no"));
-    					SimpleDateFormat dateSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    					if(map.containsKey("trade_no")){
+    						msResultNotice.setPtSerialNo(map.getString("trade_no"));
+    					}
+    					//SimpleDateFormat dateSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     					msResultNotice.setRespDate(DateUtil.getDateTimeStr(new Date()));
-    					msResultNotice.setRespType(result_code);
+    					msResultNotice.setRespType("");
     					msResultNotice.setRespCode(result_code);
     					msResultNotice.setRespMsg(result_message);
     					msResultNotice.setPayTime(DateUtil.getDateTimeStr(new Date()));
@@ -4299,7 +4303,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
     						tradeDetail.setOrderNumOuter(payResultNotice.getOrderNumOuter());
     					}
     					//更改逻辑  只有交易成功的记录才写进交易记录表  单独写在此处防止后面再次更改逻辑会不理解
-    					if ("0".equals(result_code)) {
+    					if ("200".equals(result_code)) {
     						tradeDetail.setCardType(msResultNotice.getCardType());
     						tradeDetailService.insertSelective(tradeDetail);
     					}
