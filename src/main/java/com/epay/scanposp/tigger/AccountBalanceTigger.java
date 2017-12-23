@@ -120,13 +120,14 @@ public class AccountBalanceTigger {
 						account.setW6Balance(new BigDecimal(tradeMoneyBalanceSLF30));
 						balance = balance + tradeMoneyBalanceSLF70 - drawMoneyCountYesterDay - drawFailMoneyCountYesterDay;
 					}else if(week == 1){//周一凌晨跑
-						account.setW0Balance(new BigDecimal(tradeMoneyBalanceSLF30));
-						balance = balance + tradeMoneyBalanceSLF70 - drawMoneyCountYesterDay - drawFailMoneyCountYesterDay + w5Balance;
+						//account.setW0Balance(new BigDecimal(tradeMoneyBalanceSLF30));
+						balance = balance + tradeMoneyBalanceSLF - drawMoneyCountYesterDay - drawFailMoneyCountYesterDay + w5Balance + w6Balance;
 						account.setW5Balance(new BigDecimal(0));
-					}else if(week == 2){//周二凌晨跑
-						balance = balance + tradeMoneyBalanceSLF - drawMoneyCountYesterDay - drawFailMoneyCountYesterDay + w6Balance + w0Balance;
 						account.setW6Balance(new BigDecimal(0));
-						account.setW0Balance(new BigDecimal(0));
+					//}else if(week == 2){//周二凌晨跑
+					//	balance = balance + tradeMoneyBalanceSLF - drawMoneyCountYesterDay - drawFailMoneyCountYesterDay + w6Balance + w0Balance;
+					//	account.setW6Balance(new BigDecimal(0));
+					//	account.setW0Balance(new BigDecimal(0));
 					}else{
 						balance = balance + tradeMoneyBalanceSLF - drawMoneyCountYesterDay - drawFailMoneyCountYesterDay ;
 					}
