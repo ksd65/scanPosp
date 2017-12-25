@@ -41,10 +41,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.FTConfig;
 import com.epay.scanposp.common.constant.MSConfig;
 import com.epay.scanposp.common.constant.SysConfig;
+import com.epay.scanposp.common.constant.TBConfig;
 import com.epay.scanposp.common.constant.WxConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
@@ -73,6 +75,7 @@ import com.epay.scanposp.common.utils.slf.vo.QueryRequest;
 import com.epay.scanposp.common.utils.slf.vo.QueryResponse;
 import com.epay.scanposp.common.utils.swift.MD5;
 import com.epay.scanposp.common.utils.swift.SignUtils;
+import com.epay.scanposp.common.utils.tb.SignUtil;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
 import com.epay.scanposp.entity.BuAreaCode;
@@ -240,6 +243,7 @@ public class CashierDeskController {
 	
 	@Autowired
 	private PayTypeService payTypeService;
+	
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/getQrcodePay")
@@ -4355,7 +4359,7 @@ public class CashierDeskController {
 			MemberInfo memberInfo = memberInfoList.get(0);
 			if(!"0".equals(memberInfo.getStatus())){
 				if("4".equals(memberInfo.getStatus())){
-					result.put("returnCode", "0011");
+					result.put("returnCode", "0008");
 					result.put("returnMsg", "该商户未进行认证，暂时无法交易");
 					return signReturn(result);
 				}
@@ -4534,11 +4538,71 @@ public class CashierDeskController {
 						}
 					}
 				}else{
-					result.put("returnCode", "0004");
+					result.put("returnCode", "0012");
 					result.put("returnMsg", "第三方订单查询失败:"+queryResponse.getRespDesc());
 					return result;
 				}
 				
+			}else if(RouteCodeConstant.TB_ROUTE_CODE.equals(routeCode)){
+				
+				
+				TreeMap<String, String> map = new TreeMap<>();
+		        map.put("app_id",TBConfig.agentId);
+		        map.put("method","openapi.payment.order.query");
+		        map.put("format","json");
+		        map.put("sign_method","md5");
+		        map.put("nonce",new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+		        map.put("version","1.0");
+		        
+		        HashMap<String, Object> content = new HashMap<String, Object>();
+		        content.put("merchant_order_sn", debitNote.getOrderCode());
+		         
+		        String bizContent = JSON.toJSONString(content);
+
+		        map.put("biz_content",bizContent);
+
+		        String secret = TBConfig.privateKey;
+		        String sign = SignUtil.createSign(map, secret);
+		        map.put("sign",sign);
+		        logger.info("提呗订单查询请求报文[{}]", new Object[] { JSON.toJSONString(map) });
+		        String resultMsg = HttpUtil.sendPostRequest(TBConfig.msServerUrl, JSON.toJSONString(map));
+		        logger.info("提呗订单查询返回报文[{}]", new Object[] { resultMsg });
+		        
+				
+		        com.alibaba.fastjson.JSONObject resultObj = com.alibaba.fastjson.JSONObject.parseObject(resultMsg);
+		        String result_code = resultObj.getString("result_code");
+		        if("200".equals(result_code)){
+		        	com.alibaba.fastjson.JSONObject data = (com.alibaba.fastjson.JSONObject)resultObj.get("data");
+		        	String trade_state = data.getString("trade_state");
+		        	if("SUCCESS".equals(trade_state)){
+						result.put("oriRespType", "S");
+						result.put("oriRespCode", "000000");
+						result.put("oriRespMsg", "支付成功");
+						result.put("totalAmount", data.getString("total_fee"));
+
+					}else if("USERPAYING".equals(trade_state)){
+						result.put("oriRespType", "R");
+						result.put("oriRespCode", "000001");
+						result.put("oriRespMsg", "支付中");
+					}else{
+						result.put("oriRespType", "E");
+						result.put("oriRespCode", "000002");
+						if("REVOKED".equals(trade_state)){
+							result.put("oriRespMsg", "支付已撤销");
+						}else if("REVOKING".equals(trade_state)){
+							result.put("oriRespMsg", "支付撤销中");
+						}else if("REVOKED_ERROR".equals(trade_state)){
+							result.put("oriRespMsg", "支付撤销失败");
+						}else{
+							result.put("oriRespMsg", "支付失败");
+						}
+					}
+		        	
+		        }else{
+		        	result.put("returnCode", "0012");
+					result.put("returnMsg", resultObj.getString("result_message"));
+		        }
+		        
 			}else{
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
@@ -4619,6 +4683,40 @@ public class CashierDeskController {
 		result.put("returnMsg", "成功");
 		return signReturn(result);
 	}
+	
+	@RequestMapping("/bankPay/wxH5Pay")
+	public void wxH5Pay(HttpServletRequest request,HttpServletResponse response){
+		
+		TreeMap<String, String> map = new TreeMap<>();
+        map.put("app_id",TBConfig.agentId);
+        map.put("method","openapi.payment.order.h5");
+        map.put("format","json");
+        map.put("sign_method","md5");
+        map.put("nonce",new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+        map.put("version","1.0");
+        
+        HashMap<String, Object> content = new HashMap<String, Object>();
+        String orderCode = CommonUtil.getOrderCode();
+        content.put("merchant_order_sn", orderCode);
+        content.put("mchid", "81693055");
+        content.put("total_fee","0.01");
+       // content.put("store_id",TestConstants.storeId);
+        content.put("scene_info","ereqwe");
+        content.put("ip","112.17.240.109");
+        
+        String bizContent = JSON.toJSONString(content);
+
+        map.put("biz_content",bizContent);
+
+        String secret = TBConfig.privateKey;
+        String sign = SignUtil.createSign(map, secret);
+        map.put("sign",sign);
+        String post = HttpUtil.sendPostRequest(TBConfig.msServerUrl, JSON.toJSONString(map));
+        //String post = httpClientUtil.post(TBConfig.msServerUrl, JSON.toJSONString(map));
+		System.out.println("======"+post);
+	}
+	
+	
 	
 	private JSONObject signReturn(JSONObject result){
 		String rtSrc = StringUtil.orderedKey(result);
