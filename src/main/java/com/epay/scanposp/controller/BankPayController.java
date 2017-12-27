@@ -81,12 +81,12 @@ import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
+import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
 import com.epay.scanposp.service.TradeDetailService;
-import com.epay.scanposp.thread.PayResultNoticeThread;
 
 @Controller
 public class BankPayController {
@@ -140,6 +140,9 @@ public class BankPayController {
 	
 	@Autowired
 	private CommonService commonService;
+	
+	@Resource
+	private PayResultNotifyService payResultNotifyService;
 	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/toPay")
@@ -576,15 +579,16 @@ public class BankPayController {
             					}
             					
             					if(payResultNoticeList.size() > 0){
+            						payResultNotifyService.notify(payResultNotice);
             						//更新状态是触发器可以读取该条数据以执行通知任务
-            						payResultNoticeService.updateByPrimaryKeySelective(payResultNotice);
+            					/*	payResultNoticeService.updateByPrimaryKeySelective(payResultNotice);
             						//获取民生通知后即向商户提供结果通知 (后续若因其他因素需多次通知商户,则由相应的定时任务完成)
             						System.out.println("getPoolSize====" + threadPoolTaskExecutor.getPoolSize());
             						PayResultNoticeThread payResultNoyiceThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice);
             						threadPoolTaskExecutor.execute(payResultNoyiceThread);
             						System.out.println("getActiveCount====" + threadPoolTaskExecutor.getActiveCount());
             						//new Thread(payResultNoyiceThread).start();
-
+								*/
             					}
             					
             				}

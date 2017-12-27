@@ -136,6 +136,7 @@ import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
+import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.PayRouteService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RegisterTmpService;
@@ -149,7 +150,6 @@ import com.epay.scanposp.service.SysOfficeService;
 import com.epay.scanposp.service.TradeDetailService;
 import com.epay.scanposp.service.TradeVolumnDailyService;
 import com.epay.scanposp.thread.DrawResultNoticeThread;
-import com.epay.scanposp.thread.PayResultNoticeThread;
 
 
 
@@ -243,6 +243,9 @@ public class CashierDeskController {
 	
 	@Autowired
 	private PayTypeService payTypeService;
+	
+	@Resource
+	private PayResultNotifyService payResultNotifyService;
 	
 	
 	@ResponseBody
@@ -625,15 +628,16 @@ public class CashierDeskController {
 					}
 					
 					if(payResultNoticeList.size() > 0){
+						payResultNotifyService.notify(payResultNotice);
 						//更新状态是触发器可以读取该条数据以执行通知任务
-						payResultNoticeService.updateByPrimaryKeySelective(payResultNotice);
+						/*payResultNoticeService.updateByPrimaryKeySelective(payResultNotice);
 						//获取民生通知后即向商户提供结果通知 (后续若因其他因素需多次通知商户,则由相应的定时任务完成)
 						System.out.println("getPoolSize====" + threadPoolTaskExecutor.getPoolSize());
 						PayResultNoticeThread payResultNoyiceThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice);
 						threadPoolTaskExecutor.execute(payResultNoyiceThread);
 						System.out.println("getActiveCount====" + threadPoolTaskExecutor.getActiveCount());
 						//new Thread(payResultNoyiceThread).start();
-
+						*/
 					}
 				}
 			}
@@ -790,89 +794,10 @@ public class CashierDeskController {
 						}else{
 							tradeDetail.setSettleType("1");
 						}
-					//	tradeDetail.setSettleType("1");
-						//发送微信模板消息
-						/*
-						EpayCodeExample epayCodeExample = new EpayCodeExample();
-						epayCodeExample.or().andMemberIdEqualTo(debitNote.getMemberId()).andStatusEqualTo("5");
-						List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
-						if(epayCodeList.size() > 0){
-							String memberOfficeId = epayCodeList.get(0).getOfficeId();
-							SysOffice sysOffice = getTopAgentOffice(memberOfficeId);
-							if(null != sysOffice){
-								MemberOpenidExample memberOpenidExample = new MemberOpenidExample();
-								memberOpenidExample.or().andMemberIdEqualTo(debitNote.getMemberId());
-								List<MemberOpenid> memberOpenidList = memberOpenidService.selectByExample(memberOpenidExample);
-								if(memberOpenidList.size()>0){
-									MemberOpenid memberOpenid = memberOpenidList.get(0);
-									if(null != memberOpenid.getOpenid() && !"".equals(memberOpenid.getOpenid())){
-										SimpleDateFormat sdf= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-										String messageTitle = "恭喜您有一笔收款到账";
-										String remark = "详细信息请查看交易记录";
-										MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(debitNote.getMemberId());
-										String payTime = msResultNotice.getPayTime();
-										if(null != payTime && !"".equals(payTime) && payTime.length() >= 14){
-											payTime = sdf.format(new SimpleDateFormat("yyyyMMddHHmmss").parse(payTime.length()>14?payTime.substring(0,14):payTime));
-										}else{
-											payTime = sdf.format(new Date());
-										}
-										if("2".equals(sysOffice.getAgtType())){
-											SysOfficeConfigOemExample sysOfficeConfigOemExample = new SysOfficeConfigOemExample();
-											sysOfficeConfigOemExample.or().andOfficeIdEqualTo(memberOfficeId);
-											List<SysOfficeConfigOem> officeConfogList = sysOfficeConfigOemService.selectByExample(sysOfficeConfigOemExample);
-											if(officeConfogList.size()>0){
-												int expiresSeconds = 7200;//单位秒
-												SysOfficeConfigOem officeConfigOEM = officeConfogList.get(0);
-												String accessToken = officeConfigOEM.getAccessToken();
-												Date updateDate = officeConfigOEM.getUpdateDate();
-												if(null != accessToken && !"".equals(accessToken) && ((new Date()).getTime() < updateDate.getTime()+expiresSeconds*1000)){
-													//accessToken有效
-													WxMessageUtil.sendTmpMsgSKTZOEM(accessToken,officeConfigOEM.getWxTemplateid(), memberOpenid.getOpenid(), messageTitle, memberInfo.getName(), debitNote.getMoney() + "元", payTime, remark);
-												}else{
-													String result = HttpUtil.sendGetRequest("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + officeConfigOEM.getWxAppid() + "&secret=" + officeConfigOEM.getWxAppsecret());
-													JSONObject resultJson = JSONObject.fromObject(result);
-													if (resultJson.has("access_token")) {
-														accessToken = resultJson.getString("access_token");
-														updateDate = new Date();
-														officeConfigOEM.setAccessToken(accessToken);
-														officeConfigOEM.setUpdateDate(new Date());
-														sysOfficeConfigOemService.updateByPrimaryKeySelective(officeConfigOEM);
-														WxMessageUtil.sendTmpMsgSKTZOEM(accessToken,officeConfigOEM.getWxTemplateid(), memberOpenid.getOpenid(), messageTitle, memberInfo.getName(), debitNote.getMoney() + "元", payTime, remark);
-													}
-												}
-											}
-										}else{
-											WxMessageUtil.sendTmpMsgSKTZ(memberOpenid.getOpenid(), messageTitle, memberInfo.getName(), debitNote.getMoney() + "元", payTime, remark);
-										}
-									}
-								}
-								
-							}
-						}
-						*/
+					
 					}
-					/**T0 发起提现操作*/
-					/*
-					String nowTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
-					//如果是T0交易则发起提现请求
-					if ("S".equals(respJSONObject.get("respType")) && "000000".equals(respJSONObject.get("respCode"))) {
-							//该段为即时提现功能的处理
-						if("0".equals(debitNote.getSettleType())){
-							if(DateUtil.dateCompare(nowTime,"09:00:00","HH:mm:ss")==1&&DateUtil.dateCompare(nowTime,"23:00:00","HH:mm:ss")==-1){
-								logger.debug("----------T0 提现-------------");
-								System.out.println("----------T0 提现-------------");
-								tradeDetail.setSettleType("0");
-								msWithdraw(debitNote.getMemberId(),debitNote.getMemberCode(),debitNote.getMerchantCode());
-							}else{
-								debitNote.setSettleType("1");
-								tradeDetail.setSettleType("1");
-								debitNoteService.updateByPrimaryKey(debitNote);
-							}
-						}else{
-							tradeDetail.setSettleType("1");
-						}
-					}
-					*/
+					
+					
 					
 					PayResultNoticeExample payResultNoticeExample = new PayResultNoticeExample();
 					payResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
@@ -909,15 +834,16 @@ public class CashierDeskController {
 					}
 					
 					if(payResultNoticeList.size() > 0){
+						payResultNotifyService.notify(payResultNotice);
 						//更新状态是触发器可以读取该条数据以执行通知任务
-						payResultNoticeService.updateByPrimaryKeySelective(payResultNotice);
+					/*	payResultNoticeService.updateByPrimaryKeySelective(payResultNotice);
 						//获取民生通知后即向商户提供结果通知 (后续若因其他因素需多次通知商户,则由相应的定时任务完成)
 						System.out.println("getPoolSize====" + threadPoolTaskExecutor.getPoolSize());
 						PayResultNoticeThread payResultNoyiceThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice);
 						threadPoolTaskExecutor.execute(payResultNoyiceThread);
 						System.out.println("getActiveCount====" + threadPoolTaskExecutor.getActiveCount());
 						//new Thread(payResultNoyiceThread).start();
-
+					*/
 					}
 				}
 			}
@@ -1095,15 +1021,16 @@ public class CashierDeskController {
 	                    					}
 	                    					
 	                    					if(payResultNoticeList.size() > 0){
+	                    						payResultNotifyService.notify(payResultNotice);
 	                    						//更新状态是触发器可以读取该条数据以执行通知任务
-	                    						payResultNoticeService.updateByPrimaryKeySelective(payResultNotice);
+	                    					/*	payResultNoticeService.updateByPrimaryKeySelective(payResultNotice);
 	                    						//获取民生通知后即向商户提供结果通知 (后续若因其他因素需多次通知商户,则由相应的定时任务完成)
 	                    						System.out.println("getPoolSize====" + threadPoolTaskExecutor.getPoolSize());
 	                    						PayResultNoticeThread payResultNoyiceThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice);
 	                    						threadPoolTaskExecutor.execute(payResultNoyiceThread);
 	                    						System.out.println("getActiveCount====" + threadPoolTaskExecutor.getActiveCount());
 	                    						//new Thread(payResultNoyiceThread).start();
-	
+											*/
 	                    					}
                     					}
                     				}
@@ -4286,8 +4213,14 @@ public class CashierDeskController {
 		String signStr = resJo.getString("signStr");
 		String srcStr = StringUtil.orderedKey(params);
 		System.out.println("（接收）排序后的参数串："+srcStr);
-		String pubKey = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAK4hKvMwLnbtrdfwSuxRksgDefm8lZ0mNe5uh581eNH1nLjaRoIbs9YFo+fL2tsT/wBrdkEUPcdgWRSyZmX6iosCAwEAAQ==";
+		String pubKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAm6A4TXa9UCEe6fBfVVsuW1qUGPON4w9WLNRZQ6etcIZHgn6BV6PE5/WxoVXjRGafG5jsBspVzr1pHaqMUZ0B66juV4z4ghKxolAEbGUgysDb/WDqJGvPKkHf7MeTGxfcVpzMRxiQ7dHpazVuzIHREg5qcZGNGllhKya4FMSk4STUcQj75gv0eAUSuQfO5RlF1Q0QqtCFzUyVXSk97yjXTqJvTe3MiX1jn/w+RMn9lkz9v3aCkj2PgelcmgBt+rlZpNZtX9ujnws4KIlVX/IvT81Pd+39t/aF4gzbFiZaJ8O02+6u4zBbrU+ziujlUOptY3eNnx3/QQE1JJiS5zmYQQIDAQAB";
 		System.out.println(EpaySignUtil.checksign(pubKey, srcStr, signStr));
+		try {
+			response.getWriter().write("{\"resCode\":\"0000\"}");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 	

@@ -40,9 +40,9 @@ import com.epay.scanposp.entity.TradeDetailExample;
 import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
+import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.TradeDetailService;
-import com.epay.scanposp.thread.PayResultNoticeThread;
 
 public class QueryPayResultTigger {
 	
@@ -61,6 +61,9 @@ public class QueryPayResultTigger {
 	private MsResultNoticeService msResultNoticeService;
 	@Resource
 	ThreadPoolTaskExecutor threadPoolTaskExecutor;
+	
+	@Resource
+	private PayResultNotifyService payResultNotifyService;
 	
 	public void queryPayResult(){
 		DebitNoteExample debitNoteExample = new DebitNoteExample();
@@ -240,8 +243,9 @@ public class QueryPayResultTigger {
 							payResultNotice.setResultMessage("交易失败");
 						}
 						//获取民生通知后即向商户提供结果通知 (后续若因其他因素需多次通知商户,则由相应的定时任务完成)
-						PayResultNoticeThread payResultNoyiceThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice);
-						threadPoolTaskExecutor.execute(payResultNoyiceThread);
+						//PayResultNoticeThread payResultNoyiceThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice);
+						//threadPoolTaskExecutor.execute(payResultNoyiceThread);
+						payResultNotifyService.notify(payResultNotice);
 					}
 					
 					tradeDetail.setInterfaceType(payResultNotice.getInterfaceType());
