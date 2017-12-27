@@ -110,6 +110,7 @@ public class HttpUtil {
 			httpUrlConn.setUseCaches(false);
 			// 设置请求方式（GET/POST）
 			httpUrlConn.setRequestMethod("POST");
+			httpUrlConn.setConnectTimeout(10000);
 			// httpUrlConn.setRequestProperty( "Cookie",
 			// "JSESSIONID=62A1A46FD933C9EDC6FCB16E7E4214E9");
 
@@ -153,8 +154,9 @@ public class HttpUtil {
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error(e.getMessage());
+			return e.getMessage();
 		}
-		return buffer.toString();
+		//return buffer.toString();
 
 	}
 
