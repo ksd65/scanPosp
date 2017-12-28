@@ -22,6 +22,7 @@
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
     <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
     <result column="remarks" jdbcType="VARCHAR" property="remarks" />
+    <result column="ip" jdbcType="VARCHAR" property="ip" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -84,7 +85,7 @@
   <sql id="Base_Column_List">
     id, money, member_id, member_code, merchant_code, order_code, order_num_outer,settle_type,txn_method, txn_type, trade_rate,
     status, route_id, resp_code, resp_msg, create_by, create_date, update_by, update_date, 
-    remarks
+    remarks,ip
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.DebitNoteExample" resultMap="BaseResultMap">
     select
@@ -199,6 +200,9 @@
       <if test="remarks != null">
         remarks,
       </if>
+      <if test="ip != null">
+        ip,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="money != null">
@@ -257,6 +261,9 @@
       </if>
       <if test="remarks != null">
         #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="ip != null">
+        #{ip,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>

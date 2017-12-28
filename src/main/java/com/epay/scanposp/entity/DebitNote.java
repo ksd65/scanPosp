@@ -43,6 +43,8 @@ public class DebitNote {
     private Date updateDate;
 
     private String remarks;
+    
+    private String ip;
 
     public Integer getId() {
         return id;
@@ -202,6 +204,14 @@ public class DebitNote {
 
 	public void setTxnMethod(String txnMethod) {
 		this.txnMethod = txnMethod;
+	}
+
+	public String getIp() {
+		return ip;
+	}
+
+	public void setIp(String ip) {
+		this.ip = ip;
 	}
     
     

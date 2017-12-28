@@ -4148,6 +4148,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
 			
 			debitNote.setSettleType(memberInfo.getSettleType());
+			debitNote.setIp(ip);
 			if("0".equals(memberInfo.getSettleType())){
 				debitNote.setTradeRate(merchantCode.getT0TradeRate());
 			}else{
@@ -4263,7 +4264,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			debitNote.setTxnType("1");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
 			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
-			
+			debitNote.setIp(ip);
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
 				debitNote.setTradeRate(merchantCode.getT0TradeRate());
