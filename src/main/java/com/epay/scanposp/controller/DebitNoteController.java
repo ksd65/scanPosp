@@ -4687,8 +4687,20 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
         		response.getWriter().write(respString);
         		return;
         	}
+        	
+        	DebitNoteExample debitNoteExample = new DebitNoteExample();
+			debitNoteExample.createCriteria().andOrderCodeEqualTo(reqMsgId);
+			List<DebitNote> debitNotes_tmp = debitNoteService.selectByExample(debitNoteExample);
+			if (debitNotes_tmp == null || debitNotes_tmp.size() == 0) {
+				res = "订单不存在";
+                respString = "fail";
+                response.getWriter().write(respString);
+        		return;
+				
+			}
+			DebitNote debitNote = debitNotes_tmp.get(0);
         	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
-            memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TB_ROUTE_CODE).andMerchantCodeEqualTo(tradeDetailList.get(0).getMerchantCode()).andDelFlagEqualTo("0");
+            memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TB_ROUTE_CODE).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
             List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
             if(keyList == null || keyList.size()!=1){
             	res = "商户私钥未配置";
@@ -4710,11 +4722,10 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			msResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
 			List<MsResultNotice> msResultNoticeList = msResultNoticeService.selectByExample(msResultNoticeExample);
 			if(null == msResultNoticeList || msResultNoticeList.size() == 0){
-				DebitNoteExample debitNoteExample = new DebitNoteExample();
-				debitNoteExample.createCriteria().andOrderCodeEqualTo(reqMsgId);
-				List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
-				if (debitNotes != null && debitNotes.size() > 0) {
-					DebitNote debitNote = debitNotes.get(0);
+				//debitNoteExample.createCriteria().andOrderCodeEqualTo(reqMsgId);
+				//List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
+				if (debitNote != null ) {
+					//DebitNote debitNote = debitNotes.get(0);
 					debitNote.setRespCode(result_code);
 					debitNote.setRespMsg(result_message);
 					
