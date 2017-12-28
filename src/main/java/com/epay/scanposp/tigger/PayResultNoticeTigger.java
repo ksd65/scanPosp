@@ -39,11 +39,13 @@ public class PayResultNoticeTigger {
 	public void dealPayResultNotice(){
 		logger.info("回调通知定时开始执行");
 		PayResultNoticeExample payResultNoticeExample = new PayResultNoticeExample();
-		payResultNoticeExample.or().andStatusEqualTo("2").andCountsLessThan(10);
+		payResultNoticeExample.or().andStatusEqualTo("2").andCountsLessThan(3);
 		payResultNoticeExample.setOrderByClause(" id asc ");
 		List<PayResultNotice> payResultNoticeList = payResultNoticeService.selectByExample(payResultNoticeExample);
-		
-		for(final PayResultNotice payResultNotice : payResultNoticeList){
+		if(payResultNoticeList!=null){
+			logger.info("回调通知定时查询个数："+payResultNoticeList.size());
+		}
+		for(PayResultNotice payResultNotice : payResultNoticeList){
 			payResultNotifyService.notify(payResultNotice);
 			/*PayResultNoticeThread payResultNoticeThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice,payResultNoticeLogService);
 			threadPoolTaskExecutor.execute(payResultNoticeThread);

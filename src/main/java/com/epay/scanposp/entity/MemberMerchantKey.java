@@ -10,6 +10,8 @@ public class MemberMerchantKey {
 	
 	private String merchantCode;
 	
+	private String appId;
+	
 	private String privateKey;
 	
 	private String publicKey;
@@ -114,6 +116,14 @@ public class MemberMerchantKey {
 
 	public void setPrivateKeyPassword(String privateKeyPassword) {
 		this.privateKeyPassword = privateKeyPassword;
+	}
+
+	public String getAppId() {
+		return appId;
+	}
+
+	public void setAppId(String appId) {
+		this.appId = appId;
 	}
 
 	
