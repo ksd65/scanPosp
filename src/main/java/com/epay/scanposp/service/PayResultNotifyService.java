@@ -84,18 +84,22 @@ public class PayResultNotifyService {
 				if(resData.containsKey("resCode") && "0000".equals(resData.getString("resCode"))){
 					payResultNotice.setStatus("3");
 				}else{
-					if(payResultNotice.getCounts() > 10){
+					if(payResultNotice.getCounts() >= 3){
 						payResultNotice.setStatus("4");
 					}
+				}
+			}else{
+				payResultNotice.setCounts(payResultNotice.getCounts()+1);
+				if(payResultNotice.getCounts() >= 3){
+					payResultNotice.setStatus("4");
 				}
 			}
 							
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			if(payResultNotice.getCounts() > 10){
+			payResultNotice.setCounts(payResultNotice.getCounts()+1);
+			if(payResultNotice.getCounts() >= 3){
 				payResultNotice.setStatus("4");
-			}else{
-				payResultNotice.setCounts(payResultNotice.getCounts()+1);
 			}
 		}finally{
 			PayResultNoticeLog payResultNoticeLog = new PayResultNoticeLog();

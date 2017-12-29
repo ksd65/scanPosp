@@ -46,6 +46,7 @@ import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.EnvironmentUtil;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.JsonBeanReleaseUtil;
+import com.epay.scanposp.common.utils.Probability;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
@@ -87,7 +88,11 @@ import com.epay.scanposp.entity.PayResultNoticeLog;
 import com.epay.scanposp.entity.PayRoute;
 import com.epay.scanposp.entity.PayRouteExample;
 import com.epay.scanposp.entity.PayType;
+import com.epay.scanposp.entity.PayTypeDefault;
+import com.epay.scanposp.entity.PayTypeDefaultExample;
 import com.epay.scanposp.entity.PayTypeExample;
+import com.epay.scanposp.entity.PayTypeRule;
+import com.epay.scanposp.entity.PayTypeRuleExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.SysCommonConfig;
@@ -118,6 +123,8 @@ import com.epay.scanposp.service.PayResultNoticeLogService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.PayRouteService;
+import com.epay.scanposp.service.PayTypeDefaultService;
+import com.epay.scanposp.service.PayTypeRuleService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.SysCommonConfigService;
@@ -203,6 +210,12 @@ public class DebitNoteController {
 	
 	@Autowired
 	private MemberMerchantKeyService memberMerchantKeyService;
+	
+	@Resource
+	private PayTypeRuleService payTypeRuleService;
+	
+	@Resource
+	private PayTypeDefaultService payTypeDefaultService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -4067,6 +4080,38 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}
 		
 		MemberMerchantCode merchantCode = merchantCodes.get(0);
+		
+		
+		PayTypeDefaultExample payTypeDefaultExample = new PayTypeDefaultExample();
+		payTypeDefaultExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+		List<PayTypeDefault> payTypeDefaultList = payTypeDefaultService.selectByExample(payTypeDefaultExample);
+		if(payTypeDefaultList != null && payTypeDefaultList.size()>0){//走概率计算
+			PayTypeRuleExample payTypeRuleExample = new PayTypeRuleExample();
+			payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andDelFlagEqualTo("0");
+			payTypeRuleExample.setOrderByClause(" id asc ");
+			List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
+			if(payTypeRuleList !=null && payTypeRuleList.size()>0){
+				List<Map<String,Object>> rateList=new ArrayList<>();
+	            for(int i=0;i<payTypeRuleList.size();i++){
+					Map<String, Object> rateMap = new HashMap<String, Object>();
+					rateMap.put("rate", payTypeRuleList.get(i).getRuleRate().doubleValue());
+					rateList.add(rateMap);
+				}
+	            int index = Probability.getProbabilityRange(rateList);
+	            if(index >= payTypeRuleList.size()){
+	            	logger.info("不在概率计算范围内，走默认商户，商户编码："+merchantCode.getWxMerchantCode()+"，通道编码："+routeCode);
+	            }else{
+	            	PayTypeRule payTypeRule = payTypeRuleList.get(index);
+	            	logger.info("概率计算商户编码："+payTypeRule.getMerchantCode()+"，通道编码："+payTypeRule.getRouteCode());
+	            	merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
+	            	routeCode = payTypeRule.getRouteCode();
+	            	aisleType = payTypeRule.getAisleType();
+	            }
+			}
+			
+		}
+		
+		
 		
 		SysOfficeExample sysOfficeExample = new SysOfficeExample();
 		sysOfficeExample.or().andIdEqualTo(epayCodeList.get(0).getOfficeId()).andAgtTypeEqualTo("3");
