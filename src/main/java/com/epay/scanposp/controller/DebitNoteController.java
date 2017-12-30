@@ -3580,6 +3580,30 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		return null;
 	}
 	
+	private JSONObject checkMinMoney(String configName, BigDecimal tradeMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal singleMin = new BigDecimal(value);
+			if (null != singleMin && singleMin.compareTo(BigDecimal.ZERO) > 0){
+				if (tradeMoney.compareTo(singleMin) < 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "单笔交易最小金额为"+singleMin+"元,当前交易已小于最小金额");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
 	private JSONObject checkPayLimit(Integer memberId, BigDecimal tradeMoney, BigDecimal singleLimit, BigDecimal dayLimit){
 		
 		JSONObject result = new JSONObject();
@@ -4199,12 +4223,20 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			}else{
 				debitNote.setTradeRate(merchantCode.getT1TradeRate());
 			}
-			String configName = "SINGLE_LIMIT_1007_006_WX";
-			JSONObject checkResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			String configName = "SINGLE_MIN_1007_006_WX";
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
 			if(null != checkResult){
-				debitNote.setStatus("4");
+				debitNote.setStatus("5");
 				debitNoteService.insertSelective(debitNote);
 				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_1007_006_WX";
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
 			}
 			
 			debitNoteService.insertSelective(debitNote);
@@ -4275,9 +4307,23 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	        	result.put("returnCode", "0000");
 				result.put("returnMsg", "成功");
 	        }else{
+	        	String result_message = resultObj.getString("result_message");
 	        	result.put("returnCode", "0009");
-				result.put("returnMsg", resultObj.getString("result_message"));
-	        }
+				result.put("returnMsg", result_message);
+				
+				DebitNoteExample debitNoteExample = new DebitNoteExample();
+				debitNoteExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
+				if (debitNotes != null && debitNotes.size() > 0) {
+					DebitNote debitNote_1 = debitNotes.get(0);
+					debitNote_1.setStatus("2");
+					debitNote_1.setUpdateDate(new Date());
+					if(!"".equals(result_message)){
+						debitNote_1.setRespMsg(result_message.length()>250?result_message.substring(0, 250):result_message);
+					}
+					debitNoteService.updateByPrimaryKey(debitNote_1);
+				}
+			}
 	        
 			
 			
@@ -4317,12 +4363,20 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNote.setTradeRate(merchantCode.getT1TradeRate());
 			}
 			
-			String configName = "SINGLE_LIMIT_1002_006_WX";
-			JSONObject checkResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			String configName = "SINGLE_MIN_1002_006_WX";
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
 			if(null != checkResult){
-				debitNote.setStatus("4");
+				debitNote.setStatus("5");
 				debitNoteService.insertSelective(debitNote);
 				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_1002_006_WX";
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
 			}
 			
 			debitNoteService.insertSelective(debitNote);
@@ -4422,8 +4476,23 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 					result.put("returnMsg", "获取微信信息失败");
 				}
 			}else{
-				result.put("returnCode", "0009");
-				result.put("returnMsg", "调用微信H5支付接口返回失败("+respJSONObject.getString("respMsg")+")");
+				
+				String result_message = respJSONObject.getString("respMsg");
+	        	result.put("returnCode", "0009");
+				result.put("returnMsg", result_message);
+				
+				DebitNoteExample debitNoteExample = new DebitNoteExample();
+				debitNoteExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
+				if (debitNotes != null && debitNotes.size() > 0) {
+					DebitNote debitNote_1 = debitNotes.get(0);
+					debitNote_1.setStatus("2");
+					debitNote_1.setUpdateDate(new Date());
+					if(!"".equals(result_message)){
+						debitNote_1.setRespMsg(result_message.length()>250?result_message.substring(0, 250):result_message);
+					}
+					debitNoteService.updateByPrimaryKey(debitNote_1);
+				}
 			}
 			
         } catch (Exception e) {
