@@ -70,12 +70,17 @@ import com.epay.scanposp.entity.AccountExample;
 import com.epay.scanposp.entity.BusinessCategory;
 import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
+import com.epay.scanposp.entity.DebitNoteIp;
 import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
 import com.epay.scanposp.entity.EskNotice;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberInfoExample.Criteria;
+import com.epay.scanposp.entity.MemberIpBlackList;
+import com.epay.scanposp.entity.MemberIpBlackListExample;
+import com.epay.scanposp.entity.MemberIpRule;
+import com.epay.scanposp.entity.MemberIpRuleExample;
 import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberMerchantKey;
@@ -110,10 +115,13 @@ import com.epay.scanposp.request.SandOrderPayRequest.SandOrderPayRequestBody;
 import com.epay.scanposp.response.SandOrderPayResponse;
 import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.BusinessCategoryService;
+import com.epay.scanposp.service.DebitNoteIpService;
 import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.EskNoticeService;
 import com.epay.scanposp.service.MemberInfoService;
+import com.epay.scanposp.service.MemberIpBlackListService;
+import com.epay.scanposp.service.MemberIpRuleService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MemberOpenidService;
@@ -216,6 +224,15 @@ public class DebitNoteController {
 	
 	@Resource
 	private PayTypeDefaultService payTypeDefaultService;
+	
+	@Resource
+	private DebitNoteIpService debitNoteIpService;
+	
+	@Resource
+	private MemberIpBlackListService memberIpBlackListService;
+	
+	@Resource
+	private MemberIpRuleService memberIpRuleService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -3604,6 +3621,40 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		return null;
 	}
 	
+	private JSONObject checkLimitIp(String payMethod, String payType, int memberId, String routeCode, String merchantCode, String ip){
+		
+		JSONObject result = new JSONObject();
+		MemberIpBlackListExample memberIpBlackListExample = new MemberIpBlackListExample();
+		memberIpBlackListExample.createCriteria().andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andMemberIdEqualTo(memberId).andDelFlagEqualTo("0");
+		List<MemberIpBlackList> memberIpBlackList = memberIpBlackListService.selectByExample(memberIpBlackListExample);
+		if(memberIpBlackList != null && memberIpBlackList.size()>0){
+			MemberIpRuleExample memberIpRuleExample = new MemberIpRuleExample();
+			memberIpRuleExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merchantCode).andDelFlagEqualTo("0");
+			List<MemberIpRule> memberIpRuleList = memberIpRuleService.selectByExample(memberIpRuleExample);
+			if(memberIpRuleList !=null && memberIpRuleList.size()>0){
+				for(MemberIpRule rule : memberIpRuleList){
+					int seconds = rule.getSeconds();
+					int limitTimes = rule.getLimitTimes();
+					Map<String,Object> param = new HashMap<String, Object>();
+					param.put("memberId", memberId);
+					param.put("routeId", routeCode);
+					param.put("merchantCode", merchantCode);
+					param.put("ip", ip);
+					param.put("seconds", seconds);
+					Integer count = debitNoteIpService.countDebitNoteIpByCondition(param);
+					count = count == null ? 0 : count;
+					if(count >= limitTimes){
+						logger.info("超过IP访问次数，规则："+seconds+"秒"+limitTimes+"次，访问"+count);
+						result.put("returnCode", "4004");
+						result.put("returnMsg", "您的IP访问过于频繁，请稍后再访问");
+						return result;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
 	private JSONObject checkPayLimit(Integer memberId, BigDecimal tradeMoney, BigDecimal singleLimit, BigDecimal dayLimit){
 		
 		JSONObject result = new JSONObject();
@@ -4239,6 +4290,12 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
+			JSONObject ipResult = checkLimitIp(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), RouteCodeConstant.TB_ROUTE_CODE, merchantCode.getWxMerchantCode(), ip);
+			if(null != ipResult){
+				debitNote.setStatus("6");
+				debitNoteService.insertSelective(debitNote);
+				return ipResult;
+			}
 			debitNoteService.insertSelective(debitNote);
 			
 			PayResultNotice payResultNotice = new PayResultNotice();
@@ -4324,9 +4381,18 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 					debitNoteService.updateByPrimaryKey(debitNote_1);
 				}
 			}
-	        
-			
-			
+	        try{
+		        DebitNoteIp debitNoteIp = new DebitNoteIp();
+		        debitNoteIp.setMemberId(memberInfo.getId());
+		        debitNoteIp.setMerchantCode(merchantCode.getWxMerchantCode());
+		        debitNoteIp.setOrderCode(orderCode);
+		        debitNoteIp.setRouteId(RouteCodeConstant.TB_ROUTE_CODE);
+		        debitNoteIp.setIp(ip);
+		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
+				debitNoteIpService.insertSelective(debitNoteIp);
+	        }catch(Exception ex){
+	        	logger.error(ex.getMessage());
+	        }
         } catch (Exception e) {
 			logger.error(e.getMessage());
 			result.put("returnCode", "0096");
@@ -4377,6 +4443,13 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNote.setStatus("4");
 				debitNoteService.insertSelective(debitNote);
 				return limitResult;
+			}
+			
+			JSONObject ipResult = checkLimitIp(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), RouteCodeConstant.ESK_ROUTE_CODE, merchantCode.getWxMerchantCode(), ip);
+			if(null != ipResult){
+				debitNote.setStatus("6");
+				debitNoteService.insertSelective(debitNote);
+				return ipResult;
 			}
 			
 			debitNoteService.insertSelective(debitNote);
@@ -4494,6 +4567,18 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 					debitNoteService.updateByPrimaryKey(debitNote_1);
 				}
 			}
+			try{
+		        DebitNoteIp debitNoteIp = new DebitNoteIp();
+		        debitNoteIp.setMemberId(memberInfo.getId());
+		        debitNoteIp.setMerchantCode(merchantCode.getWxMerchantCode());
+		        debitNoteIp.setOrderCode(orderCode);
+		        debitNoteIp.setRouteId(RouteCodeConstant.ESK_ROUTE_CODE);
+		        debitNoteIp.setIp(ip);
+		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
+				debitNoteIpService.insertSelective(debitNoteIp);
+	        }catch(Exception ex){
+	        	logger.error(ex.getMessage());
+	        }
 			
         } catch (Exception e) {
 			logger.error(e.getMessage());
