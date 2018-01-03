@@ -150,14 +150,33 @@ public class BankPayController {
 		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
 		System.out.println("请求参数==="+reqDataJson.toString());
-		String payMoney = reqDataJson.getString("payMoney");
-		String orderNum = reqDataJson.getString("orderNum");
-		String memberCode = reqDataJson.getString("memberCode");
-		String callbackUrl = reqDataJson.getString("callbackUrl");
+		String bankCode = "";
+		if(reqDataJson.containsKey("bankCode")){
+			bankCode = reqDataJson.getString("bankCode");
+		}
+		String payMoney = "";
+		if(reqDataJson.containsKey("payMoney")){
+			payMoney = reqDataJson.getString("payMoney");
+		}
+		String orderNum = "";
+		if(reqDataJson.containsKey("orderNum")){
+			orderNum = reqDataJson.getString("orderNum");
+		}
+		String memberCode = "";
+		if(reqDataJson.containsKey("memberCode")){
+			memberCode = reqDataJson.getString("memberCode");
+		}
+		String callbackUrl = "";
+		if(reqDataJson.containsKey("callbackUrl")){
+			callbackUrl = reqDataJson.getString("callbackUrl");
+		}
 	//	String gateWayType = reqDataJson.getString("gateWayType");
 	//	String goodsName = reqDataJson.getString("goodsName");
 		
-		String signStr = reqDataJson.getString("signStr");
+		String signStr = "";
+		if(reqDataJson.containsKey("signStr")){
+			signStr = reqDataJson.getString("signStr");
+		}
 		
 		StringBuilder srcStr = new StringBuilder();
 		JSONObject result = new JSONObject();
@@ -166,12 +185,20 @@ public class BankPayController {
 			result.put("returnMsg", "支付金额输入不正确");
 			return result;
 		}
+		
+		if(bankCode == null || "".equals(bankCode)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "银行编码缺失");
+			return result;
+		}
+		srcStr.append("bankCode="+bankCode);
+		
 		if(callbackUrl == null || "".equals(callbackUrl)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "平台支付结果通知回调地址缺失");
 			return result;
 		}
-		srcStr.append("callbackUrl="+callbackUrl);
+		srcStr.append("&callbackUrl="+callbackUrl);
 		
 	/*	if(gateWayType == null || "".equals(gateWayType)){
 			result.put("returnCode", "0007");
@@ -215,14 +242,14 @@ public class BankPayController {
 		
 		
 		
-		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3",  srcStr.toString(), signStr, callbackUrl);
+		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3",  srcStr.toString(), signStr, callbackUrl ,bankCode);
 		
 		return result;
 	}
 	
 	
 	
-	public JSONObject validMemberInfoForQrcode(String memberCode,String orderNum,String payMoney,String platformType,String signOrginalStr,String signedStr,String callbackUrl){
+	public JSONObject validMemberInfoForQrcode(String memberCode,String orderNum,String payMoney,String platformType,String signOrginalStr,String signedStr,String callbackUrl,String bankCode){
 		JSONObject result = new JSONObject();
 		
 		MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -321,14 +348,14 @@ public class BankPayController {
 		*/
 		
 		if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
-			result = bankPay(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode );
+			result = bankPay(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode , bankCode);
 			result.put("routeCode", routeCode);
 		}
 		
 		return result;
 	}
 	
-	public JSONObject bankPay(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode) {
+	public JSONObject bankPay(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String bankCode) {
 		JSONObject result = new JSONObject();
 		try {
 			// 插入一条收款记录
@@ -407,6 +434,7 @@ public class BankPayController {
 			orderRequest.setOrderTime(format.format(new Date()));
 			orderRequest.setRptType("1");//收款方式 定值1
 			orderRequest.setPayMode("0");//付款类型 0 初次支付 1 重复支付，当前支持 0
+			orderRequest.setBankId(bankCode);
 			
 			MerchantClient client = new MerchantClient(merchantCode.getWxMerchantCode());
 			String merchantCertPath = MerchantClient.configPath + merchantKey.getPrivateKey();

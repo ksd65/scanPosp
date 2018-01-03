@@ -11,6 +11,12 @@ public class PayTypeRule {
 	
 	private String payType;
 	
+	private String ruleType;
+	
+	private BigDecimal minMoney;
+	
+	private BigDecimal maxMoney;
+	
 	private String routeCode;
 	
 	private String aisleType;
@@ -126,6 +132,30 @@ public class PayTypeRule {
 
 	public void setRuleRate(BigDecimal ruleRate) {
 		this.ruleRate = ruleRate;
+	}
+
+	public String getRuleType() {
+		return ruleType;
+	}
+
+	public void setRuleType(String ruleType) {
+		this.ruleType = ruleType;
+	}
+
+	public BigDecimal getMinMoney() {
+		return minMoney;
+	}
+
+	public void setMinMoney(BigDecimal minMoney) {
+		this.minMoney = minMoney;
+	}
+
+	public BigDecimal getMaxMoney() {
+		return maxMoney;
+	}
+
+	public void setMaxMoney(BigDecimal maxMoney) {
+		this.maxMoney = maxMoney;
 	}
     
 	

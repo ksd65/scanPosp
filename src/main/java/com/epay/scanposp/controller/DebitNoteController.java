@@ -4156,33 +4156,91 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		
 		MemberMerchantCode merchantCode = merchantCodes.get(0);
 		
-		
+		boolean merchantFlag = false;
 		PayTypeDefaultExample payTypeDefaultExample = new PayTypeDefaultExample();
 		payTypeDefaultExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
 		List<PayTypeDefault> payTypeDefaultList = payTypeDefaultService.selectByExample(payTypeDefaultExample);
 		if(payTypeDefaultList != null && payTypeDefaultList.size()>0){//走概率计算
 			PayTypeRuleExample payTypeRuleExample = new PayTypeRuleExample();
-			payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andDelFlagEqualTo("0");
-			payTypeRuleExample.setOrderByClause(" id asc ");
-			List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
-			if(payTypeRuleList !=null && payTypeRuleList.size()>0){
-				List<Map<String,Object>> rateList=new ArrayList<>();
-	            for(int i=0;i<payTypeRuleList.size();i++){
-					Map<String, Object> rateMap = new HashMap<String, Object>();
-					rateMap.put("rate", payTypeRuleList.get(i).getRuleRate().doubleValue());
-					rateList.add(rateMap);
+			if(StringUtil.isRealDouble(payMoney)){//订单金额有小数点
+				payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andRuleTypeEqualTo("3").andDelFlagEqualTo("0");//小数点金额概率规则
+				payTypeRuleExample.setOrderByClause(" id asc ");
+				List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
+				if(payTypeRuleList !=null && payTypeRuleList.size()>0){
+					logger.info(orderNum+"进入小数点规则概率计算");
+					List<Map<String,Object>> rateList=new ArrayList<>();
+		            for(int i=0;i<payTypeRuleList.size();i++){
+						Map<String, Object> rateMap = new HashMap<String, Object>();
+						rateMap.put("rate", payTypeRuleList.get(i).getRuleRate().doubleValue());
+						rateList.add(rateMap);
+					}
+		            int index = Probability.getProbabilityRange(rateList);
+		            if(index >= payTypeRuleList.size()){
+		            	logger.info(orderNum+"不在小数点规则概率计算范围内");
+		            }else{
+		            	PayTypeRule payTypeRule = payTypeRuleList.get(index);
+		            	logger.info(orderNum+"小数点规则概率计算商户编码："+payTypeRule.getMerchantCode()+"，通道编码："+payTypeRule.getRouteCode());
+		            	merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
+		            	routeCode = payTypeRule.getRouteCode();
+		            	aisleType = payTypeRule.getAisleType();
+		            	merchantFlag = true;
+		            }
 				}
-	            int index = Probability.getProbabilityRange(rateList);
-	            if(index >= payTypeRuleList.size()){
-	            	logger.info("不在概率计算范围内，走默认商户，商户编码："+merchantCode.getWxMerchantCode()+"，通道编码："+routeCode);
-	            }else{
-	            	PayTypeRule payTypeRule = payTypeRuleList.get(index);
-	            	logger.info("概率计算商户编码："+payTypeRule.getMerchantCode()+"，通道编码："+payTypeRule.getRouteCode());
-	            	merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
-	            	routeCode = payTypeRule.getRouteCode();
-	            	aisleType = payTypeRule.getAisleType();
-	            }
 			}
+			if(!merchantFlag){
+				payTypeRuleExample = new PayTypeRuleExample();
+				payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andRuleTypeEqualTo("2").andMinMoneyLessThan(new BigDecimal(payMoney)).andMaxMoneyGreaterThanOrEqualTo(new BigDecimal(payMoney)).andDelFlagEqualTo("0");//金额概率规则
+				payTypeRuleExample.setOrderByClause(" id asc ");
+				List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
+				if(payTypeRuleList !=null && payTypeRuleList.size()>0){
+					logger.info(orderNum+"进入金额规则概率计算");
+					List<Map<String,Object>> rateList=new ArrayList<>();
+		            for(int i=0;i<payTypeRuleList.size();i++){
+						Map<String, Object> rateMap = new HashMap<String, Object>();
+						rateMap.put("rate", payTypeRuleList.get(i).getRuleRate().doubleValue());
+						rateList.add(rateMap);
+					}
+		            int index = Probability.getProbabilityRange(rateList);
+		            if(index >= payTypeRuleList.size()){
+		            	logger.info(orderNum+"不在金额规则概率计算范围内");
+		            }else{
+		            	PayTypeRule payTypeRule = payTypeRuleList.get(index);
+		            	logger.info(orderNum+"金额规则概率计算商户编码："+payTypeRule.getMerchantCode()+"，通道编码："+payTypeRule.getRouteCode());
+		            	merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
+		            	routeCode = payTypeRule.getRouteCode();
+		            	aisleType = payTypeRule.getAisleType();
+		            	merchantFlag = true;
+		            }
+				}
+			}
+			if(!merchantFlag){
+				payTypeRuleExample = new PayTypeRuleExample();
+				payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andRuleTypeEqualTo("1").andDelFlagEqualTo("0");//默认规则
+				payTypeRuleExample.setOrderByClause(" id asc ");
+				List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
+				if(payTypeRuleList !=null && payTypeRuleList.size()>0){
+					logger.info(orderNum+"进入默认规则概率计算");
+					List<Map<String,Object>> rateList=new ArrayList<>();
+		            for(int i=0;i<payTypeRuleList.size();i++){
+						Map<String, Object> rateMap = new HashMap<String, Object>();
+						rateMap.put("rate", payTypeRuleList.get(i).getRuleRate().doubleValue());
+						rateList.add(rateMap);
+					}
+		            int index = Probability.getProbabilityRange(rateList);
+		            if(index >= payTypeRuleList.size()){
+		            	logger.info(orderNum+"不在默认规则概率计算范围内，走默认商户，商户编码："+merchantCode.getWxMerchantCode()+"，通道编码："+routeCode);
+		            }else{
+		            	PayTypeRule payTypeRule = payTypeRuleList.get(index);
+		            	logger.info(orderNum+"默认规则概率计算商户编码："+payTypeRule.getMerchantCode()+"，通道编码："+payTypeRule.getRouteCode());
+		            	merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
+		            	routeCode = payTypeRule.getRouteCode();
+		            	aisleType = payTypeRule.getAisleType();
+		            }
+				}
+				
+				
+			}
+			
 			
 		}
 		

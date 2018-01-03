@@ -1,5 +1,6 @@
 package com.epay.scanposp.entity;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -498,8 +499,198 @@ public class PayTypeRuleExample {
         }
 
         
+        public Criteria andRuleTypeIsNull() {
+            addCriterion("rule_type is null");
+            return (Criteria) this;
+        }
 
+        public Criteria andRuleTypeIsNotNull() {
+            addCriterion("rule_type is not null");
+            return (Criteria) this;
+        }
 
+        public Criteria andRuleTypeEqualTo(String value) {
+            addCriterion("rule_type =", value, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeNotEqualTo(String value) {
+            addCriterion("rule_type <>", value, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeGreaterThan(String value) {
+            addCriterion("rule_type >", value, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeGreaterThanOrEqualTo(String value) {
+            addCriterion("rule_type >=", value, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeLessThan(String value) {
+            addCriterion("rule_type <", value, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeLessThanOrEqualTo(String value) {
+            addCriterion("rule_type <=", value, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeLike(String value) {
+            addCriterion("rule_type like", value, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeNotLike(String value) {
+            addCriterion("rule_type not like", value, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeIn(List<String> values) {
+            addCriterion("rule_type in", values, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeNotIn(List<String> values) {
+            addCriterion("rule_type not in", values, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeBetween(String value1, String value2) {
+            addCriterion("rule_type between", value1, value2, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRuleTypeNotBetween(String value1, String value2) {
+            addCriterion("rule_type not between", value1, value2, "ruleType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyIsNull() {
+            addCriterion("min_money is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyIsNotNull() {
+            addCriterion("min_money is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyEqualTo(BigDecimal value) {
+            addCriterion("min_money =", value, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyNotEqualTo(BigDecimal value) {
+            addCriterion("min_money <>", value, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyGreaterThan(BigDecimal value) {
+            addCriterion("min_money >", value, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyGreaterThanOrEqualTo(BigDecimal value) {
+            addCriterion("min_money >=", value, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyLessThan(BigDecimal value) {
+            addCriterion("min_money <", value, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyLessThanOrEqualTo(BigDecimal value) {
+            addCriterion("min_money <=", value, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyIn(List<BigDecimal> values) {
+            addCriterion("min_money in", values, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyNotIn(List<BigDecimal> values) {
+            addCriterion("min_money not in", values, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyBetween(BigDecimal value1, BigDecimal value2) {
+            addCriterion("min_money between", value1, value2, "minMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMinMoneyNotBetween(BigDecimal value1, BigDecimal value2) {
+            addCriterion("min_money not between", value1, value2, "minMoney");
+            return (Criteria) this;
+        }
+        
+        public Criteria andMaxMoneyIsNull() {
+            addCriterion("max_money is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyIsNotNull() {
+            addCriterion("max_money is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyEqualTo(BigDecimal value) {
+            addCriterion("max_money =", value, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyNotEqualTo(BigDecimal value) {
+            addCriterion("max_money <>", value, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyGreaterThan(BigDecimal value) {
+            addCriterion("max_money >", value, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyGreaterThanOrEqualTo(BigDecimal value) {
+            addCriterion("max_money >=", value, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyLessThan(BigDecimal value) {
+            addCriterion("max_money <", value, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyLessThanOrEqualTo(BigDecimal value) {
+            addCriterion("max_money <=", value, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyIn(List<BigDecimal> values) {
+            addCriterion("max_money in", values, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyNotIn(List<BigDecimal> values) {
+            addCriterion("max_money not in", values, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyBetween(BigDecimal value1, BigDecimal value2) {
+            addCriterion("max_money between", value1, value2, "maxMoney");
+            return (Criteria) this;
+        }
+
+        public Criteria andMaxMoneyNotBetween(BigDecimal value1, BigDecimal value2) {
+            addCriterion("max_money not between", value1, value2, "maxMoney");
+            return (Criteria) this;
+        }
+        
+        
+        
         public Criteria andCreateByIsNull() {
             addCriterion("create_by is null");
             return (Criteria) this;

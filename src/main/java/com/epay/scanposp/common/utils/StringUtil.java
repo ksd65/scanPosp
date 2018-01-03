@@ -1,11 +1,10 @@
 package com.epay.scanposp.common.utils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import net.sf.json.JSONObject;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -95,4 +94,21 @@ public class StringUtil {
 		return result;
 	}
 	
+	public static boolean isRealDouble(String str){
+		try{
+			int index = str.indexOf(".");
+			if(index !=-1){
+				String doubleStr = str.substring(index);
+				if(new BigDecimal(doubleStr).compareTo(BigDecimal.ZERO)>0){
+					return true;
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return false;
+	}
+	public static void main(String[] args) {
+		System.out.println(StringUtil.isRealDouble("0.002"));
+	}
 }
