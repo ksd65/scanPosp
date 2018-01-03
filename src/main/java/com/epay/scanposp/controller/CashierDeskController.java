@@ -118,6 +118,7 @@ import com.epay.scanposp.entity.StTradeDetailExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
+import com.epay.scanposp.entity.TradeDetailDaily;
 import com.epay.scanposp.entity.TradeDetailExample;
 import com.epay.scanposp.entity.TradeVolumnDaily;
 import com.epay.scanposp.entity.TradeVolumnDailyExample;
@@ -147,6 +148,7 @@ import com.epay.scanposp.service.StTradeDetailService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
+import com.epay.scanposp.service.TradeDetailDailyService;
 import com.epay.scanposp.service.TradeDetailService;
 import com.epay.scanposp.service.TradeVolumnDailyService;
 import com.epay.scanposp.thread.DrawResultNoticeThread;
@@ -175,6 +177,9 @@ public class CashierDeskController {
 	
 	@Resource
 	private TradeDetailService tradeDetailService;
+	
+	@Resource
+	private TradeDetailDailyService tradeDetailDailyService;
 	
 	@Resource
 	private RoutewayDrawService routewayDrawService;
@@ -831,6 +836,18 @@ public class CashierDeskController {
 					if ("S".equals(respJSONObject.get("respType")) && "000000".equals(respJSONObject.get("respCode"))) {
 						tradeDetail.setCardType(msResultNotice.getCardType());
 						tradeDetailService.insertSelective(tradeDetail);
+						
+						TradeDetailDaily tradeDetailDaily = new TradeDetailDaily();
+						
+						tradeDetailDaily.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+						tradeDetailDaily.setMemberId(debitNote.getMemberId());
+						tradeDetailDaily.setMerchantCode(debitNote.getMerchantCode());
+						tradeDetailDaily.setMoney(debitNote.getMoney());
+						tradeDetailDaily.setOrderCode(debitNote.getOrderCode());
+						tradeDetailDaily.setRouteId(debitNote.getRouteId());
+						tradeDetailDaily.setDelFlag("0");
+						tradeDetailDaily.setCreateDate(new Date());
+						tradeDetailDailyService.insertSelective(tradeDetailDaily);
 					}
 					
 					if(payResultNoticeList.size() > 0){

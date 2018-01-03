@@ -105,6 +105,7 @@ import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
+import com.epay.scanposp.entity.TradeDetailDaily;
 import com.epay.scanposp.entity.TradeDetailExample;
 import com.epay.scanposp.entity.TradeVolumnDaily;
 import com.epay.scanposp.entity.TradeVolumnDailyExample;
@@ -139,6 +140,7 @@ import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeConfigOemService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
+import com.epay.scanposp.service.TradeDetailDailyService;
 import com.epay.scanposp.service.TradeDetailService;
 import com.epay.scanposp.service.TradeVolumnDailyService;
 import com.epay.scanposp.thread.WeixinTemplateSendThread;
@@ -165,6 +167,9 @@ public class DebitNoteController {
 	
 	@Resource
 	private TradeDetailService tradeDetailService;
+	
+	@Resource
+	private TradeDetailDailyService tradeDetailDailyService;
 	
 	@Resource
 	private RoutewayDrawService routewayDrawService;
@@ -3597,6 +3602,76 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		return null;
 	}
 	
+	
+	private JSONObject checkLimitMerchantMoney(String routeId,String merchantCode){
+		
+		JSONObject result = new JSONObject();
+		String configName = "LIMIT_MERCHANT_"+routeId+"_"+merchantCode;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal merchantLimit = new BigDecimal(value);
+			if (null != merchantLimit && merchantLimit.compareTo(BigDecimal.ZERO) > 0){
+				Map<String,Object> param = new HashMap<String, Object>();
+				param.put("merchantCode", merchantCode);
+				param.put("routeId", routeId);
+				param.put("txnDate", DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+				Double count = tradeDetailDailyService.countTradeDetailDaily(param);
+				count = count == null ? 0 : count;
+				if (new BigDecimal(count).compareTo(merchantLimit) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "已超过商户当日交易总金额，无法交易");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
+	private JSONObject checkLimitCounts(String routeId){
+		
+		JSONObject result = new JSONObject();
+		String configName = "LIMIT_ROUTE_SECONDS_"+routeId;
+		String value = "",value1 = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		
+		configName = "LIMIT_ROUTE_TIMES_"+routeId;
+		sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value1 = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value) && !"".equals(value1)){
+			
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("routeId", routeId);
+			param.put("seconds", value);
+			Integer count = debitNoteIpService.countDebitNoteIpByCondition(param);
+			count = count == null ? 0 : count;
+			
+			BigDecimal limitCount = new BigDecimal(value1);
+			if (null != limitCount && limitCount.compareTo(BigDecimal.ZERO) > 0){
+				if (new BigDecimal(count).compareTo(limitCount) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "交易过于频繁，已超过商户限制交易次数，请稍后再试");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
 	private JSONObject checkMinMoney(String configName, BigDecimal tradeMoney){
 		
 		JSONObject result = new JSONObject();
@@ -4354,6 +4429,21 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNoteService.insertSelective(debitNote);
 				return ipResult;
 			}
+			
+			JSONObject mResult = checkLimitMerchantMoney(RouteCodeConstant.TB_ROUTE_CODE,merchantCode.getWxMerchantCode());
+			if(null != mResult){
+				debitNote.setStatus("7");
+				debitNoteService.insertSelective(debitNote);
+				return mResult;
+			}
+			
+			JSONObject tResult = checkLimitCounts(RouteCodeConstant.TB_ROUTE_CODE);
+			if(null != tResult){
+				debitNote.setStatus("8");
+				debitNoteService.insertSelective(debitNote);
+				return tResult;
+			}
+			
 			debitNoteService.insertSelective(debitNote);
 			
 			PayResultNotice payResultNotice = new PayResultNotice();
@@ -4508,6 +4598,20 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNote.setStatus("6");
 				debitNoteService.insertSelective(debitNote);
 				return ipResult;
+			}
+			
+			JSONObject mResult = checkLimitMerchantMoney(RouteCodeConstant.ESK_ROUTE_CODE,merchantCode.getWxMerchantCode());
+			if(null != mResult){
+				debitNote.setStatus("7");
+				debitNoteService.insertSelective(debitNote);
+				return mResult;
+			}
+			
+			JSONObject tResult = checkLimitCounts(RouteCodeConstant.ESK_ROUTE_CODE);
+			if(null != tResult){
+				debitNote.setStatus("8");
+				debitNoteService.insertSelective(debitNote);
+				return tResult;
 			}
 			
 			debitNoteService.insertSelective(debitNote);
@@ -5071,6 +5175,19 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 					if ("200".equals(result_code)) {
 						tradeDetail.setCardType(msResultNotice.getCardType());
 						tradeDetailService.insertSelective(tradeDetail);
+						
+						
+						TradeDetailDaily tradeDetailDaily = new TradeDetailDaily();
+						
+						tradeDetailDaily.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+						tradeDetailDaily.setMemberId(debitNote.getMemberId());
+						tradeDetailDaily.setMerchantCode(debitNote.getMerchantCode());
+						tradeDetailDaily.setMoney(debitNote.getMoney());
+						tradeDetailDaily.setOrderCode(debitNote.getOrderCode());
+						tradeDetailDaily.setRouteId(debitNote.getRouteId());
+						tradeDetailDaily.setDelFlag("0");
+						tradeDetailDaily.setCreateDate(new Date());
+						tradeDetailDailyService.insertSelective(tradeDetailDaily);
 					}
 					
 					
@@ -5141,14 +5258,17 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		//	List<PayRoute> list = payRouteService.selectByExample(payRouteExample);
 		//	System.out.println(list.size());
 			
-			PayResultNoticeLog payResultNoticeLog = new PayResultNoticeLog();
-			payResultNoticeLog.setMemberCode("11111");
-			payResultNoticeLog.setOrderCode("22222");
-			payResultNoticeLog.setOrderNumOuter("33333");
-			payResultNoticeLog.setReturnUrl("http://");
-			payResultNoticeLog.setNotifyContent("444444");
-			payResultNoticeLog.setReceiveContent("55555");
-			payResultNoticeLogService.insertNoticeLog(payResultNoticeLog);
+			TradeDetailDaily tradeDetailDaily = new TradeDetailDaily();
+			
+			tradeDetailDaily.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+			tradeDetailDaily.setMemberId(15);
+			tradeDetailDaily.setMerchantCode("12222");
+			tradeDetailDaily.setMoney(new BigDecimal(12));
+			tradeDetailDaily.setOrderCode("2222");
+			tradeDetailDaily.setRouteId("1007");
+			tradeDetailDaily.setDelFlag("0");
+			tradeDetailDaily.setCreateDate(new Date());
+			tradeDetailDailyService.insertSelective(tradeDetailDaily);
 			
 			//EskNotice notice = new EskNotice();
 			//notice.setNoticeData("111111111");

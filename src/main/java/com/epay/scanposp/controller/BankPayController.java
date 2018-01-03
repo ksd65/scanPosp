@@ -67,12 +67,16 @@ import com.epay.scanposp.entity.PayType;
 import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
+import com.epay.scanposp.entity.SysCommonConfig;
+import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
+import com.epay.scanposp.entity.TradeDetailDaily;
 import com.epay.scanposp.entity.TradeDetailExample;
 import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.CommonService;
+import com.epay.scanposp.service.DebitNoteIpService;
 import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.MemberBankService;
@@ -84,8 +88,10 @@ import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayDrawService;
+import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
+import com.epay.scanposp.service.TradeDetailDailyService;
 import com.epay.scanposp.service.TradeDetailService;
 
 @Controller
@@ -109,7 +115,13 @@ public class BankPayController {
 	private DebitNoteService debitNoteService;
 	
 	@Resource
+	private DebitNoteIpService debitNoteIpService;
+	
+	@Resource
 	private TradeDetailService tradeDetailService;
+	
+	@Resource
+	private TradeDetailDailyService tradeDetailDailyService;
 	
 	@Resource
 	private EpayCodeService epayCodeService;
@@ -143,6 +155,9 @@ public class BankPayController {
 	
 	@Resource
 	private PayResultNotifyService payResultNotifyService;
+	
+	@Autowired
+	private SysCommonConfigService sysCommonConfigService;
 	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/toPay")
@@ -381,6 +396,29 @@ public class BankPayController {
 				debitNote.setTradeRate(merchantCode.getT1TradeRate());
 			}
 			
+			String configName = "SINGLE_MIN_1006_005_YL";
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_1006_005_YL";
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+			JSONObject tResult = checkLimitCounts(RouteCodeConstant.ESK_ROUTE_CODE);
+			if(null != tResult){
+				debitNote.setStatus("8");
+				debitNoteService.insertSelective(debitNote);
+				return tResult;
+			}
+			
 			debitNoteService.insertSelective(debitNote);
 			
 			PayResultNotice payResultNotice = new PayResultNotice();
@@ -399,6 +437,9 @@ public class BankPayController {
 			}else{
 				payResultNotice.setInterfaceType("1");
 			}
+			
+			
+			
 			payResultNoticeService.insertSelective(payResultNotice);
 			
 			// String callBack = "http://" + request.getServerName() + ":" +
@@ -604,6 +645,18 @@ public class BankPayController {
             					if ("01".equals(result_code)) {
             						tradeDetail.setCardType(msResultNotice.getCardType());
             						tradeDetailService.insertSelective(tradeDetail);
+            						
+            						TradeDetailDaily tradeDetailDaily = new TradeDetailDaily();
+            						
+            						tradeDetailDaily.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+            						tradeDetailDaily.setMemberId(debitNote.getMemberId());
+            						tradeDetailDaily.setMerchantCode(debitNote.getMerchantCode());
+            						tradeDetailDaily.setMoney(debitNote.getMoney());
+            						tradeDetailDaily.setOrderCode(debitNote.getOrderCode());
+            						tradeDetailDaily.setRouteId(debitNote.getRouteId());
+            						tradeDetailDaily.setDelFlag("0");
+            						tradeDetailDaily.setCreateDate(new Date());
+            						tradeDetailDailyService.insertSelective(tradeDetailDaily);
             					}
             					
             					if(payResultNoticeList.size() > 0){
@@ -1376,7 +1429,92 @@ public class BankPayController {
 		return signReturn(result);
 	}
 	
+	private JSONObject checkLimitMoney(String configName, BigDecimal tradeMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal singleLimit = new BigDecimal(value);
+			if (null != singleLimit && singleLimit.compareTo(BigDecimal.ZERO) > 0){
+				if (tradeMoney.compareTo(singleLimit) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "单笔交易限额为"+singleLimit+"元,当前交易已超出限额");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
 	
+	private JSONObject checkMinMoney(String configName, BigDecimal tradeMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal singleMin = new BigDecimal(value);
+			if (null != singleMin && singleMin.compareTo(BigDecimal.ZERO) > 0){
+				if (tradeMoney.compareTo(singleMin) < 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "单笔交易最小金额为"+singleMin+"元,当前交易已小于最小金额");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
+	private JSONObject checkLimitCounts(String routeId){
+		
+		JSONObject result = new JSONObject();
+		String configName = "LIMIT_ROUTE_SECONDS_"+routeId;
+		String value = "",value1 = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		
+		configName = "LIMIT_ROUTE_TIMES_"+routeId;
+		sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value1 = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value) && !"".equals(value1)){
+			
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("routeId", routeId);
+			param.put("seconds", value);
+			Integer count = debitNoteIpService.countDebitNoteIpByCondition(param);
+			count = count == null ? 0 : count;
+			
+			BigDecimal limitCount = new BigDecimal(value1);
+			if (null != limitCount && limitCount.compareTo(BigDecimal.ZERO) > 0){
+				if (new BigDecimal(count).compareTo(limitCount) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "交易过于频繁，已超过商户限制交易次数，请稍后再试");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
 	
 	private Map<String,String> getRouteCodeAndAisleType(Integer memberId,String payMethod, String payType  ){
 		Map<String,String> map = new HashMap<String, String>();
