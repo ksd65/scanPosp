@@ -4238,7 +4238,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		if(payTypeDefaultList != null && payTypeDefaultList.size()>0){//走概率计算
 			PayTypeRuleExample payTypeRuleExample = new PayTypeRuleExample();
 			if(StringUtil.isRealDouble(payMoney)){//订单金额有小数点
-				payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andRuleTypeEqualTo("3").andDelFlagEqualTo("0");//小数点金额概率规则
+				payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_WX).andRuleTypeEqualTo("3").andMinMoneyLessThan(new BigDecimal(payMoney)).andMaxMoneyGreaterThanOrEqualTo(new BigDecimal(payMoney)).andDelFlagEqualTo("0");//小数点金额概率规则
 				payTypeRuleExample.setOrderByClause(" id asc ");
 				List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
 				if(payTypeRuleList !=null && payTypeRuleList.size()>0){
