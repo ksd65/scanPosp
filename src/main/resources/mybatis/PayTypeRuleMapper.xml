@@ -4,6 +4,7 @@
   <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.PayTypeRule">
     <id column="id" jdbcType="INTEGER" property="id" />
     <result column="pay_method" jdbcType="VARCHAR" property="payMethod" />
+    <result column="member_id" jdbcType="INTEGER" property="memberId" />
     <result column="pay_type" jdbcType="VARCHAR" property="payType" />
     <result column="rule_type" jdbcType="VARCHAR" property="ruleType" />
     <result column="min_money" jdbcType="DECIMAL" property="minMoney" />
@@ -77,7 +78,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id,pay_method,route_code,pay_type,rule_type,min_money,max_money, aisle_type, merchant_code,rule_rate,
+    id,member_id,pay_method,route_code,pay_type,rule_type,min_money,max_money, aisle_type, merchant_code,rule_rate,
     create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.PayTypeRuleExample" resultMap="BaseResultMap">

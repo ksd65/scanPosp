@@ -13,6 +13,8 @@ public class PayTypeRule {
 	
 	private String ruleType;
 	
+	private Integer memberId;
+	
 	private BigDecimal minMoney;
 	
 	private BigDecimal maxMoney;
@@ -156,6 +158,14 @@ public class PayTypeRule {
 
 	public void setMaxMoney(BigDecimal maxMoney) {
 		this.maxMoney = maxMoney;
+	}
+
+	public Integer getMemberId() {
+		return memberId;
+	}
+
+	public void setMemberId(Integer memberId) {
+		this.memberId = memberId;
 	}
     
 	
