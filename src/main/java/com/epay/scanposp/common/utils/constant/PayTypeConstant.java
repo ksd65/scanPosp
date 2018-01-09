@@ -15,6 +15,8 @@ public class PayTypeConstant {
 	public static String PAY_TYPE_ZFB = "ZFB";//支付宝支付   
 	
 	public static String PAY_TYPE_YL = "YL";//银联支付   
+	
+	public static String PAY_TYPE_QQ = "QQ";//QQ支付
 	  
 
 }
