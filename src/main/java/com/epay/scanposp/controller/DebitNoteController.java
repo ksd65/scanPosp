@@ -89,9 +89,6 @@ import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
-import com.epay.scanposp.entity.PayResultNoticeLog;
-import com.epay.scanposp.entity.PayRoute;
-import com.epay.scanposp.entity.PayRouteExample;
 import com.epay.scanposp.entity.PayType;
 import com.epay.scanposp.entity.PayTypeDefault;
 import com.epay.scanposp.entity.PayTypeDefaultExample;
@@ -4463,7 +4460,15 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			}else{
 				debitNote.setTradeRate(merchantCode.getT1TradeRate());
 			}
-			String configName = "SINGLE_MIN_1007_006_WX";
+			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_006_WX";
+			JSONObject memResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != memResult){
+				debitNote.setStatus("9");
+				debitNoteService.insertSelective(debitNote);
+				return memResult;
+			}
+			
+			configName = "SINGLE_MIN_1007_006_WX";
 			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
 			if(null != checkResult){
 				debitNote.setStatus("5");
@@ -4633,7 +4638,15 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNote.setTradeRate(merchantCode.getT1TradeRate());
 			}
 			
-			String configName = "SINGLE_MIN_1002_006_WX";
+			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_006_WX";
+			JSONObject memResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != memResult){
+				debitNote.setStatus("9");
+				debitNoteService.insertSelective(debitNote);
+				return memResult;
+			} 
+			
+			configName = "SINGLE_MIN_1002_006_WX";
 			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
 			if(null != checkResult){
 				debitNote.setStatus("5");
