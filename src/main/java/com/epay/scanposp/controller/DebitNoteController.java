@@ -5554,6 +5554,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		try {
 			Map<String,String> params = new HashMap<String,String>();
 			String responseStr = HttpUtil.getPostString(request);
+		//	String responseStr = "{\"UserInfo\":null,\"OrderNum\":\"20180110104925390468\",\"PayNum\":\"010000012201801101049273000005\",\"PayType\":\"11\",\"PayTime\":\"20180110104943\",\"PayMoney\":\"2\",\"RespType\":\"2\",\"AppKey\":\"tDWiOfuHidvVp5vtWYEAdv9v4mKPFvrQISl6uD\",\"ReturnCode\":\"0000\",\"SignStr\":\"Rd8xQPxR6nxg8VJsqN3LyPAgC5S8kvlQJjcY1bEtSsboSDO3NgeepzmhXSP5NDFVssuxrXBKf4coTnsR3gOdV+noVNTfGrPzuQzllypEYuVk7B9Tr7FEgRFxo9ZSacF9QzHbpIr/7w/IWQrRrBxOW06rl2cMfE0qWoT4XalKxBs=\"}";
 			logger.info("rfH5PayNotify解密回调返回报文[{}]",  responseStr );
 			JSONObject resJo = JSONObject.fromObject(responseStr);
 			String reqMsgId = "";
@@ -5562,8 +5563,12 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			String channelNo = "";
 			String respType = "";
 			String payMoney = "";
+			String userInfo = "";
 			if(resJo.containsKey("UserInfo")){
-				String userInfo = resJo.getString("UserInfo");
+				userInfo = resJo.getString("UserInfo");
+				if(userInfo == null || "".equals(userInfo) ||"null".equals(userInfo)){
+					userInfo = "";
+				}
 				params.put("UserInfo", userInfo);
 			}
 			if(resJo.containsKey("OrderNum")){
@@ -5601,6 +5606,9 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			}
 			String signStr = resJo.getString("SignStr");
 			String srcStr = StringUtil.orderedKey(params);
+			if("".equals(userInfo)){
+				srcStr +="&UserInfo=";
+			}
 			System.out.println("（接收）排序后的参数串："+srcStr);
 			
 			
