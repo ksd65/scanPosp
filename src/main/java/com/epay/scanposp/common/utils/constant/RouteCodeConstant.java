@@ -16,4 +16,6 @@ public class RouteCodeConstant {
 	
 	public static String TB_ROUTE_CODE = "1007";//提呗
 	
+	public static String RF_ROUTE_CODE = "1008";//瑞付支付
+	
 }
