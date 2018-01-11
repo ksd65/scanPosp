@@ -5493,10 +5493,14 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	        String result_msg = resultObj.getString("ReturnMsg");
 	      //  String AppKey = resultObj.getString("AppKey");
 	      //  String OrderNum = resultObj.getString("OrderNum");
-	        String SignStr = resultObj.getString("SignStr");
-	        resultObj.remove("SignStr");
-	        String rtSrcStr = StringUtil.orderedKey(resultObj);
-	        boolean signCheck = EpaySignUtil.checksignSha1(merchantKey.getPublicKey(), rtSrcStr, SignStr);
+	        boolean signCheck = true;
+	        if("0000".equals(result_code)){
+	        	String SignStr = resultObj.getString("SignStr");
+		        resultObj.remove("SignStr");
+		        String rtSrcStr = StringUtil.orderedKey(resultObj);
+		        signCheck = EpaySignUtil.checksignSha1(merchantKey.getPublicKey(), rtSrcStr, SignStr);
+	        }
+	        
 	        
 	        
 	        if(signCheck && "0000".equals(result_code)){
