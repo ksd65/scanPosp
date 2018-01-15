@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.epay.scanposp.entity.PayTypeExample.Criteria;
+
 public class RoutewayDrawExample {
     protected String orderByClause;
 
@@ -995,6 +997,75 @@ public class RoutewayDrawExample {
             return (Criteria) this;
         }
         
+        public Criteria andRouteCodeIsNull() {
+            addCriterion("route_code is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeIsNotNull() {
+            addCriterion("route_code is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeEqualTo(String value) {
+            addCriterion("route_code =", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotEqualTo(String value) {
+            addCriterion("route_code <>", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeGreaterThan(String value) {
+            addCriterion("route_code >", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeGreaterThanOrEqualTo(String value) {
+            addCriterion("route_code >=", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLessThan(String value) {
+            addCriterion("route_code <", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLessThanOrEqualTo(String value) {
+            addCriterion("route_code <=", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLike(String value) {
+            addCriterion("route_code like", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotLike(String value) {
+            addCriterion("route_code not like", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeIn(List<String> values) {
+            addCriterion("route_code in", values, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotIn(List<String> values) {
+            addCriterion("route_code not in", values, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeBetween(String value1, String value2) {
+            addCriterion("route_code between", value1, value2, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotBetween(String value1, String value2) {
+            addCriterion("route_code not between", value1, value2, "routeCode");
+            return (Criteria) this;
+        }
         
         
         public Criteria andAuditStatusIsNull() {

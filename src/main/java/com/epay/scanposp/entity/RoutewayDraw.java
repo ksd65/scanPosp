@@ -11,6 +11,8 @@ public class RoutewayDraw {
     private String memberCode;
 
     private String merchantCode;
+    
+    private String routeCode;
 
     private BigDecimal memberTradeRate;
 
@@ -69,6 +71,12 @@ public class RoutewayDraw {
     private String certNo;
     
     private String tel;
+    
+    private String subName;
+    
+    private String subId;
+    
+    private String bankCode;
 
     public Integer getId() {
         return id;
@@ -333,6 +341,38 @@ public class RoutewayDraw {
 
 	public void setTel(String tel) {
 		this.tel = tel;
+	}
+
+	public String getRouteCode() {
+		return routeCode;
+	}
+
+	public void setRouteCode(String routeCode) {
+		this.routeCode = routeCode;
+	}
+
+	public String getSubName() {
+		return subName;
+	}
+
+	public void setSubName(String subName) {
+		this.subName = subName;
+	}
+
+	public String getSubId() {
+		return subId;
+	}
+
+	public void setSubId(String subId) {
+		this.subId = subId;
+	}
+
+	public String getBankCode() {
+		return bankCode;
+	}
+
+	public void setBankCode(String bankCode) {
+		this.bankCode = bankCode;
 	}
     
     

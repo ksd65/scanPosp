@@ -4898,9 +4898,9 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			debitNote.setIp(ip);
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				debitNote.setTradeRate(merchantCode.getT0TradeRate());
+				debitNote.setTradeRate(merchantCode.getQqT0TradeRate());
 			}else{
-				debitNote.setTradeRate(merchantCode.getT1TradeRate());
+				debitNote.setTradeRate(merchantCode.getQqT1TradeRate());
 			}
 			
 			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_006_QQ";
@@ -6068,12 +6068,13 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			JSONObject reqData = new JSONObject();
 			reqData.put("AppKey", "tDWiOfuHidvVp5vtWYEAdv9v4mKPFvrQISl6uD");
 			reqData.put("OrderNum", orderCode);
-			reqData.put("PayMoney", "2");
-			reqData.put("PayType", "11");
-			reqData.put("UserIp", "140.243.4.153");
-			//reqData.put("UserIp", "121.207.205.11");
-			reqData.put("SuccessUrl", "http://www.johutech.com/johuPay");
-			reqData.put("CancelUrl", "http://www.johutech.com/johuPay");
+			reqData.put("Amount", "2");
+			reqData.put("Account_no", "6226661702569637");//收款账号
+			reqData.put("Account_name", "林晓锋");//开户人
+			reqData.put("Bank_general_name", "中国光大银行");
+			reqData.put("Bank_name", "中国光大银行股份有限公司福州铜盘支行");
+			reqData.put("Bank_code", "303391000063");
+			reqData.put("Code", "CEB");
 			
 			String srcStr = StringUtil.orderedKey(reqData);
 			String privateKey = "MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAN2BWWpp51mOCRU5SaKSX+75QuvRte2bM1kTOOB/y/U0beL/+Qgwf+gtKMtgFOepuNoM/HHD2eg6RZvJWWSyPXaIm2qVhm592v7B2T53Pt/aC5DGVAl9SMfYMTUpOUG/8Be6Gq1oHXGXTzAAZOmzlm5vAD83VKOd0hL31d3RCTV7AgMBAAECgYEArS1B4SanT6byhvthDI9wHYAXyBMPL5NVk+CpaSvBJBY3i3AhHTv95GHaMRcPgQd6lE/u1msO5LcaUPAcydNopNy7ppJZrLElekmxu/SvVErWgkbooSpBac+t7o0jb9JcJBuoyMoATGdNNhZtpst3foUQi97SeLW/ddQCxGS8MRECQQD76ZlT1UxkhqyLCirjiyse7afSanOuQFOQRy4rwN0mjH9e89V8wrYtomkKGK2EUm436QujiMe9y8AJC9AtJWs1AkEA4RlxqFWiyhE+Zyckkn8XE7yvwhW7aAlc+5UE7SHpj78TLQgQZL0oMa2rahK7TgBZ4sci33VdjDneKX4jOgaD7wJAXzE1xG0csfwGJYBRFq0XPVe3DBc34YfjS+jp9JSrvQ5obzwa10tIxlPR94O9xfvUNIJ26HQeboUY6xIwt26lZQJBAKBSM+411/TdZTmo2lZwqCoJiJDOU6TcjlotH84ZCjW0XF8FUE+/naIMVHr/DmKWw25OcJsBB3i5Om8JBOPuAgcCQQC7WmovBTDJ0+jrsAh9n/Po7QKTJOtvchX2/LlL8i/+Dvf1ghuQA0H4xvd/agUyPq9jlbisKLnhEUx3vSC33NqI";
@@ -6082,11 +6083,55 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			
 			System.out.println("待加密数据: "+reqData);
-			
-			String ret = HttpUtil.sendPostRequest("http://pay.ruifuzhifu.com/api.php/Rpay/h5_pay", reqData.toString());
+			//http://pay.ruifuzhifu.com/api.php/Rpay/h5_pay
+			//http:// pay.ruifuzhifu.com/api.php/Rpay/PayNew
+			String ret = HttpUtil.sendPostRequest("http://pay.ruifuzhifu.com/api.php/Rpay/PayNew", reqData.toString());
 			System.out.println("======="+ret);
 			JSONObject obj = JSONObject.fromObject(ret);
-			System.out.println(obj.get("PayUrl"));
+			System.out.println(obj.get("ReturnMsg"));
+			response.getWriter().write("000000");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@RequestMapping("/test/testRf")
+	public void testRf(HttpServletRequest request,HttpServletResponse response){
+		try {
+			String orderCode = CommonUtil.getOrderCode();
+			
+			
+			
+			
+			
+			String callBack = SysConfig.serverUrl + "/cashierDesk/eskPayNotify";
+			// 调用支付通道
+			String serverUrl = ESKConfig.msServerUrl;
+			//PublicKey yhPubKey = null;
+			//yhPubKey = CryptoUtil.getEskRSAPublicKey();
+			//yhPubKey = CryptoUtil.getRSAPublicKey(false);
+			//PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			String tranCode = "008";
+			String charset = "utf-8";
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("AppKey", "tDWiOfuHidvVp5vtWYEAdv9v4mKPFvrQISl6uD");
+			reqData.put("OrderNum", "20180111151401149801");
+			
+			
+			String srcStr = StringUtil.orderedKey(reqData);
+			String privateKey = "MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAN2BWWpp51mOCRU5SaKSX+75QuvRte2bM1kTOOB/y/U0beL/+Qgwf+gtKMtgFOepuNoM/HHD2eg6RZvJWWSyPXaIm2qVhm592v7B2T53Pt/aC5DGVAl9SMfYMTUpOUG/8Be6Gq1oHXGXTzAAZOmzlm5vAD83VKOd0hL31d3RCTV7AgMBAAECgYEArS1B4SanT6byhvthDI9wHYAXyBMPL5NVk+CpaSvBJBY3i3AhHTv95GHaMRcPgQd6lE/u1msO5LcaUPAcydNopNy7ppJZrLElekmxu/SvVErWgkbooSpBac+t7o0jb9JcJBuoyMoATGdNNhZtpst3foUQi97SeLW/ddQCxGS8MRECQQD76ZlT1UxkhqyLCirjiyse7afSanOuQFOQRy4rwN0mjH9e89V8wrYtomkKGK2EUm436QujiMe9y8AJC9AtJWs1AkEA4RlxqFWiyhE+Zyckkn8XE7yvwhW7aAlc+5UE7SHpj78TLQgQZL0oMa2rahK7TgBZ4sci33VdjDneKX4jOgaD7wJAXzE1xG0csfwGJYBRFq0XPVe3DBc34YfjS+jp9JSrvQ5obzwa10tIxlPR94O9xfvUNIJ26HQeboUY6xIwt26lZQJBAKBSM+411/TdZTmo2lZwqCoJiJDOU6TcjlotH84ZCjW0XF8FUE+/naIMVHr/DmKWw25OcJsBB3i5Om8JBOPuAgcCQQC7WmovBTDJ0+jrsAh9n/Po7QKTJOtvchX2/LlL8i/+Dvf1ghuQA0H4xvd/agUyPq9jlbisKLnhEUx3vSC33NqI";
+			String signData = EpaySignUtil.signSha1(privateKey, srcStr);
+			reqData.put("SignStr", signData);
+			
+			
+			System.out.println("待加密数据: "+reqData);
+			//http://pay.ruifuzhifu.com/api.php/Rpay/h5_pay
+			//http:// pay.ruifuzhifu.com/api.php/Rpay/PayNew
+			String ret = HttpUtil.sendPostRequest("http://pay.ruifuzhifu.com/api.php/Rpay/payout", reqData.toString());
+			System.out.println("======="+ret);
+			JSONObject obj = JSONObject.fromObject(ret);
+			System.out.println(obj.get("Res"));
 			response.getWriter().write("000000");
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -25,11 +25,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.alibaba.fastjson.JSON;
+import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.SLFConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.DateUtil;
+import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.constant.PayTypeConstant;
@@ -722,7 +725,14 @@ public class BankPayController {
 				return result;
 			}
 			RoutewayDraw draw = drawList.get(0);
-			JSONObject obj = receivePay(memberId,String.valueOf(draw.getMoney().doubleValue()-1));
+			String routeCode = draw.getRouteCode();
+			JSONObject obj = null;
+			if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
+				obj = receivePay(memberId,String.valueOf(draw.getMoney().doubleValue()-1));
+			}else if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){
+				obj = receivePayRf(memberId, String.valueOf(draw.getMoney()), draw);
+			}
+			
 			if("0000".equals(obj.getString("returnCode"))){
 				draw.setRespType("R");
 				result.put("returnCode", "0000");
@@ -860,6 +870,120 @@ public class BankPayController {
 		}
 		return result;
 	}
+	
+	
+	public JSONObject receivePayRf(String memberId,String payMoney,RoutewayDraw draw){
+		JSONObject result = new JSONObject();
+		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
+			result.put("returnCode", "0005");
+			result.put("returnMsg", "支付金额输入不正确");
+			return result;
+		}
+		
+		if(memberId == null || "".equals(memberId)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户Id缺失");
+			return result;
+		}
+		
+		try{
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(Integer.parseInt(memberId));
+			if(memberInfo == null){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户不存在");
+				return result;
+			}
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(draw.getRouteCode()).andDelFlagEqualTo("0");
+			
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merchantCode.getWxMerchantCode()).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0003");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        
+	        double amount = (new BigDecimal(payMoney)).doubleValue()-merchantCode.getT0DrawFee().doubleValue();
+				
+	        MemberMerchantKey merchantKey = keyList.get(0);
+			
+			String orderCode = CommonUtil.getOrderCode();
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("AppKey", merchantCode.getWxMerchantCode());
+			reqData.put("OrderNum", orderCode);
+			reqData.put("Amount", new DecimalFormat("0.00").format(amount));
+			reqData.put("Account_no", draw.getBankAccount());//收款账号
+			reqData.put("Account_name", draw.getAccountName());//开户人
+			reqData.put("Bank_general_name", draw.getBankName());
+			reqData.put("Bank_name", draw.getSubName());
+			reqData.put("Bank_code", draw.getSubId());
+			reqData.put("Code", draw.getBankCode());
+			
+			
+			String srcStr = StringUtil.orderedKey(reqData);
+			String privateKey = merchantKey.getPrivateKey();
+			String signData = EpaySignUtil.signSha1(privateKey, srcStr);
+			reqData.put("SignStr", signData);
+			
+			logger.info("瑞付提现请求报文[{}]", new Object[] { JSON.toJSONString(reqData) });
+			
+			String url = RFConfig.msServerUrl + "/PayNew";
+			
+			String resultMsg = HttpUtil.sendPostRequest(url, reqData.toString());
+			logger.info("瑞付提现返回报文[{}]", new Object[] { resultMsg });
+			
+			JSONObject resultObj = JSONObject.fromObject(resultMsg);
+	        String result_code = resultObj.getString("ReturnCode");
+	        String result_msg = resultObj.getString("ReturnMsg");
+			
+			String reqDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			
+			boolean signCheck = true;
+	        if("0000".equals(result_code)){
+	        	String SignStr = resultObj.getString("SignStr");
+		        resultObj.remove("SignStr");
+		        String rtSrcStr = StringUtil.orderedKey(resultObj);
+		        signCheck = EpaySignUtil.checksignSha1(merchantKey.getPublicKey(), rtSrcStr, SignStr);
+	        }
+			
+			if(signCheck && "0000".equals(result_code)){
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "请求成功");
+			}else{
+				if(!signCheck){
+	        		result_msg = "出参验签失败";
+	        	}
+				result.put("returnCode", "0001");
+				result.put("returnMsg", result_msg);
+				result.put("respCode", result_code);
+				result.put("respMsg", result_msg);
+			}
+			result.put("orderCode", orderCode);
+			result.put("merchantCode", merchantCode.getWxMerchantCode());
+			result.put("reqDate", reqDate);
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	
+	
+	
+	
 	
 	@RequestMapping("/bankPay/receivePayNotify")
 	public void receivePayNotify(HttpServletRequest request,HttpServletResponse response) {

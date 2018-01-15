@@ -230,6 +230,38 @@
    		) `t`
   	</select>
   	
+  	<select id="countTransactionRealMoneyByCondition" parameterType="java.util.Map" resultType="java.lang.Double">
+      	SELECT
+		SUM(money*(1-member_trade_rate)) transactionCount
+		FROM
+		(
+			SELECT
+			<include refid="bu_trade_detail"></include>
+			FROM
+				`bu_trade_detail` `a`
+			WHERE 1=1 
+			<if test="memberId != null" >
+				AND a.member_id = #{memberId,jdbcType=INTEGER} 
+			</if>
+			<if test="startDate != null" >
+	        	AND a.txn_date &gt;= #{startDate}
+	      	</if>
+			<if test="endDate != null" >
+	        	AND a.txn_date &lt;= #{endDate}
+	      	</if>
+	      	<if test="txnType != null" >
+	        	AND a.txn_type = #{txnType}
+	      	</if>
+	      	<if test="settleType != null" >
+	        	AND a.settle_type = #{settleType}
+	      	</if>
+	      	<if test="routeId != null" >
+	        	AND a.route_id = #{routeId}
+	      	</if>
+			
+   		) `t`
+  	</select>
+  	
   	<select id="countDrawMoneyByCondition" parameterType="java.util.Map" resultType="java.lang.Double">
   		SELECT SUM(drawAmount+drawFee+tradeFee) drawCount FROM bu_routeway_draw 
 		WHERE 1=1 
@@ -247,6 +279,9 @@
       	</if>
       	<if test="respType != null" >
         	AND resp_type = #{respType}
+      	</if>
+      	<if test="routeCode != null" >
+        	AND route_code = #{routeCode}
       	</if>
       	<if test="drawType != null" >
         	AND draw_type = #{drawType}
@@ -276,6 +311,9 @@
       	</if>
       	<if test="respType != null" >
         	AND resp_type = #{respType}
+      	</if>
+      	<if test="routeCode != null" >
+        	AND route_code = #{routeCode}
       	</if>
       	<if test="drawType != null" >
         	AND draw_type = #{drawType}

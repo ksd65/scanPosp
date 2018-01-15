@@ -30,6 +30,22 @@ public class MemberMerchantCode {
     private BigDecimal t1DrawFee;
 
     private BigDecimal t1TradeRate;
+    
+    private BigDecimal zfbT0DrawFee;
+
+    private BigDecimal zfbT0TradeRate;
+
+    private BigDecimal zfbT1DrawFee;
+
+    private BigDecimal zfbT1TradeRate;
+    
+    private BigDecimal qqT0DrawFee;
+
+    private BigDecimal qqT0TradeRate;
+
+    private BigDecimal qqT1DrawFee;
+
+    private BigDecimal qqT1TradeRate;
 	
 	private String delFlag;
 	
@@ -185,6 +201,70 @@ public class MemberMerchantCode {
 
 	public void setT1TradeRate(BigDecimal t1TradeRate) {
 		this.t1TradeRate = t1TradeRate;
+	}
+
+	public BigDecimal getZfbT0DrawFee() {
+		return zfbT0DrawFee;
+	}
+
+	public void setZfbT0DrawFee(BigDecimal zfbT0DrawFee) {
+		this.zfbT0DrawFee = zfbT0DrawFee;
+	}
+
+	public BigDecimal getZfbT0TradeRate() {
+		return zfbT0TradeRate;
+	}
+
+	public void setZfbT0TradeRate(BigDecimal zfbT0TradeRate) {
+		this.zfbT0TradeRate = zfbT0TradeRate;
+	}
+
+	public BigDecimal getZfbT1DrawFee() {
+		return zfbT1DrawFee;
+	}
+
+	public void setZfbT1DrawFee(BigDecimal zfbT1DrawFee) {
+		this.zfbT1DrawFee = zfbT1DrawFee;
+	}
+
+	public BigDecimal getZfbT1TradeRate() {
+		return zfbT1TradeRate;
+	}
+
+	public void setZfbT1TradeRate(BigDecimal zfbT1TradeRate) {
+		this.zfbT1TradeRate = zfbT1TradeRate;
+	}
+
+	public BigDecimal getQqT0DrawFee() {
+		return qqT0DrawFee;
+	}
+
+	public void setQqT0DrawFee(BigDecimal qqT0DrawFee) {
+		this.qqT0DrawFee = qqT0DrawFee;
+	}
+
+	public BigDecimal getQqT0TradeRate() {
+		return qqT0TradeRate;
+	}
+
+	public void setQqT0TradeRate(BigDecimal qqT0TradeRate) {
+		this.qqT0TradeRate = qqT0TradeRate;
+	}
+
+	public BigDecimal getQqT1DrawFee() {
+		return qqT1DrawFee;
+	}
+
+	public void setQqT1DrawFee(BigDecimal qqT1DrawFee) {
+		this.qqT1DrawFee = qqT1DrawFee;
+	}
+
+	public BigDecimal getQqT1TradeRate() {
+		return qqT1TradeRate;
+	}
+
+	public void setQqT1TradeRate(BigDecimal qqT1TradeRate) {
+		this.qqT1TradeRate = qqT1TradeRate;
 	}
     
     

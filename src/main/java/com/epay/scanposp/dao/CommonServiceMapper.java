@@ -8,6 +8,7 @@ import com.epay.scanposp.common.base.MyBatisRepository;
 public interface CommonServiceMapper {
 	public String getNextSequenceVal(String sequenceType);
 	public Double countTransactionMoneyByCondition(Map<String,Object> paramMap);
+	public Double countTransactionRealMoneyByCondition(Map<String,Object> paramMap);
 	public Double countTransactionMoneyByConditionHis(Map<String,Object> paramMap);
 	public Double countDrawMoneyByCondition(Map<String,Object> paramMap);
 	public Double countMoneyByCondition(Map<String,Object> paramMap);

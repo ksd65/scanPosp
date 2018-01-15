@@ -76,6 +76,8 @@ import com.epay.scanposp.entity.PayRouteExample;
 import com.epay.scanposp.entity.PayType;
 import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.RequestMsg;
+import com.epay.scanposp.entity.RoutewayAccount;
+import com.epay.scanposp.entity.RoutewayAccountExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.StTradeDetail;
@@ -105,6 +107,7 @@ import com.epay.scanposp.service.MlTradeDetailService;
 import com.epay.scanposp.service.MlTradeResNoticeService;
 import com.epay.scanposp.service.PayRouteService;
 import com.epay.scanposp.service.PayTypeService;
+import com.epay.scanposp.service.RoutewayAccountService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.StTradeDetailAllService;
 import com.epay.scanposp.service.StTradeDetailService;
@@ -189,6 +192,9 @@ public class MemberInfoController {
 	
 	@Autowired
 	private AccountService accountService;
+	
+	@Autowired
+	private RoutewayAccountService routewayAccountService;
 	
 	@Autowired
 	private MemberMerchantCodeService memberMerchantCodeService;
@@ -341,6 +347,10 @@ public class MemberInfoController {
 		SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
 		try {
 			int memberId = reqDataJson.getInt("memberId");
+			String routeCode = RouteCodeConstant.SLF_ROUTE_CODE;
+			if(reqDataJson.containsKey("routeCode")){
+				routeCode = reqDataJson.getString("routeCode");
+			}
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(memberId);
 
 			// 今天开始时间
@@ -372,6 +382,7 @@ public class MemberInfoController {
 			paramMap = new HashMap<String, Object>();
 			paramMap.put("memberId", memberId);
 			paramMap.put("respType", "S");
+			paramMap.put("routeCode", routeCode);
 			//已成功提现总额
 			Double drawMoneyCountAll = commonService.countDrawMoneyByCondition(paramMap);
 			drawMoneyCountAll = drawMoneyCountAll == null ? 0 : drawMoneyCountAll;
@@ -384,6 +395,7 @@ public class MemberInfoController {
 			paramMap.put("memberId", memberId);
 			//待审核提现金额
 			paramMap.put("auditStatus", "1");
+			paramMap.put("routeCode", routeCode);
 			Double waitAuditMoneyCountAll = commonService.countMoneyByCondition(paramMap);
 			waitAuditMoneyCountAll = waitAuditMoneyCountAll == null ? 0 : waitAuditMoneyCountAll;
 			//提现中的金额
@@ -398,20 +410,8 @@ public class MemberInfoController {
 			Double drawFailMoneyCountToday = commonService.countMoneyByCondition(paramMap);
 			drawFailMoneyCountToday = drawFailMoneyCountToday == null ? 0 : drawFailMoneyCountToday;
 			
-			Double drawPercent = 0.7;//D0 70%
-			
-			AccountExample accountExample = new AccountExample();
-			accountExample.createCriteria().andMemberIdEqualTo(memberId).andDelFlagEqualTo("0");
-			List<Account> accountList = accountService.selectByExample(accountExample);
-			if(accountList == null || accountList.size()!=1){
-				result.put("returnCode", "0008");
-				result.put("returnMsg", "账户信息不存在");
-				return result.toString();
-			}
-			Account account = accountList.get(0);
-			
 			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
-			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(RouteCodeConstant.SLF_ROUTE_CODE).andDelFlagEqualTo("0");
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
 			if (merchantCodes == null || merchantCodes.size() != 1) {
 				result.put("returnCode", "0008");
@@ -429,30 +429,76 @@ public class MemberInfoController {
 				drawFee = merchantCode.getT1DrawFee().doubleValue();
 			}
 			
-			//随乐付当天交易总额
-			paramMap = new HashMap<String, Object>();
-			paramMap.put("memberId", reqDataJson.getInt("memberId"));
-			paramMap.put("routeId", RouteCodeConstant.SLF_ROUTE_CODE);
-			paramMap.put("startDate", df.format(begin));
-			paramMap.put("endDate", df.format(end));
-			Double tradeMoneyCountSLF = commonService.countTransactionMoneyByCondition(paramMap);
-			tradeMoneyCountSLF = tradeMoneyCountSLF == null ? 0 : tradeMoneyCountSLF;
-			
-			Double canDrawToday = tradeMoneyCountSLF * drawPercent * (1-tradeRate);//当天可提现的金额
-			Double balanceToday = tradeMoneyCountSLF * (1-tradeRate);//当天交易账户余额
-			Double balanceHis = account.getBalance().doubleValue() + account.getW0Balance().doubleValue() + account.getW5Balance().doubleValue() + account.getW6Balance().doubleValue();//历史账户余额
-			Double balance = balanceHis + balanceToday - drawMoneyCountToday - drawFailMoneyCountToday;//总账户余额
-			
-			//可提现总额
-			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(account.getBalance().doubleValue() + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll - drawFailMoneyCountToday));
-			
-			
-			resData.put("balance", new DecimalFormat("0.00").format(balance));
-			resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
-			resData.put("canDrawMoneyCount", new DecimalFormat("0.00").format(canDrawMoneyCount));
-			resData.put("drawFee", new DecimalFormat("#.00").format(drawFee));
-			resData.put("memberInfo", memberInfo);
-			result.put("resData", resData);
+			if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
+				Double drawPercent = 0.7;//D0 70%
+				
+				AccountExample accountExample = new AccountExample();
+				accountExample.createCriteria().andMemberIdEqualTo(memberId).andDelFlagEqualTo("0");
+				List<Account> accountList = accountService.selectByExample(accountExample);
+				if(accountList == null || accountList.size()!=1){
+					result.put("returnCode", "0008");
+					result.put("returnMsg", "账户信息不存在");
+					return result.toString();
+				}
+				Account account = accountList.get(0);
+				
+				//随乐付当天交易总额
+				paramMap = new HashMap<String, Object>();
+				paramMap.put("memberId", reqDataJson.getInt("memberId"));
+				paramMap.put("routeId", RouteCodeConstant.SLF_ROUTE_CODE);
+				paramMap.put("startDate", df.format(begin));
+				paramMap.put("endDate", df.format(end));
+				Double tradeMoneyCountSLF = commonService.countTransactionMoneyByCondition(paramMap);
+				tradeMoneyCountSLF = tradeMoneyCountSLF == null ? 0 : tradeMoneyCountSLF;
+				
+				Double canDrawToday = tradeMoneyCountSLF * drawPercent * (1-tradeRate);//当天可提现的金额
+				Double balanceToday = tradeMoneyCountSLF * (1-tradeRate);//当天交易账户余额
+				Double balanceHis = account.getBalance().doubleValue() + account.getW0Balance().doubleValue() + account.getW5Balance().doubleValue() + account.getW6Balance().doubleValue();//历史账户余额
+				Double balance = balanceHis + balanceToday - drawMoneyCountToday - drawFailMoneyCountToday;//总账户余额
+				
+				//可提现总额
+				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(account.getBalance().doubleValue() + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll - drawFailMoneyCountToday));
+				
+				
+				resData.put("balance", new DecimalFormat("0.00").format(balance));
+				resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
+				resData.put("canDrawMoneyCount", new DecimalFormat("0.00").format(canDrawMoneyCount));
+				resData.put("drawFee", new DecimalFormat("#.00").format(drawFee));
+				resData.put("memberInfo", memberInfo);
+				result.put("resData", resData);
+			}else{
+				
+				paramMap = new HashMap<String, Object>();
+				paramMap.put("memberId", reqDataJson.getInt("memberId"));
+				paramMap.put("routeId", routeCode);
+				paramMap.put("startDate", df.format(begin));
+				paramMap.put("endDate", df.format(end));
+				paramMap.put("settleType", "0");//D0
+				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
+				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
+				
+				Double canDrawToday = balanceToday;//当天可提现的金额
+				
+				Double balanceHis = 0d;
+				RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
+				routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+				List<RoutewayAccount> accountList = routewayAccountService.selectByExample(routewayAccountExample);
+				if(accountList != null && accountList.size()>0){
+					RoutewayAccount account = accountList.get(0);
+					balanceHis = account.getBalance().doubleValue();
+				}
+				
+				Double balance = balanceHis + balanceToday - drawMoneyCountToday;//总账户余额
+				
+				//可提现总额
+				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
+				
+				resData.put("balance", new DecimalFormat("0.00").format(balance));
+				resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
+				resData.put("canDrawMoneyCount", new DecimalFormat("0.00").format(canDrawMoneyCount));
+				resData.put("drawFee", new DecimalFormat("#.00").format(drawFee));
+				result.put("resData", resData);
+			}
 			result.put("returnCode", "0000");
 			result.put("returnMsg", "成功");
 			return JsonBeanReleaseUtil.beanToJson(result, "yyyy-MM-dd HH:mm:ss");
@@ -611,6 +657,10 @@ public class MemberInfoController {
 		SimpleDateFormat dateFormatShort = new SimpleDateFormat("yyyy-MM-dd");
 		SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
 		try{
+			String routeCode = RouteCodeConstant.SLF_ROUTE_CODE;
+			if(reqDataJson.containsKey("routeCode")){
+				routeCode = reqDataJson.getString("routeCode");
+			}
 			int memberId = reqDataJson.getInt("memberId");
 			String drawMoney = reqDataJson.getString("drawMoney");
 			if("".equals(drawMoney)){
@@ -626,17 +676,18 @@ public class MemberInfoController {
 				return result.toString();
 			}
 			
-			MemberBankExample memberBankExample = new MemberBankExample();
-			memberBankExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
-			List<MemberBank> memberBanks = memberBankService.selectByExample(memberBankExample);
-			if (memberBanks == null || memberBanks.size() != 1) {
-				result.put("returnCode", "4004");
-				result.put("returnMsg", "提现银行卡号未配置，无法提现");
-				return result.toString();
+			if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
+				MemberBankExample memberBankExample = new MemberBankExample();
+				memberBankExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+				List<MemberBank> memberBanks = memberBankService.selectByExample(memberBankExample);
+				if (memberBanks == null || memberBanks.size() != 1) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "提现银行卡号未配置，无法提现");
+					return result.toString();
+				}
 			}
-			
 			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
-			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(RouteCodeConstant.SLF_ROUTE_CODE).andDelFlagEqualTo("0");
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
 			if (merchantCodes == null || merchantCodes.size() != 1) {
 				result.put("returnCode", "4004");
@@ -659,6 +710,12 @@ public class MemberInfoController {
 				result.put("returnMsg", "提现金额必须大于提现手续费");
 				return result.toString();
 			}
+			
+			String configName = "SINGLE_DRAW_LIMIT_"+routeCode;
+			JSONObject limitResult = checkSingleDrawLimit(configName,new BigDecimal(drawMoney));
+			if(limitResult!=null){
+				return limitResult.toString();
+			}
 			// 今天开始时间
 			Date begin = dateFormatLong.parse(dateFormatShort.format(new Date()) + " 00:00:00");
 			// 今天结束时间
@@ -668,6 +725,7 @@ public class MemberInfoController {
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("memberId", memberId);
 			paramMap.put("respType", "S");
+			paramMap.put("routeCode", routeCode);
 			//当天成功提现金额
 			paramMap.put("respDate", df.format(new Date()));
 			Double drawMoneyCountToday = commonService.countDrawMoneyByCondition(paramMap);
@@ -677,6 +735,7 @@ public class MemberInfoController {
 			paramMap.put("memberId", memberId);
 			//待审核提现金额
 			paramMap.put("auditStatus", "1");
+			paramMap.put("routeCode", routeCode);
 			Double waitAuditMoneyCountAll = commonService.countMoneyByCondition(paramMap);
 			waitAuditMoneyCountAll = waitAuditMoneyCountAll == null ? 0 : waitAuditMoneyCountAll;
 			//提现中的金额
@@ -690,49 +749,103 @@ public class MemberInfoController {
 			paramMap.put("respDate", df.format(new Date()));
 			Double drawFailMoneyCountToday = commonService.countMoneyByCondition(paramMap);
 			drawFailMoneyCountToday = drawFailMoneyCountToday == null ? 0 : drawFailMoneyCountToday;
-			
-			Double drawPercent = 0.7;//D0 70%
-			
-			AccountExample accountExample = new AccountExample();
-			accountExample.createCriteria().andMemberIdEqualTo(memberId).andDelFlagEqualTo("0");
-			List<Account> accountList = accountService.selectByExample(accountExample);
-			if(accountList == null || accountList.size()!=1){
-				result.put("returnCode", "0008");
-				result.put("returnMsg", "账户信息不存在");
-				return result.toString();
+	        
+			if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
+				Double drawPercent = 0.7;//D0 70%
+				
+				AccountExample accountExample = new AccountExample();
+				accountExample.createCriteria().andMemberIdEqualTo(memberId).andDelFlagEqualTo("0");
+				List<Account> accountList = accountService.selectByExample(accountExample);
+				if(accountList == null || accountList.size()!=1){
+					result.put("returnCode", "0008");
+					result.put("returnMsg", "账户信息不存在");
+					return result.toString();
+				}
+				Account account = accountList.get(0);
+				
+				//随乐付当天交易总额
+				paramMap = new HashMap<String, Object>();
+				paramMap.put("memberId", reqDataJson.getInt("memberId"));
+				paramMap.put("routeId", RouteCodeConstant.SLF_ROUTE_CODE);
+				paramMap.put("startDate", df.format(begin));
+				paramMap.put("endDate", df.format(end));
+				Double tradeMoneyCountSLF = commonService.countTransactionMoneyByCondition(paramMap);
+				tradeMoneyCountSLF = tradeMoneyCountSLF == null ? 0 : tradeMoneyCountSLF;
+				
+				Double canDrawToday = tradeMoneyCountSLF * drawPercent * (1-tradeRate);//当天可提现的金额
+				
+				//可提现总额
+				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(account.getBalance().doubleValue() + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll - drawFailMoneyCountToday));
+				
+				if(Double.parseDouble(drawMoney)>canDrawMoneyCount){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "提现金额大于可提现金额，无法提现");
+					return result.toString();
+				}
+			}else{
+				
+				paramMap = new HashMap<String, Object>();
+				paramMap.put("memberId", reqDataJson.getInt("memberId"));
+				paramMap.put("routeId", routeCode);
+				paramMap.put("startDate", df.format(begin));
+				paramMap.put("endDate", df.format(end));
+				paramMap.put("settleType", "0");//D0
+				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
+				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
+				
+				Double canDrawToday = balanceToday;//当天可提现的金额
+				
+				Double balanceHis = 0d;
+				RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
+				routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+				List<RoutewayAccount> accountList = routewayAccountService.selectByExample(routewayAccountExample);
+				if(accountList != null && accountList.size()>0){
+					RoutewayAccount account = accountList.get(0);
+					balanceHis = account.getBalance().doubleValue();
+				}
+				
+				
+				//可提现总额
+				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
+				
+				if(Double.parseDouble(drawMoney)>canDrawMoneyCount){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "提现金额大于可提现金额，无法提现");
+					return result.toString();
+				}
+				
+				
 			}
-			Account account = accountList.get(0);
-			
-			//随乐付当天交易总额
-			paramMap = new HashMap<String, Object>();
-			paramMap.put("memberId", reqDataJson.getInt("memberId"));
-			paramMap.put("routeId", RouteCodeConstant.SLF_ROUTE_CODE);
-			paramMap.put("startDate", df.format(begin));
-			paramMap.put("endDate", df.format(end));
-			Double tradeMoneyCountSLF = commonService.countTransactionMoneyByCondition(paramMap);
-			tradeMoneyCountSLF = tradeMoneyCountSLF == null ? 0 : tradeMoneyCountSLF;
-			
-			Double canDrawToday = tradeMoneyCountSLF * drawPercent * (1-tradeRate);//当天可提现的金额
-			
-			//可提现总额
-			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(account.getBalance().doubleValue() + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll - drawFailMoneyCountToday));
-			
-			if(Double.parseDouble(drawMoney)>canDrawMoneyCount){
-				result.put("returnCode", "4004");
-				result.put("returnMsg", "提现金额大于可提现金额，无法提现");
-				return result.toString();
-			}
-			
 			RoutewayDraw routewayDraw=new RoutewayDraw();
 			routewayDraw.setCreateDate(new Date());
 			routewayDraw.setDelFlag("0");
 			routewayDraw.setMemberCode(memberInfo.getCode());
 			routewayDraw.setMemberId(memberId);
+			routewayDraw.setRouteCode(routeCode);
 			routewayDraw.setMoney(new BigDecimal(drawMoney));
 			routewayDraw.setDrawamount(new BigDecimal(Double.parseDouble(drawMoney)-drawFee));
 			routewayDraw.setDrawfee(new BigDecimal(drawFee));
 			routewayDraw.setTradefee(new BigDecimal(0));
 			routewayDraw.setAuditStatus("1");
+			if(reqDataJson.containsKey("bankName")){
+				routewayDraw.setBankName(reqDataJson.getString("bankName"));
+			}
+			if(reqDataJson.containsKey("subName")){
+				routewayDraw.setSubName(reqDataJson.getString("subName"));
+			}
+			if(reqDataJson.containsKey("subId")){
+				routewayDraw.setSubId(reqDataJson.getString("subId"));
+			}
+			if(reqDataJson.containsKey("bankAccount")){
+				routewayDraw.setBankAccount(reqDataJson.getString("bankAccount"));
+			}
+			if(reqDataJson.containsKey("accountName")){
+				routewayDraw.setAccountName(reqDataJson.getString("accountName"));
+			}
+			if(reqDataJson.containsKey("bankCode")){
+				routewayDraw.setBankCode(reqDataJson.getString("bankCode"));
+			}
+			
 			routewayDrawService.insertSelective(routewayDraw);
 			result.put("returnCode", "0000");
 			result.put("returnMsg", "提交成功");
@@ -2054,6 +2167,31 @@ public class MemberInfoController {
 			routeCode = sysCommonConfig.get(0).getValue();
 		}
 		return routeCode;
+	}
+	
+	
+	private JSONObject checkSingleDrawLimit(String configName, BigDecimal drawMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal singleLimit = new BigDecimal(value);
+			if (null != singleLimit && singleLimit.compareTo(BigDecimal.ZERO) > 0){
+				if (drawMoney.compareTo(singleLimit) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "提现单笔限额为"+singleLimit+"元,当前金额已超过");
+					return result;
+				}
+			}
+		}
+		return null;
 	}
 	
 	public static void main(String[] args) {

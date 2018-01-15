@@ -26,6 +26,11 @@ public class CommonService {
 	public Double countTransactionMoneyByCondition(Map<String,Object> paramMap){
 		return commonServiceMapper.countTransactionMoneyByCondition(paramMap);
 	}
+	
+	public Double countTransactionRealMoneyByCondition(Map<String,Object> paramMap){
+		return commonServiceMapper.countTransactionRealMoneyByCondition(paramMap);
+	}
+	
 	public Double countTransactionMoneyByConditionHis(Map<String,Object> paramMap){
 		return commonServiceMapper.countTransactionMoneyByConditionHis(paramMap);
 	}
