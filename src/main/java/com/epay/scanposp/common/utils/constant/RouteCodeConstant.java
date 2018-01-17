@@ -18,4 +18,6 @@ public class RouteCodeConstant {
 	
 	public static String RF_ROUTE_CODE = "1008";//瑞付支付
 	
+	public static String YL_ROUTE_CODE = "1009";//云路
+	
 }
