@@ -36,6 +36,10 @@ public class PayTypeRule {
     private String updateBy;
 
     private Date updateDate;
+    
+    private String beginTime;
+    
+    private String endTime;
 
 	
 	public String getAisleType() {
@@ -166,6 +170,22 @@ public class PayTypeRule {
 
 	public void setMemberId(Integer memberId) {
 		this.memberId = memberId;
+	}
+
+	public String getBeginTime() {
+		return beginTime;
+	}
+
+	public void setBeginTime(String beginTime) {
+		this.beginTime = beginTime;
+	}
+
+	public String getEndTime() {
+		return endTime;
+	}
+
+	public void setEndTime(String endTime) {
+		this.endTime = endTime;
 	}
     
 	
