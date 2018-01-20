@@ -4442,6 +4442,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	
 	public JSONObject tbH5Pay(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String sceneInfo,String ip,String callbackUrl,MemberMerchantCode merchantCode) {
 		JSONObject result = new JSONObject();
+		String orderCode = "";
 		try {
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TB_ROUTE_CODE).andMerchantCodeEqualTo(merchantCode.getWxMerchantCode()).andDelFlagEqualTo("0");
@@ -4454,7 +4455,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	        MemberMerchantKey merchantKey = keyList.get(0);
 			
 			// 插入一条收款记录
-			String orderCode = CommonUtil.getOrderCode();
+			orderCode = CommonUtil.getOrderCode();
 			
 			DebitNote debitNote = new DebitNote();
 			debitNote.setCreateDate(new Date());
@@ -4579,6 +4580,21 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	        logger.info("H5支付请求报文[{}]", new Object[] { JSON.toJSONString(map) });
 	        String resultMsg = HttpUtil.sendPostRequest(TBConfig.msServerUrl, JSON.toJSONString(map));
 	        logger.info("H5返回请求报文[{}]", new Object[] { resultMsg });
+	        if("".equals(resultMsg)||"Read timed out".equals(resultMsg)||"connect timed out".equals(resultMsg)){
+	        	DebitNoteExample debitNoteExample = new DebitNoteExample();
+				debitNoteExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
+				if (debitNotes != null && debitNotes.size() > 0) {
+					DebitNote debitNote_1 = debitNotes.get(0);
+					debitNote_1.setStatus("10");
+					debitNote_1.setUpdateDate(new Date());
+					debitNote_1.setRespMsg(resultMsg.length()>250?resultMsg.substring(0, 250):resultMsg);
+					debitNoteService.updateByPrimaryKey(debitNote_1);
+				}
+				result.put("returnCode", "0009");
+				result.put("returnMsg", "接口调用失败："+resultMsg);
+				return result;
+	        }
 	        
 	        com.alibaba.fastjson.JSONObject resultObj = com.alibaba.fastjson.JSONObject.parseObject(resultMsg);
 	        String result_code = resultObj.getString("result_code");
@@ -4620,6 +4636,16 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	        }
         } catch (Exception e) {
 			logger.error(e.getMessage());
+			DebitNoteExample debitNoteExample = new DebitNoteExample();
+			debitNoteExample.createCriteria().andOrderCodeEqualTo(orderCode);
+			List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
+			if (debitNotes != null && debitNotes.size() > 0) {
+				DebitNote debitNote_1 = debitNotes.get(0);
+				debitNote_1.setStatus("11");
+				debitNote_1.setUpdateDate(new Date());
+				debitNote_1.setRespMsg(e.getMessage().length()>250?e.getMessage().substring(0, 250):e.getMessage());
+				debitNoteService.updateByPrimaryKey(debitNote_1);
+			}
 			result.put("returnCode", "0096");
 			result.put("returnMsg", e.getMessage());
 			return result;
