@@ -45,6 +45,7 @@ import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.FTConfig;
 import com.epay.scanposp.common.constant.MSConfig;
+import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.TBConfig;
 import com.epay.scanposp.common.constant.WxConfig;
@@ -4505,9 +4506,19 @@ public class CashierDeskController {
 				
 			}else if(RouteCodeConstant.TB_ROUTE_CODE.equals(routeCode)){
 				
+				MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return signReturn(result);
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+				
 				
 				TreeMap<String, String> map = new TreeMap<>();
-		        map.put("app_id",TBConfig.agentId);
+		        map.put("app_id",merchantKey.getAppId());
 		        map.put("method","openapi.payment.order.query");
 		        map.put("format","json");
 		        map.put("sign_method","md5");
@@ -4521,7 +4532,7 @@ public class CashierDeskController {
 
 		        map.put("biz_content",bizContent);
 
-		        String secret = TBConfig.privateKey;
+		        String secret = merchantKey.getPrivateKey();
 		        String sign = SignUtil.createSign(map, secret);
 		        map.put("sign",sign);
 		        logger.info("提呗订单查询请求报文[{}]", new Object[] { JSON.toJSONString(map) });
@@ -4561,6 +4572,63 @@ public class CashierDeskController {
 		        }else{
 		        	result.put("returnCode", "0012");
 					result.put("returnMsg", resultObj.getString("result_message"));
+		        }
+		        
+			}else if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){
+				
+				MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return signReturn(result);
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        JSONObject reqData = new JSONObject();
+				reqData.put("AppKey", debitNote.getMerchantCode());
+				reqData.put("OrderNum", debitNote.getOrderCode());
+				
+				
+				String str = StringUtil.orderedKey(reqData);
+				String privateKey = merchantKey.getPrivateKey();
+				String signData = EpaySignUtil.signSha1(privateKey, str);
+				reqData.put("SignStr", signData);
+				
+				logger.info("瑞付订单查询请求报文[{}]", new Object[] { JSON.toJSONString(reqData) });
+				
+				String url = RFConfig.msServerUrl + "/order";
+				
+				String resultMsg = HttpUtil.sendPostRequest(url, reqData.toString());
+				logger.info("瑞付订单请求返回报文[{}]", new Object[] { resultMsg });
+				
+				
+		        JSONObject resultObj = JSONObject.fromObject(resultMsg);
+		        String result_code = resultObj.getString("ReturnCode");
+		        String result_msg = resultObj.getString("ReturnMsg");
+		        
+		        if("0000".equals(result_code)){
+		        	String trade_state = resultObj.getString("RespType");
+		        	if("2".equals(trade_state)){
+						result.put("oriRespType", "S");
+						result.put("oriRespCode", "000000");
+						result.put("oriRespMsg", "支付成功");
+						result.put("totalAmount", resultObj.getString("PayMoney"));
+
+					}else if("1".equals(trade_state)){
+						result.put("oriRespType", "R");
+						result.put("oriRespCode", "000001");
+						result.put("oriRespMsg", "支付中");
+					}else{
+						result.put("oriRespType", "E");
+						result.put("oriRespCode", "000002");
+						result.put("oriRespMsg", "支付失败");
+					}
+		        	
+		        }else{
+		        	result.put("returnCode", "0012");
+					result.put("returnMsg", result_msg);
 		        }
 		        
 			}else{
