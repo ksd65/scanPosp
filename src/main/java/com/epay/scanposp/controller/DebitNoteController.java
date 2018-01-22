@@ -6136,78 +6136,327 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	
 	
 	
-		@ResponseBody
-		@RequestMapping("/testQrPay")
-		public JSONObject testQrPay(HttpServletRequest request,HttpServletResponse response) {
-				
-			JSONObject result = new JSONObject();
-			//String reqMsgId=CommonUtil.getOrderCode();
-			try {
-				
-				
-				
-				String orderCode = CommonUtil.getOrderCode();
-				
-				
-				String callBack = SysConfig.serverUrl + "/debitNote/sdPayNotify";
-				String frontUrl = SysConfig.frontUrl + "/debitNote/sdResult";
-				// 调用支付通道
-				String serverUrl = "https://cashier.sandpay.com.cn/qr/api/order/create";
-				//PublicKey yhPubKey = null;
-				//yhPubKey = CryptoUtil.getEskRSAPublicKey();
-				//yhPubKey = CryptoUtil.getRSAPublicKey(false);
-				//PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
-				
-				
-				CertUtil.init("classpath:"+EnvironmentUtil.propertyPath + "sdkey/cd-qz-gs.cer", 
-						"classpath:"+EnvironmentUtil.propertyPath + "sdkey/cd-qz-ss.pfx", "123654");
-				
-				
-				SandpayRequestHead head = new SandpayRequestHead();
-				QrOrderCreateRequestBody body = new QrOrderCreateRequestBody();
-				
-				QrOrderCreateRequest req = new QrOrderCreateRequest();
-				req.setHead(head);
-				req.setBody(body);
-				
-				
-				PacketTool.setDefaultRequestHead(head, "sandpay.trade.precreate", "00000005", "19268240");
-				body.setPayTool("0402");  //支付工具 0401：支付宝扫码 0402：微信扫码
-				body.setOrderCode(orderCode);  //商户订单号
-				body.setLimitPay("1");  //限定支付方式 支付工具为微信扫码有效 1-限定不能使用信用卡
-				body.setTotalAmount("000000000001");  //订单金额
-				body.setSubject("话费充值");  //订单标题
-				body.setBody("用户购买话费0.01");  //订单描述
-				body.setTxnTimeOut("20171205170000");  //订单超时时间
-				body.setStoreId("");  //商户门店编号
-				body.setTerminalId("");  //商户终端编号
-				body.setOperatorId("");  //操作员编号
-				body.setNotifyUrl(callBack);  //异步通知地址
-				body.setBizExtendParams("");  //业务扩展参数
-				body.setMerchExtendParams("");  //商户扩展参数
-				body.setExtend("");  //扩展域
-				
-				SandOrderPayResponse res =  SandpayClient.execute(req, serverUrl);
-				
-				
-				
-				
-				
-			} catch (ArgException e) {
-				result.put("returnCode", "4004");
-				result.put("returnMsg", "子商户号配置失败");
-				logger.info(e.getMessage());
-				return result;
-			} catch (Exception e) {
-				logger.error(e.getMessage());
-				e.printStackTrace();
-				result.put("returnCode", "4004");
-				result.put("returnMsg", "请求失败");
+	@ResponseBody
+	@RequestMapping("/testQrPay")
+	public JSONObject testQrPay(HttpServletRequest request,HttpServletResponse response) {
+			
+		JSONObject result = new JSONObject();
+		//String reqMsgId=CommonUtil.getOrderCode();
+		try {
+			
+			
+			
+			String orderCode = CommonUtil.getOrderCode();
+			
+			
+			String callBack = SysConfig.serverUrl + "/debitNote/sdPayNotify";
+			String frontUrl = SysConfig.frontUrl + "/debitNote/sdResult";
+			// 调用支付通道
+			String serverUrl = "https://cashier.sandpay.com.cn/qr/api/order/create";
+			//PublicKey yhPubKey = null;
+			//yhPubKey = CryptoUtil.getEskRSAPublicKey();
+			//yhPubKey = CryptoUtil.getRSAPublicKey(false);
+			//PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
+			
+			
+			CertUtil.init("classpath:"+EnvironmentUtil.propertyPath + "sdkey/cd-qz-gs.cer", 
+					"classpath:"+EnvironmentUtil.propertyPath + "sdkey/cd-qz-ss.pfx", "123654");
+			
+			
+			SandpayRequestHead head = new SandpayRequestHead();
+			QrOrderCreateRequestBody body = new QrOrderCreateRequestBody();
+			
+			QrOrderCreateRequest req = new QrOrderCreateRequest();
+			req.setHead(head);
+			req.setBody(body);
+			
+			
+			PacketTool.setDefaultRequestHead(head, "sandpay.trade.precreate", "00000005", "19268240");
+			body.setPayTool("0402");  //支付工具 0401：支付宝扫码 0402：微信扫码
+			body.setOrderCode(orderCode);  //商户订单号
+			body.setLimitPay("1");  //限定支付方式 支付工具为微信扫码有效 1-限定不能使用信用卡
+			body.setTotalAmount("000000000001");  //订单金额
+			body.setSubject("话费充值");  //订单标题
+			body.setBody("用户购买话费0.01");  //订单描述
+			body.setTxnTimeOut("20171205170000");  //订单超时时间
+			body.setStoreId("");  //商户门店编号
+			body.setTerminalId("");  //商户终端编号
+			body.setOperatorId("");  //操作员编号
+			body.setNotifyUrl(callBack);  //异步通知地址
+			body.setBizExtendParams("");  //业务扩展参数
+			body.setMerchExtendParams("");  //商户扩展参数
+			body.setExtend("");  //扩展域
+			
+			SandOrderPayResponse res =  SandpayClient.execute(req, serverUrl);
+			
+			
+			
+			
+			
+		} catch (ArgException e) {
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "子商户号配置失败");
+			logger.info(e.getMessage());
+			return result;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "请求失败");
+			return result;
+		}
+		return result;
+		
+	}
+	
+	
+	@ResponseBody
+	@RequestMapping("/api/debitNote/testWxH5Pay")
+	public JSONObject testWxH5Pay(HttpServletRequest request,HttpServletResponse response){
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		System.out.println("请求参数==="+reqDataJson.toString());
+		String payMoney = reqDataJson.getString("payMoney");
+		String orderNum = reqDataJson.getString("orderNum");
+		String memberCode = reqDataJson.getString("memberCode");
+		String callbackUrl = reqDataJson.getString("callbackUrl");
+		String sceneInfo = reqDataJson.getString("sceneInfo");
+		String ip = reqDataJson.getString("ip");
+		String merchantCode = reqDataJson.getString("merchantCode");
+		String routeCode = reqDataJson.getString("routeCode");
+		
+		String signStr = reqDataJson.getString("signStr");
+		
+		StringBuilder srcStr = new StringBuilder();
+		JSONObject result = new JSONObject();
+		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
+			result.put("returnCode", "0005");
+			result.put("returnMsg", "支付金额输入不正确");
+			return result;
+		}
+		if(callbackUrl == null || "".equals(callbackUrl)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "平台支付结果通知回调地址缺失");
+			return result;
+		}
+		srcStr.append("callbackUrl="+callbackUrl);
+		
+		if(ip == null || "".equals(ip)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "IP缺失");
+			return result;
+		}
+		srcStr.append("&ip="+ip);
+		
+		if(memberCode == null || "".equals(memberCode)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户号缺失");
+			return result;
+		}
+		srcStr.append("&memberCode="+memberCode);
+		
+		if(!"9010000988".equals(memberCode)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户错误");
+			return result;
+		}
+		
+		if(merchantCode == null || "".equals(merchantCode)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "通道商户号缺失");
+			return result;
+		}
+		srcStr.append("&merchantCode="+merchantCode);
+		
+		if(orderNum == null || "".equals(orderNum)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户订单号缺失");
+			return result;
+		}
+		if(orderNum.length() > 32){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "订单号长度不能超过32位");
+			return result;
+		}
+		srcStr.append("&orderNum="+orderNum);
+		srcStr.append("&payMoney="+payMoney);
+		
+		String payType = "";
+		if(reqDataJson.containsKey("payType")){
+			payType = reqDataJson.getString("payType");
+		}
+		if(payType != null && !"".equals(payType)){
+			srcStr.append("&payType="+payType);
+		}else{
+			payType = "1";
+		}
+		
+		if(routeCode == null || "".equals(routeCode)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "通道编码缺失");
+			return result;
+		}
+		srcStr.append("&routeCode="+routeCode);
+		
+		if(sceneInfo == null || "".equals(sceneInfo)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "场景信息缺失");
+			return result;
+		}
+		srcStr.append("&sceneInfo="+sceneInfo);
+		
+		if(signStr == null || "".equals(signStr)){ 
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "缺少签名信息");
+			return result;
+		}
+		
+		
+		result = testValidMemberInfoForH5(memberCode, orderNum, payMoney, "3",  srcStr.toString(), signStr, callbackUrl,sceneInfo,ip,payType,merchantCode,routeCode);
+		
+		
+		
+		return result;
+	}
+		
+	public JSONObject testValidMemberInfoForH5(String memberCode,String orderNum,String payMoney,String platformType,String signOrginalStr,String signedStr,String callbackUrl,String sceneInfo,String ip,String payType,String merCode,String rCode){
+		JSONObject result = new JSONObject();
+		
+		MemberInfoExample memberInfoExample = new MemberInfoExample();
+		memberInfoExample.or().andCodeEqualTo(memberCode).andDelFlagEqualTo("0");
+		List<MemberInfo> memberInfoList = memberInfoService.selectByExample(memberInfoExample);
+		if(null == memberInfoList || memberInfoList.size() == 0){
+			result.put("returnCode", "0001");
+			result.put("returnMsg", "商户信息不存在");
+			return result;
+		}
+		MemberInfo memberInfo = memberInfoList.get(0);
+		if(!"0".equals(memberInfo.getStatus())){
+			if("4".equals(memberInfo.getStatus())){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "该商户未进行认证，暂时无法交易");
 				return result;
 			}
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，该商户暂不可用");
 			return result;
-			
 		}
+		
+		AccountExample accountExample = new AccountExample();
+		accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+		List<Account> accounts = accountService.selectByExample(accountExample);
+		if (accounts == null || accounts.size() != 1) {
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "会员账户不存在");
+			return result;
+		}
+		
+		EpayCodeExample epayCodeExample = new EpayCodeExample();
+		List<String> values = new ArrayList<String>();
+		values.add("5");
+		values.add("7");
+		epayCodeExample.or().andMemberIdEqualTo(memberInfo.getId()).andStatusIn(values);
+		List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
+		if(null == epayCodeList || epayCodeList.size() == 0){
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，该商户暂不可用");
+			return result;
+		}
+		String payTypeStr = PayTypeConstant.PAY_TYPE_WX;
+		if("3".equals(payType)){
+			payTypeStr = PayTypeConstant.PAY_TYPE_QQ;
+		}
+		
+		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_H5,payTypeStr);
+		String routeCode = rtMap.get("routeCode");
+		String aisleType = rtMap.get("aisleType");
+		MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+		if(aisleType !=null &&!"".equals(aisleType)){
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andAisleTypeEqualTo(aisleType).andDelFlagEqualTo("0");
+		}else{
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+		}
+		List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+		if (merchantCodes == null || merchantCodes.size() != 1) {
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，商户编码不存在");
+			return result;
+		}
+		
+		MemberMerchantCode merchantCode = merchantCodes.get(0);
+		merchantCode.setRouteCode(rCode);
+		if("1".equals(payType)){
+			merchantCode.setWxMerchantCode(merCode);
+		}else if("3".equals(payType)){
+			merchantCode.setQqMerchantCode(rCode);
+		}
+		routeCode = rCode;
+		if("1002".equals(routeCode)){
+			aisleType = "2";
+		}
+		
+		
+		
+		SysOfficeExample sysOfficeExample = new SysOfficeExample();
+		sysOfficeExample.or().andIdEqualTo(epayCodeList.get(0).getOfficeId()).andAgtTypeEqualTo("3");
+		List<SysOffice> sysOfficeList = sysOfficeService.selectByExample(sysOfficeExample);
+		if(null == sysOfficeList || sysOfficeList.size() == 0){
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "该商户暂未支持收银台功能，请确认后重试");
+			return result;
+		}
+		
+		PayResultNoticeExample payResultNoticeExample = new PayResultNoticeExample();
+		payResultNoticeExample.or().andMemberCodeEqualTo(memberCode).andOrderNumOuterEqualTo(orderNum).andStatusNotEqualTo("1");
+		List<PayResultNotice> PayResultNoticeList = payResultNoticeService.selectByExample(payResultNoticeExample);
+		if(null != PayResultNoticeList && PayResultNoticeList.size() > 0){
+			result.put("returnCode", "0002");
+			result.put("returnMsg", "该笔订单已支付，请勿重复支付");
+			return result;
+		}
+		
+		SysOffice sysOffice = sysOfficeList.get(0);
+//		String singedStr = EpaySignUtil.sign(sysOffice.getPrivateKeyRsa(), signOrginalStr);
+//		System.out.println(singedStr);  
+		if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
+			result.put("returnCode", "0004");
+			result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
+			return result;
+		}
+		
+		//校验交易额是否超出限制
+	    /*
+		JSONObject checkResult = checkPayLimit(memberInfo.getId(), new BigDecimal(payMoney), memberInfo.getSingleLimit(), memberInfo.getDayLimit());
+		if(null != checkResult){
+			return checkResult;
+		}
+		*/
+		
+		if(RouteCodeConstant.TB_ROUTE_CODE.equals(routeCode)){
+			if("1".equals(payType)){
+				result = tbH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode );
+			}
+			result.put("routeCode", routeCode);
+		}else if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
+			if("1".equals(payType)){
+				result = eskH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode );
+			}else if("3".equals(payType)){
+				result = eskQqH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode );
+			}
+			result.put("routeCode", routeCode);
+		}else if(RouteCodeConstant.XF_ROUTE_CODE.equals(routeCode)){
+			result = xfH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode );
+			result.put("routeCode", routeCode);
+		}else if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){
+			if("1".equals(payType)){
+				result = rfH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode );
+			}
+			result.put("routeCode", routeCode);
+		}
+		
+		return result;
+	}	
+		
 	
 	
 }
