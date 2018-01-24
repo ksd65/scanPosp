@@ -6388,7 +6388,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		if("1".equals(payType)){
 			merchantCode.setWxMerchantCode(merCode);
 		}else if("3".equals(payType)){
-			merchantCode.setQqMerchantCode(rCode);
+			merchantCode.setQqMerchantCode(merCode);
 		}
 		routeCode = rCode;
 		if("1002".equals(routeCode)){
