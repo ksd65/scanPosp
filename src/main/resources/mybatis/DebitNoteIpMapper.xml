@@ -7,6 +7,8 @@
     <result column="merchant_code" jdbcType="VARCHAR" property="merchantCode" />
     <result column="order_code" jdbcType="VARCHAR" property="orderCode" />
     <result column="route_id" jdbcType="VARCHAR" property="routeId" />
+    <result column="txn_method" jdbcType="VARCHAR" property="txnMethod" />
+    <result column="txn_type" jdbcType="CHAR" property="txnType" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
@@ -73,7 +75,7 @@
   </sql>
   <sql id="Base_Column_List">
     id, member_id, merchant_code, order_code, 
-    route_id,create_by, create_date, update_by, update_date, ip
+    route_id,txn_method, txn_type,create_by, create_date, update_by, update_date, ip
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.DebitNoteIpExample" resultMap="BaseResultMap">
     select
@@ -104,9 +106,9 @@
       SELECT LAST_INSERT_ID() 
     </selectKey>
     insert into bu_debit_note_ip (member_id,merchant_code, order_code,
-      route_id,create_by,create_date, update_by, update_date,ip)
+      route_id,txn_method, txn_type,create_by,create_date, update_by, update_date,ip)
     values (#{memberId,jdbcType=INTEGER},#{merchantCode,jdbcType=VARCHAR}, #{orderCode,jdbcType=VARCHAR}, 
-      #{routeId,jdbcType=VARCHAR},#{createBy,jdbcType=VARCHAR},#{createDate,jdbcType=TIMESTAMP},
+      #{routeId,jdbcType=VARCHAR},#{txnMethod,jdbcType=VARCHAR},#{txnType,jdbcType=CHAR},#{createBy,jdbcType=VARCHAR},#{createDate,jdbcType=TIMESTAMP},
       #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP},#{ip,jdbcType=VARCHAR})
   </insert>
   <insert id="insertSelective" parameterType="com.epay.scanposp.entity.DebitNoteIp">
@@ -126,6 +128,12 @@
       </if>
       <if test="routeId != null">
         route_id,
+      </if>
+      <if test="txnMethod != null">
+        txn_method,
+      </if>
+      <if test="txnType != null">
+        txn_type,
       </if>
       <if test="createBy != null">
         create_by,
@@ -155,6 +163,12 @@
       </if>
       <if test="routeId != null">
         #{routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="txnMethod != null">
+        #{txnMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="txnType != null">
+        #{txnType,jdbcType=CHAR},
       </if>
       <if test="createBy != null">
         #{createBy,jdbcType=VARCHAR},
@@ -191,6 +205,12 @@
 		</if>
   		<if test="routeId != null" >
 			AND t.route_id = #{routeId,jdbcType=VARCHAR} 
+		</if>
+		<if test="txnMethod != null" >
+			AND t.txn_method = #{txnMethod,jdbcType=VARCHAR} 
+		</if>
+		<if test="txnType != null" >
+			AND t.txn_type = #{txnType,jdbcType=VARCHAR} 
 		</if>
 		<if test="merchantCode != null" >
 			AND t.merchant_code = #{merchantCode,jdbcType=VARCHAR} 

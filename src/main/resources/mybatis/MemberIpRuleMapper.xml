@@ -5,6 +5,8 @@
     <id column="id" jdbcType="INTEGER" property="id" />
     <result column="member_id" jdbcType="INTEGER" property="memberId" />
     <result column="route_code" jdbcType="VARCHAR" property="routeCode" />
+    <result column="pay_method" jdbcType="VARCHAR" property="payMethod" />
+    <result column="pay_type" jdbcType="VARCHAR" property="payType" />
     <result column="merchant_code" jdbcType="VARCHAR" property="merchantCode" />
     <result column="seconds" jdbcType="INTEGER" property="seconds" />
     <result column="limit_times" jdbcType="INTEGER" property="limitTimes" />
@@ -73,7 +75,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id,member_id, route_code,merchant_code,seconds, limit_times, 
+    id,member_id, route_code,pay_method,pay_type,merchant_code,seconds, limit_times, 
     create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberIpRuleExample" resultMap="BaseResultMap">
