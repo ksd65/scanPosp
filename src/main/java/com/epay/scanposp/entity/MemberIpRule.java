@@ -10,6 +10,10 @@ public class MemberIpRule {
 	
 	private String routeCode;
 	
+	private String payMethod;
+	
+	private String payType;
+	
 	private String merchantCode;
 	
 	private Integer seconds;
@@ -113,6 +117,22 @@ public class MemberIpRule {
 
 	public void setLimitTimes(Integer limitTimes) {
 		this.limitTimes = limitTimes;
+	}
+
+	public String getPayMethod() {
+		return payMethod;
+	}
+
+	public void setPayMethod(String payMethod) {
+		this.payMethod = payMethod;
+	}
+
+	public String getPayType() {
+		return payType;
+	}
+
+	public void setPayType(String payType) {
+		this.payType = payType;
 	}
     
 	

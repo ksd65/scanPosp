@@ -5,8 +5,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import com.epay.scanposp.entity.MemberIpBlackListExample.Criteria;
-
 public class MemberIpRuleExample {
     protected String orderByClause;
 
@@ -421,6 +419,146 @@ public class MemberIpRuleExample {
             return (Criteria) this;
         }
 
+        
+        public Criteria andPayMethodIsNull() {
+            addCriterion("pay_method is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodIsNotNull() {
+            addCriterion("pay_method is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodEqualTo(String value) {
+            addCriterion("pay_method =", value, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodNotEqualTo(String value) {
+            addCriterion("pay_method <>", value, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodGreaterThan(String value) {
+            addCriterion("pay_method >", value, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodGreaterThanOrEqualTo(String value) {
+            addCriterion("pay_method >=", value, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodLessThan(String value) {
+            addCriterion("pay_method <", value, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodLessThanOrEqualTo(String value) {
+            addCriterion("pay_method <=", value, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodLike(String value) {
+            addCriterion("pay_method like", value, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodNotLike(String value) {
+            addCriterion("pay_method not like", value, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodIn(List<String> values) {
+            addCriterion("pay_method in", values, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodNotIn(List<String> values) {
+            addCriterion("pay_method not in", values, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodBetween(String value1, String value2) {
+            addCriterion("pay_method between", value1, value2, "payMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayMethodNotBetween(String value1, String value2) {
+            addCriterion("pay_method not between", value1, value2, "payMethod");
+            return (Criteria) this;
+        }
+        
+        public Criteria andPayTypeIsNull() {
+            addCriterion("pay_type is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeIsNotNull() {
+            addCriterion("pay_type is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeEqualTo(String value) {
+            addCriterion("pay_type =", value, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeNotEqualTo(String value) {
+            addCriterion("pay_type <>", value, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeGreaterThan(String value) {
+            addCriterion("pay_type >", value, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeGreaterThanOrEqualTo(String value) {
+            addCriterion("pay_type >=", value, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeLessThan(String value) {
+            addCriterion("pay_type <", value, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeLessThanOrEqualTo(String value) {
+            addCriterion("pay_type <=", value, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeLike(String value) {
+            addCriterion("pay_type like", value, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeNotLike(String value) {
+            addCriterion("pay_type not like", value, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeIn(List<String> values) {
+            addCriterion("pay_type in", values, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeNotIn(List<String> values) {
+            addCriterion("pay_type not in", values, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeBetween(String value1, String value2) {
+            addCriterion("pay_type between", value1, value2, "payType");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayTypeNotBetween(String value1, String value2) {
+            addCriterion("pay_type not between", value1, value2, "payType");
+            return (Criteria) this;
+        }
         
 
         public Criteria andCreateByIsNull() {

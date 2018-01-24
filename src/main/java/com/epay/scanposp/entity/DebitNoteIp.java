@@ -12,6 +12,10 @@ public class DebitNoteIp {
     private String orderCode;
     
     private String routeId;
+    
+    private String txnMethod;
+
+    private String txnType;
 
     private String createBy;
 
@@ -101,6 +105,22 @@ public class DebitNoteIp {
 
 	public void setIp(String ip) {
 		this.ip = ip;
+	}
+
+	public String getTxnMethod() {
+		return txnMethod;
+	}
+
+	public void setTxnMethod(String txnMethod) {
+		this.txnMethod = txnMethod;
+	}
+
+	public String getTxnType() {
+		return txnType;
+	}
+
+	public void setTxnType(String txnType) {
+		this.txnType = txnType;
 	}
     
     

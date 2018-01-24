@@ -45,6 +45,12 @@ public class DebitNote {
     private String remarks;
     
     private String ip;
+    
+    private String userAgent;
+    
+    private String browser;
+    
+    private String deviceInfo;
 
     public Integer getId() {
         return id;
@@ -212,6 +218,30 @@ public class DebitNote {
 
 	public void setIp(String ip) {
 		this.ip = ip;
+	}
+
+	public String getUserAgent() {
+		return userAgent;
+	}
+
+	public void setUserAgent(String userAgent) {
+		this.userAgent = userAgent;
+	}
+
+	public String getBrowser() {
+		return browser;
+	}
+
+	public void setBrowser(String browser) {
+		this.browser = browser;
+	}
+
+	public String getDeviceInfo() {
+		return deviceInfo;
+	}
+
+	public void setDeviceInfo(String deviceInfo) {
+		this.deviceInfo = deviceInfo;
 	}
     
     

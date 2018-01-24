@@ -533,6 +533,146 @@ public class DebitNoteIpExample {
             return (Criteria) this;
         }
 
+        public Criteria andTxnTypeIsNull() {
+            addCriterion("txn_type is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeIsNotNull() {
+            addCriterion("txn_type is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeEqualTo(String value) {
+            addCriterion("txn_type =", value, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeNotEqualTo(String value) {
+            addCriterion("txn_type <>", value, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeGreaterThan(String value) {
+            addCriterion("txn_type >", value, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeGreaterThanOrEqualTo(String value) {
+            addCriterion("txn_type >=", value, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeLessThan(String value) {
+            addCriterion("txn_type <", value, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeLessThanOrEqualTo(String value) {
+            addCriterion("txn_type <=", value, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeLike(String value) {
+            addCriterion("txn_type like", value, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeNotLike(String value) {
+            addCriterion("txn_type not like", value, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeIn(List<String> values) {
+            addCriterion("txn_type in", values, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeNotIn(List<String> values) {
+            addCriterion("txn_type not in", values, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeBetween(String value1, String value2) {
+            addCriterion("txn_type between", value1, value2, "txnType");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnTypeNotBetween(String value1, String value2) {
+            addCriterion("txn_type not between", value1, value2, "txnType");
+            return (Criteria) this;
+        }
+        
+        
+        public Criteria andTxnMethodIsNull() {
+            addCriterion("txn_method is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodIsNotNull() {
+            addCriterion("txn_method is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodEqualTo(String value) {
+            addCriterion("txn_method =", value, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodNotEqualTo(String value) {
+            addCriterion("txn_method <>", value, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodGreaterThan(String value) {
+            addCriterion("txn_method >", value, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodGreaterThanOrEqualTo(String value) {
+            addCriterion("txn_method >=", value, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodLessThan(String value) {
+            addCriterion("txn_method <", value, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodLessThanOrEqualTo(String value) {
+            addCriterion("txn_method <=", value, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodLike(String value) {
+            addCriterion("txn_method like", value, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodNotLike(String value) {
+            addCriterion("txn_method not like", value, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodIn(List<String> values) {
+            addCriterion("txn_method in", values, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodNotIn(List<String> values) {
+            addCriterion("txn_method not in", values, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodBetween(String value1, String value2) {
+            addCriterion("txn_method between", value1, value2, "txnMethod");
+            return (Criteria) this;
+        }
+
+        public Criteria andTxnMethodNotBetween(String value1, String value2) {
+            addCriterion("txn_method not between", value1, value2, "txnMethod");
+            return (Criteria) this;
+        }
         
 
         public Criteria andCreateByIsNull() {
