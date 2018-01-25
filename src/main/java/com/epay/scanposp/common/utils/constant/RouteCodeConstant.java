@@ -20,4 +20,8 @@ public class RouteCodeConstant {
 	
 	public static String YL_ROUTE_CODE = "1009";//云路
 	
+	public static String ESKXF_ROUTE_CODE = "1010";//先锋（易收款）
+	
+	public static String ESKHLB_ROUTE_CODE = "1011";//合利宝（易收款）
+	
 }
