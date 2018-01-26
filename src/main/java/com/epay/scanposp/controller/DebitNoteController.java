@@ -2836,7 +2836,7 @@ public class DebitNoteController {
 			
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(debitNote.getMemberId());
 			String routeCode = debitNote.getRouteId();
-			if(!RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
+			if(!RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)&&!RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
 				if (serverUrl.startsWith("https://ipay")) {
