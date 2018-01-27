@@ -19,6 +19,7 @@
     <result column="resp_code" property="respCode" jdbcType="VARCHAR" />
     <result column="resp_msg" property="respMsg" jdbcType="VARCHAR" />
     <result column="drawAmount" property="drawamount" jdbcType="DECIMAL" />
+    <result column="drawRate" property="drawRate" jdbcType="DECIMAL" />
     <result column="drawFee" property="drawfee" jdbcType="DECIMAL" />
     <result column="tradeFee" property="tradefee" jdbcType="DECIMAL" />
     <result column="settle_date" property="settleDate" jdbcType="VARCHAR" />
@@ -100,7 +101,7 @@
   </sql>
   <sql id="Base_Column_List" >
     id, member_id, member_code, merchant_code,route_code, member_trade_rate, money, draw_type,order_code, pt_serial_no,order_num_outer, req_date, 
-    resp_date, resp_type, resp_code, resp_msg, drawAmount, drawFee, tradeFee, settle_date, 
+    resp_date, resp_type, resp_code, resp_msg, drawAmount, drawFee, tradeFee, drawRate,settle_date, 
     create_by, create_date, update_by, update_date, remarks, del_flag,audit_status,audit_by,audit_date,
     bank_name,bank_account,account_name,cert_no,tel,sub_name,sub_id,bank_code
   </sql>
@@ -274,6 +275,9 @@
       <if test="routeCode != null" >
         route_code,
       </if>
+      <if test="drawRate != null" >
+        drawRate,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="memberId != null" >
@@ -384,6 +388,9 @@
       </if>
       <if test="routeCode != null" >
         #{routeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="drawRate != null" >
+        #{drawRate,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>

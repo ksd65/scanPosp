@@ -24,12 +24,16 @@ public class MemberMerchantCode {
 	private String jdMerchantCode;
 	
     private BigDecimal t0DrawFee;
+    
+    private BigDecimal t0DrawRate;
 
     private BigDecimal t0TradeRate;
 
     private BigDecimal t1DrawFee;
 
     private BigDecimal t1TradeRate;
+    
+    private BigDecimal t1DrawRate;
     
     private BigDecimal zfbT0DrawFee;
 
@@ -265,6 +269,22 @@ public class MemberMerchantCode {
 
 	public void setQqT1TradeRate(BigDecimal qqT1TradeRate) {
 		this.qqT1TradeRate = qqT1TradeRate;
+	}
+
+	public BigDecimal getT0DrawRate() {
+		return t0DrawRate;
+	}
+
+	public void setT0DrawRate(BigDecimal t0DrawRate) {
+		this.t0DrawRate = t0DrawRate;
+	}
+
+	public BigDecimal getT1DrawRate() {
+		return t1DrawRate;
+	}
+
+	public void setT1DrawRate(BigDecimal t1DrawRate) {
+		this.t1DrawRate = t1DrawRate;
 	}
     
     

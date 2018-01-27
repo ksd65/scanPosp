@@ -35,6 +35,8 @@ public class RoutewayDraw {
     private BigDecimal drawamount;
 
     private BigDecimal drawfee;
+    
+    private BigDecimal drawRate;
 
     private BigDecimal tradefee;
 
@@ -374,6 +376,15 @@ public class RoutewayDraw {
 	public void setBankCode(String bankCode) {
 		this.bankCode = bankCode;
 	}
+
+	public BigDecimal getDrawRate() {
+		return drawRate;
+	}
+
+	public void setDrawRate(BigDecimal drawRate) {
+		this.drawRate = drawRate;
+	}
     
+	
     
 }

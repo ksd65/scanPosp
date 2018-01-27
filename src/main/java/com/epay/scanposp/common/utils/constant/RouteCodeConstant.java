@@ -24,4 +24,6 @@ public class RouteCodeConstant {
 	
 	public static String ESKHLB_ROUTE_CODE = "1011";//合利宝（易收款）
 	
+	public static String YZF_ROUTE_CODE = "1012";//易支付
+	
 }
