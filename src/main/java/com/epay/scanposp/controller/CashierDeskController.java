@@ -20,6 +20,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.codec.binary.Base64;
@@ -50,6 +51,7 @@ import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.TBConfig;
 import com.epay.scanposp.common.constant.WxConfig;
 import com.epay.scanposp.common.constant.YLConfig;
+import com.epay.scanposp.common.constant.ZHZFConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.DateUtil;
@@ -78,6 +80,7 @@ import com.epay.scanposp.common.utils.slf.vo.QueryResponse;
 import com.epay.scanposp.common.utils.swift.MD5;
 import com.epay.scanposp.common.utils.swift.SignUtils;
 import com.epay.scanposp.common.utils.tb.SignUtil;
+import com.epay.scanposp.common.utils.zhzf.HttpUtils;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
 import com.epay.scanposp.entity.BuAreaCode;
@@ -4620,6 +4623,65 @@ public class CashierDeskController {
 						result.put("oriRespType", "R");
 						result.put("oriRespCode", "000001");
 						result.put("oriRespMsg", "支付中");
+					}else{
+						result.put("oriRespType", "E");
+						result.put("oriRespCode", "000002");
+						result.put("oriRespMsg", "支付失败");
+					}
+		        	
+		        }else{
+		        	result.put("returnCode", "0012");
+					result.put("returnMsg", result_msg);
+		        }
+		        
+			}else if(RouteCodeConstant.ZHZF_ROUTE_CODE.equals(routeCode)){
+				
+				MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return signReturn(result);
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        String serverUrl = ZHZFConfig.msServerUrl + "/orderquery";
+		        
+		        TreeMap<String, Object> map = new TreeMap<>();
+				TreeMap<String, Object> map2 = new TreeMap<>();
+				map.put("mch_id", debitNote.getMerchantCode());
+				map.put("out_order_no", debitNote.getOrderCode());
+				String biz_content = JSONObject.fromObject(map).toString();
+				String strPre = "biz_content=" + biz_content + "&key=" + merchantKey.getPrivateKey();
+				String sign = com.epay.scanposp.common.utils.zhzf.MD5.MD5Encode(strPre).toUpperCase();
+				map2.put("biz_content", biz_content);
+				map2.put("signature", sign);
+				map2.put("sign_type", "MD5");
+				logger.info("综合支付订单查询请求报文[{}]", map2.toString());
+				String respStr = HttpUtils.httpSend(serverUrl,map2);
+				logger.info("综合支付订单查询返回报文[{}]", new Object[] { respStr });
+		        
+		        
+		        JSONObject resultObj = JSONObject.fromObject(respStr);
+		        String result_code = resultObj.getString("ret_code");
+		        String result_msg = resultObj.getString("ret_msg");
+		        
+		        if("0".equals(result_code)){
+		        	String result_content = resultObj.getString("biz_content");
+		        	JSONArray arr = JSONObject.fromObject(result_content).getJSONArray("lists");
+		        	JSONObject obj = arr.getJSONObject(0);
+		        	String trade_state = obj.getString("order_status");
+		        	if("2".equals(trade_state)){
+						result.put("oriRespType", "S");
+						result.put("oriRespCode", "000000");
+						result.put("oriRespMsg", "支付成功");
+						result.put("totalAmount", String.valueOf(Float.parseFloat(obj.getString("payment_fee"))/100.0));
+
+					}else if("1".equals(trade_state)){
+						result.put("oriRespType", "R");
+						result.put("oriRespCode", "000001");
+						result.put("oriRespMsg", "未支付");
 					}else{
 						result.put("oriRespType", "E");
 						result.put("oriRespCode", "000002");

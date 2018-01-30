@@ -6711,7 +6711,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			
 			String callBack = SysConfig.serverUrl + "/debitNote/zhzfH5PayNotify";
-			String serverUrl = ZHZFConfig.msServerUrl;
+			String serverUrl = ZHZFConfig.msServerUrl + "/dopay";
 			
 			TreeMap<String, Object> map = new TreeMap<>();
 			TreeMap<String, Object> map2 = new TreeMap<>();
@@ -6769,7 +6769,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	        if("0".equals(result_code)&&signCheck){
 	        	JSONObject bizObj = JSONObject.fromObject(result_content);
 	        	String payUrl = bizObj.getString("pay_param");
-	        	result.put("payUrl", payUrl);
+	        	result.put("payUrl", payUrl.trim());
 	        	result.put("returnCode", "0000");
 				result.put("returnMsg", "成功");
 	        }else{
@@ -6821,16 +6821,15 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		String respString = "SUCCESS";
 		String res = "";
 		try {
-			String result_code = request.getParameter("ret_code");
-			String result_message = request.getParameter("ret_msg");
-			String sign = request.getParameter("signature");
-			String data = request.getParameter("biz_content");
-			TreeMap<String, Object> rtmap = new TreeMap<String, Object>();
-			rtmap.put("biz_content", data);
-			rtmap.put("ret_code", result_code);
-			rtmap.put("ret_msg", result_message);
-			rtmap.put("signature", sign);
-			logger.info("zhzfH5PayNotify解密回调返回报文[{}]",  JSON.toJSONString(rtmap) );
+			String responseStr = HttpUtil.getPostString(request);
+			//String responseStr = "{\"ret_code\":\"0\",\"ret_msg\":\"交易成功\",\"signature\":\"7A23583A97ABFCB3FC1EDFF3FD160515\",\"biz_content\":{\"create_time\":\"2018-01-30 12:05:21\",\"mch_id\":\"10003862\",\"order_no\":\"81020180130120521818577538560202\",\"out_order_no\":\"20180130120521911276\",\"pay_platform\":\"SQPAY\",\"pay_time\":\"2018-01-30 12:05:44\",\"pay_type\":\"NATIVE\",\"payment_fee\":\"100\"}}";
+			logger.info("zhzfH5PayNotify解密回调返回报文[{}]",  responseStr );
+			JSONObject resJo = JSONObject.fromObject(responseStr);
+			
+			String result_code = resJo.getString("ret_code");
+			String result_message = resJo.getString("ret_msg");
+			String sign = resJo.getString("signature");
+			String data = resJo.getString("biz_content");
 			
             JSONObject map = JSONObject.fromObject(data);
         	String reqMsgId = map.getString("out_order_no");
@@ -6842,6 +6841,9 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
         	bizmap.put("out_order_no", map.getString("out_order_no"));
         	bizmap.put("pay_platform", map.getString("pay_platform"));
         	bizmap.put("pay_time", map.getString("pay_time"));
+        	if(map.containsKey("pay_type")){
+        		bizmap.put("pay_type", map.getString("pay_type"));
+        	}
         	bizmap.put("payment_fee", map.getString("payment_fee"));
         	if(map.containsKey("transaction_id")){
         		bizmap.put("transaction_id", map.getString("transaction_id"));
@@ -6924,7 +6926,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
 					tradeDetail.setDelFlag("0");
 					tradeDetail.setCreateDate(new Date());
-					if ("00".equals(result_code)) {
+					if ("0".equals(result_code)) {
 						debitNote.setStatus("1");
 						tradeDetail.setRespType("S");
 						tradeDetail.setRespCode("000000");
@@ -6970,7 +6972,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 						payResultNotice.setStatus("2");
 						payResultNotice.setPayTime(msResultNotice.getPayTime());
 						payResultNotice.setUpdateDate(new Date());
-						if ("00".equals(result_code)) {
+						if ("0".equals(result_code)) {
 							payResultNotice.setRespType("2");
 							payResultNotice.setResultCode("0000");
 							payResultNotice.setResultMessage("交易成功");
@@ -6985,7 +6987,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 						tradeDetail.setOrderNumOuter(payResultNotice.getOrderNumOuter());
 					}
 					//更改逻辑  只有交易成功的记录才写进交易记录表  单独写在此处防止后面再次更改逻辑会不理解
-					if ("00".equals(result_code)) {
+					if ("0".equals(result_code)) {
 						tradeDetail.setCardType(msResultNotice.getCardType());
 						tradeDetailService.insertSelective(tradeDetail);
 						
