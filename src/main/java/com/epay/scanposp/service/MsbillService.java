@@ -81,7 +81,7 @@ public class MsbillService {
 	@Resource
 	private MemberInfoService memberInfoService;
 
-	@Scheduled(cron = "0 0/5 10 * * ?")
+	//@Scheduled(cron = "0 0/5 10 * * ?")
 	public synchronized void getMsPayBillsTask() {
 		String settleDate = DateUtil.getDateStr(new Date(new Date().getTime() - 24 * 60 * 60 * 1000));
 		getMsPayBillsBySettleDate(settleDate);
@@ -360,19 +360,19 @@ public class MsbillService {
 		}
 	}
 
-	@Scheduled(cron = "0 0/5 10 * * ?")
+	//@Scheduled(cron = "0 0/5 10 * * ?")
 	public synchronized void getMsWithdrawBillsT0() {
 		String settleDate = DateUtil.getDateStr(new Date(new Date().getTime() - 24 * 60 * 60 * 1000));
 		getMsWithdrawBillsT0BySettleDate(settleDate);
 	}
 
-	@Scheduled(cron = "0 0/5 12 * * ?")
+	//@Scheduled(cron = "0 0/5 12 * * ?")
 	public synchronized void getMsWithdrawBillsT1() {
 		String settleDate = DateUtil.getDateStr(new Date(new Date().getTime() - 2*24 * 60 * 60 * 1000));
 		getMsWithdrawBillsT1BySettleDate(settleDate);
 	}
 	
-	@Scheduled(cron = "0 0 10,23 * * ?")
+	//@Scheduled(cron = "0 0 10,23 * * ?")
 	public synchronized void getMsT1SettleFailSchedule() {
 //		System.out.println(DateUtil.getTime());
 		getMsT1SettleFail();

@@ -26,4 +26,6 @@ public class RouteCodeConstant {
 	
 	public static String YZF_ROUTE_CODE = "1012";//易支付
 	
+	public static String ZHZF_ROUTE_CODE = "1013";//综合支付
+	
 }
