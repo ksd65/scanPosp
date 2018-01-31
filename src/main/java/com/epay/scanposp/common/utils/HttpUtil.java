@@ -111,6 +111,7 @@ public class HttpUtil {
 			// 设置请求方式（GET/POST）
 			httpUrlConn.setRequestMethod("POST");
 			httpUrlConn.setConnectTimeout(10000);
+			httpUrlConn.setReadTimeout(30000);
 			// httpUrlConn.setRequestProperty( "Cookie",
 			// "JSESSIONID=62A1A46FD933C9EDC6FCB16E7E4214E9");
 

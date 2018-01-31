@@ -14,11 +14,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.http.NameValuePair;
@@ -36,6 +38,7 @@ import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.SLFConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
+import com.epay.scanposp.common.constant.ZHZFConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.DateUtil;
@@ -60,7 +63,10 @@ import com.epay.scanposp.common.utils.slf.vo.ReceivePayResponse;
 import com.epay.scanposp.common.utils.yzf.AESTool;
 import com.epay.scanposp.common.utils.yzf.Base64Utils;
 import com.epay.scanposp.common.utils.yzf.EncryptUtil;
+import com.epay.scanposp.common.utils.yzf.Md5Utils;
 import com.epay.scanposp.common.utils.yzf.RSATool;
+import com.epay.scanposp.common.utils.zhzf.HttpUtils;
+import com.epay.scanposp.common.utils.zhzf.MD5;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
 import com.epay.scanposp.entity.DebitNote;
@@ -744,6 +750,8 @@ public class BankPayController {
 				obj = receivePay(memberId,String.valueOf(draw.getMoney().doubleValue()-1));
 			}else if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayRf(memberId, String.valueOf(draw.getMoney()), draw);
+			}else if(RouteCodeConstant.ZHZF_ROUTE_CODE.equals(routeCode)){
+				obj = receivePayZhzf(memberId, String.valueOf(draw.getMoney()), draw);
 			}
 			
 			if("0000".equals(obj.getString("returnCode"))){
@@ -769,6 +777,9 @@ public class BankPayController {
 			
 			if(obj.containsKey("reqDate")){
 				draw.setReqDate(obj.getString("reqDate"));
+			}
+			if(obj.containsKey("channel_no")){
+				draw.setChannelNo(obj.getString("channel_no"));
 			}
 			draw.setUpdateDate(new Date());
 			routewayDrawService.updateByPrimaryKey(draw);
@@ -994,6 +1005,120 @@ public class BankPayController {
 	}
 	
 	
+	//综合支付代付
+	public JSONObject receivePayZhzf(String memberId,String payMoney,RoutewayDraw draw){
+		JSONObject result = new JSONObject();
+		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
+			result.put("returnCode", "0005");
+			result.put("returnMsg", "支付金额输入不正确");
+			return result;
+		}
+		
+		if(memberId == null || "".equals(memberId)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户Id缺失");
+			return result;
+		}
+		
+		try{
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(Integer.parseInt(memberId));
+			if(memberInfo == null){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户不存在");
+				return result;
+			}
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(draw.getRouteCode()).andDelFlagEqualTo("0");
+			
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merchantCode.getQqMerchantCode()).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0003");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        
+	        double amount = (new BigDecimal(payMoney)).doubleValue()-merchantCode.getQqT0DrawFee().doubleValue();
+				
+	        MemberMerchantKey merchantKey = keyList.get(0);
+			
+			String orderCode = CommonUtil.getOrderCode();
+			
+			String callBack = SysConfig.serverUrl + "/bankPay/zhzfReceivePayNotify";
+			String serverUrl = "https://rpi.szyinfubao.com/agentpay/pay";
+			
+			TreeMap<String, Object> map = new TreeMap<>();
+			TreeMap<String, Object> map2 = new TreeMap<>();
+			map.put("mch_id", merchantCode.getQqMerchantCode());
+			map.put("out_order_no", orderCode);
+			map.put("payment_fee", String.valueOf((int)(((new BigDecimal(amount)).floatValue())*100)));
+			map.put("payee_acct_no", draw.getBankAccount());
+			map.put("payee_acct_name", draw.getAccountName());
+			map.put("card_type", "1");//1、借记卡 2、贷记卡
+			map.put("payee_acct_type", "1");//1、对私 2、对公
+			map.put("settle_type", "1");//0、T1 1、D0
+			map.put("notify_url", callBack);
+			map.put("idcard_no", draw.getCertNo());
+			map.put("mobile", draw.getTel());
+			String bankCode = draw.getBankCode();
+			if("BCOM".equals(bankCode)){
+				bankCode = "COMM_DEBIT";
+			}else if("PABC".equals(bankCode)){
+				bankCode = "PAB_DEBIT";
+			}else{
+				bankCode = bankCode + "_DEBIT";
+			}
+			map.put("bank_code", bankCode);
+			
+			String biz_content = JSONObject.fromObject(map).toString();
+			String strPre = "biz_content=" + biz_content + "&key=" + merchantKey.getPrivateKey();
+			String sign = MD5.MD5Encode(strPre).toUpperCase();
+			
+			map2.put("biz_content", biz_content);
+			map2.put("signature", sign);
+			map2.put("sign_type", "MD5");
+			logger.info("综合支付代付请求报文[{}]", map2.toString());
+			String respStr = HttpUtils.httpSend(serverUrl,map2);
+		//	String respStr = "{\"biz_content\":{\"mch_id\":\"10003862\",\"order_no\":\"81020180130182244855358195713201\",\"out_order_no\":\"20180130182232707596\"},\"ret_code\":\"0\",\"ret_msg\":\"success\"}";
+			logger.info("综合支付代付请求报文[{}]", new Object[] { respStr });
+			
+			JSONObject resultObj = JSONObject.fromObject(respStr);
+	        String result_code = resultObj.getString("ret_code");
+	        String result_msg = resultObj.getString("ret_msg");
+			
+			String reqDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			
+			
+			if("0".equals(result_code)){
+				String result_content = resultObj.getString("biz_content");
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "请求成功");
+				result.put("channel_no", JSONObject.fromObject(result_content).getString("order_no"));
+			}else{
+				result.put("returnCode", "0001");
+				result.put("returnMsg", result_msg);
+				result.put("respCode", result_code);
+				result.put("respMsg", result_msg);
+			}
+			result.put("orderCode", orderCode);
+			result.put("merchantCode", merchantCode.getQqMerchantCode());
+			result.put("reqDate", reqDate);
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
 	
 	
 	
@@ -1610,18 +1735,76 @@ public class BankPayController {
 					if("0000".equals(code)){
 						if("0000".equals(resObj.getString("settleStatus"))){
 							draw.setRespType("S");
+							draw.setRespCode("000");
 						}else if("0001".equals(resObj.getString("settleStatus"))){
 							draw.setRespType("E");
+							draw.setRespCode(resObj.getString("settleStatus"));
 						}
-						draw.setRespCode(resObj.getString("settleStatus"));
 						draw.setRespMsg(resObj.getString("settleMemo"));
 						draw.setRespDate(resObj.getString("settleTime"));
 						draw.setUpdateDate(new Date());
 						routewayDrawService.updateByPrimaryKey(draw);
 					}
+				}else if(RouteCodeConstant.ZHZF_ROUTE_CODE.equals(routeCode)){
 					
+					MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+			        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+			        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+			        if(keyList == null || keyList.size()!=1){
+			        	result.put("returnCode", "0008");
+						result.put("returnMsg", "商户私钥未配置");
+						return signReturn(result);
+			        }
+			        MemberMerchantKey merchantKey = keyList.get(0);
+			        
+			        String serverUrl = "https://rpi.szyinfubao.com/agentpay/query";
+			        TreeMap<String, Object> map = new TreeMap<>();
+					TreeMap<String, Object> map2 = new TreeMap<>();
+					map.put("mch_id", draw.getMerchantCode());
+					map.put("order_no", draw.getChannelNo());
 					
+					String biz_content = JSONObject.fromObject(map).toString();
+					String strPre = "biz_content=" + biz_content + "&key=" + merchantKey.getPrivateKey();
+					String sign = MD5.MD5Encode(strPre).toUpperCase();
+					map2.put("biz_content", biz_content);
+					map2.put("signature", sign);
+					map2.put("sign_type", "MD5");
+					logger.info("综合支付代付查询请求报文[{}]", map2.toString());
+					String respStr = HttpUtils.httpSend(serverUrl,map2);
+					logger.info("综合支付代付查询返回报文[{}]", new Object[] { respStr });
+			        
+					JSONObject resObj = JSONObject.fromObject(respStr);
+					String code = resObj.getString("ret_code");
 					
+			     	if("0".equals(code)){
+						String result_content = resObj.getString("biz_content");
+						
+						String str = "biz_content="+result_content+"&key=" + merchantKey.getPrivateKey();
+			        	String strSign = MD5.MD5Encode(str).toUpperCase();
+			        	if(strSign.equals(resObj.getString("signature"))){
+			        		JSONArray arr = JSONObject.fromObject(result_content).getJSONArray("lists");
+				        	JSONObject obj = arr.getJSONObject(0);
+				        	String order_status = obj.getString("order_status");
+							if("2".equals(order_status)){
+								draw.setRespType("S");
+								draw.setRespCode("000");
+							}else if("3".equals(order_status)){
+								draw.setRespType("E");
+								draw.setRespCode(order_status);
+							}
+							
+							if(obj.containsKey("err_msg")){
+								draw.setRespMsg(obj.getString("err_msg"));
+							}
+							if(obj.containsKey("pay_time")){
+								draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("pay_time"))));
+							}else{
+								draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+							}
+							draw.setUpdateDate(new Date());
+							routewayDrawService.updateByPrimaryKey(draw);
+			        	}
+					}
 				}
 				
 			}
@@ -1769,4 +1952,122 @@ public class BankPayController {
 		result.put("signStr", EpaySignUtil.sign(SysConfig.platPrivateKey, rtSrc));
 		return result;
 	}
+	
+	//综合支付代付回调通知
+	@RequestMapping("/bankPay/zhzfReceivePayNotify")
+	public void zhzfReceivePayNotify(HttpServletRequest request,HttpServletResponse response) {
+		String respString = "SUCCESS";
+		String res = "";
+		try {
+			String responseStr = HttpUtil.getPostString(request);
+			//String responseStr = "{\"ret_code\":\"0\",\"ret_msg\":\"交易成功\",\"signature\":\"7A23583A97ABFCB3FC1EDFF3FD160515\",\"biz_content\":{\"create_time\":\"2018-01-30 12:05:21\",\"mch_id\":\"10003862\",\"order_no\":\"81020180130120521818577538560202\",\"out_order_no\":\"20180130120521911276\",\"pay_platform\":\"SQPAY\",\"pay_time\":\"2018-01-30 12:05:44\",\"pay_type\":\"NATIVE\",\"payment_fee\":\"100\"}}";
+			logger.info("zhzfReceivePayNotify回调通知报文[{}]",  responseStr );
+			JSONObject resJo = JSONObject.fromObject(responseStr);
+			
+			String result_code = resJo.getString("ret_code");
+			String result_message = "";
+			if(resJo.containsKey("ret_msg")){
+				result_message = resJo.getString("ret_msg");
+			}
+			String sign = "";
+			if(resJo.containsKey("signature")){
+				sign = resJo.getString("signature");
+			}
+			String data = "";
+			if(resJo.containsKey("biz_content")){
+				data = resJo.getString("biz_content");
+			}
+			if(!StringUtil.isEmpty(data)){
+				JSONObject map = JSONObject.fromObject(data);
+	        	String reqMsgId = map.getString("out_order_no");
+	        	
+	        	TreeMap<String, String> bizmap = new TreeMap<String, String>();
+	        	bizmap.put("create_time", map.getString("create_time"));
+	        	bizmap.put("mch_id", map.getString("mch_id"));
+	        	bizmap.put("order_no", map.getString("order_no"));
+	        	bizmap.put("out_order_no", map.getString("out_order_no"));
+	        	if(map.containsKey("pay_platform")){
+	        		bizmap.put("pay_platform", map.getString("pay_platform"));
+	        	}
+	        	bizmap.put("pay_time", map.getString("pay_time"));
+	        	if(map.containsKey("pay_type")){
+	        		bizmap.put("pay_type", map.getString("pay_type"));
+	        	}
+	        	bizmap.put("payment_fee", map.getString("payment_fee"));
+	        	if(map.containsKey("transaction_id")){
+	        		bizmap.put("transaction_id", map.getString("transaction_id"));
+	        	}
+	        	String result_content = JSONObject.fromObject(bizmap).toString();
+				
+	        	RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
+				routewayDrawExample.createCriteria().andOrderCodeEqualTo(reqMsgId).andDelFlagEqualTo("0");
+				List<RoutewayDraw> routeWayDrawList = routewayDrawService.selectByExample(routewayDrawExample);
+				if(routeWayDrawList==null || routeWayDrawList.size()==0){
+					res = "订单不存在";
+	                respString = "FAIL";
+	                logger.info(res);
+	                response.getWriter().write(respString);
+	        		return;
+				}
+				
+				RoutewayDraw draw = routeWayDrawList.get(0);
+				if("R".equals(draw.getRespType())){
+					MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+			        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.ZHZF_ROUTE_CODE).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+			        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+			        if(keyList == null || keyList.size()!=1){
+			        	res = "商户私钥未配置";
+		                respString = "FAIL";
+		                logger.info(res);
+		                response.getWriter().write(respString);
+		        		return;
+			        	
+			        }
+			        
+			        String str = "biz_content="+result_content+"&key=" + keyList.get(0).getPrivateKey();
+		        	String strSign = MD5.MD5Encode(str).toUpperCase();
+		            if (!sign.equals(strSign)){
+		        	   System.out.println("待加密串："+str);
+		        	   System.out.println("加密结果："+strSign);
+		        	   res = "验证签名不通过";
+		               respString = "FAIL";
+		               logger.info(res);
+		               response.getWriter().write(respString);
+		               return;
+		            }
+			        
+		            if("0".equals(result_code)){
+						draw.setRespType("S");
+						draw.setRespCode("000");
+					}else{
+						draw.setRespType("E");
+						draw.setRespCode(result_code);
+					}
+		            draw.setRespMsg(result_message);
+		            
+					if(bizmap.containsKey("pay_time")){
+						draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(bizmap.get("pay_time"))));
+					}else{
+						draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+					}
+					draw.setUpdateDate(new Date());
+					routewayDrawService.updateByPrimaryKey(draw);
+					
+				}
+			}
+                    
+        } catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+		try {
+			response.getWriter().write(respString);
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+
+	}
+	
+	
 }

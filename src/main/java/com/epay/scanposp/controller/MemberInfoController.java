@@ -496,7 +496,7 @@ public class MemberInfoController {
 				resData.put("balance", new DecimalFormat("0.00").format(balance));
 				resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
 				resData.put("canDrawMoneyCount", new DecimalFormat("0.00").format(canDrawMoneyCount));
-				resData.put("drawFee", new DecimalFormat("#.00").format(drawFee));
+				resData.put("drawFee", new DecimalFormat("0.00").format(drawFee));
 				result.put("resData", resData);
 			}
 			result.put("returnCode", "0000");
@@ -844,6 +844,14 @@ public class MemberInfoController {
 			}
 			if(reqDataJson.containsKey("bankCode")){
 				routewayDraw.setBankCode(reqDataJson.getString("bankCode"));
+			}
+			
+			if(reqDataJson.containsKey("certNo")){
+				routewayDraw.setCertNo(reqDataJson.getString("certNo"));
+			}
+			
+			if(reqDataJson.containsKey("mobilePhone")){
+				routewayDraw.setTel(reqDataJson.getString("mobilePhone"));
 			}
 			
 			routewayDrawService.insertSelective(routewayDraw);

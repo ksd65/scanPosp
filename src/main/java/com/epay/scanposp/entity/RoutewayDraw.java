@@ -21,6 +21,8 @@ public class RoutewayDraw {
     private String orderCode;
 
     private String ptSerialNo;
+    
+    private String channelNo;
 
     private String reqDate;
 
@@ -383,6 +385,14 @@ public class RoutewayDraw {
 
 	public void setDrawRate(BigDecimal drawRate) {
 		this.drawRate = drawRate;
+	}
+
+	public String getChannelNo() {
+		return channelNo;
+	}
+
+	public void setChannelNo(String channelNo) {
+		this.channelNo = channelNo;
 	}
     
 	
