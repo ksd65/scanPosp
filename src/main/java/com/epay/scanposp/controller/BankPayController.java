@@ -1960,7 +1960,7 @@ public class BankPayController {
 		String res = "";
 		try {
 			String responseStr = HttpUtil.getPostString(request);
-			//String responseStr = "{\"ret_code\":\"0\",\"ret_msg\":\"交易成功\",\"signature\":\"7A23583A97ABFCB3FC1EDFF3FD160515\",\"biz_content\":{\"create_time\":\"2018-01-30 12:05:21\",\"mch_id\":\"10003862\",\"order_no\":\"81020180130120521818577538560202\",\"out_order_no\":\"20180130120521911276\",\"pay_platform\":\"SQPAY\",\"pay_time\":\"2018-01-30 12:05:44\",\"pay_type\":\"NATIVE\",\"payment_fee\":\"100\"}}";
+			//String responseStr = "{\"ret_code\":\"0\",\"ret_msg\":\"交易成功\",\"signature\":\"78C88192D3E53F78416232595A3841B2\",\"biz_content\":{\"create_time\":\"2018-01-31 10:59:34\",\"mch_id\":\"10003862\",\"order_no\":\"81020180131105934380692339712201\",\"order_status\":\"2\",\"out_order_no\":\"20180131105933809173\",\"pay_time\":\"2018-01-31 11:05:02\",\"payment_fee\":\"500\"}}";
 			logger.info("zhzfReceivePayNotify回调通知报文[{}]",  responseStr );
 			JSONObject resJo = JSONObject.fromObject(responseStr);
 			
@@ -1996,6 +1996,9 @@ public class BankPayController {
 	        	bizmap.put("payment_fee", map.getString("payment_fee"));
 	        	if(map.containsKey("transaction_id")){
 	        		bizmap.put("transaction_id", map.getString("transaction_id"));
+	        	}
+	        	if(map.containsKey("order_status")){
+	        		bizmap.put("order_status", map.getString("order_status"));
 	        	}
 	        	String result_content = JSONObject.fromObject(bizmap).toString();
 				
@@ -2035,25 +2038,26 @@ public class BankPayController {
 		               response.getWriter().write(respString);
 		               return;
 		            }
-			        
 		            if("0".equals(result_code)){
-						draw.setRespType("S");
-						draw.setRespCode("000");
-					}else{
-						draw.setRespType("E");
-						draw.setRespCode(result_code);
-					}
-		            draw.setRespMsg(result_message);
-		            
-					if(bizmap.containsKey("pay_time")){
-						draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(bizmap.get("pay_time"))));
-					}else{
-						draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
-					}
-					draw.setUpdateDate(new Date());
-					routewayDrawService.updateByPrimaryKey(draw);
-					
-				}
+		        		 String order_status = bizmap.get("order_status"); 
+			             if("2".equals(order_status)){
+			            	draw.setRespType("S");
+							draw.setRespCode("000");
+						 }else if("3".equals(order_status)){
+							draw.setRespType("E");
+							draw.setRespCode(result_code);
+						 }
+			             draw.setRespMsg(result_message);
+			            
+						 if(bizmap.containsKey("pay_time")){
+							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(bizmap.get("pay_time"))));
+						 }else{
+							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+						 }
+						 draw.setUpdateDate(new Date());
+						 routewayDrawService.updateByPrimaryKey(draw);
+		        	 }
+		        }
 			}
                     
         } catch (Exception e) {

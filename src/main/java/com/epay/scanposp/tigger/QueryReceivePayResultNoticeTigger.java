@@ -7,7 +7,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeMap;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.http.NameValuePair;
@@ -34,6 +36,8 @@ import com.epay.scanposp.common.utils.yzf.AESTool;
 import com.epay.scanposp.common.utils.yzf.Base64Utils;
 import com.epay.scanposp.common.utils.yzf.EncryptUtil;
 import com.epay.scanposp.common.utils.yzf.RSATool;
+import com.epay.scanposp.common.utils.zhzf.HttpUtils;
+import com.epay.scanposp.common.utils.zhzf.MD5;
 import com.epay.scanposp.entity.MemberMerchantKey;
 import com.epay.scanposp.entity.MemberMerchantKeyExample;
 import com.epay.scanposp.entity.RoutewayDraw;
@@ -230,7 +234,64 @@ public class QueryReceivePayResultNoticeTigger {
 							draw.setUpdateDate(new Date());
 							routewayDrawService.updateByPrimaryKey(draw);
 						}
-					}
+					}else if(RouteCodeConstant.ZHZF_ROUTE_CODE.equals(routeCode)){
+						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+				        if(keyList == null || keyList.size()!=1){
+				        	continue;
+				        }
+				        MemberMerchantKey merchantKey = keyList.get(0);
+				        
+				        String serverUrl = "https://rpi.szyinfubao.com/agentpay/query";
+				        TreeMap<String, Object> map = new TreeMap<>();
+						TreeMap<String, Object> map2 = new TreeMap<>();
+						map.put("mch_id", draw.getMerchantCode());
+						map.put("order_no", draw.getChannelNo());
+						
+						String biz_content = JSONObject.fromObject(map).toString();
+						String strPre = "biz_content=" + biz_content + "&key=" + merchantKey.getPrivateKey();
+						String sign = MD5.MD5Encode(strPre).toUpperCase();
+						map2.put("biz_content", biz_content);
+						map2.put("signature", sign);
+						map2.put("sign_type", "MD5");
+						logger.info("综合支付代付查询请求报文[{}]", map2.toString());
+						String respStr = HttpUtils.httpSend(serverUrl,map2);
+						logger.info("综合支付代付查询返回报文[{}]", new Object[] { respStr });
+				        
+						JSONObject resObj = JSONObject.fromObject(respStr);
+						String code = resObj.getString("ret_code");
+						
+				     	if("0".equals(code)){
+							String result_content = resObj.getString("biz_content");
+							
+							String str = "biz_content="+result_content+"&key=" + merchantKey.getPrivateKey();
+				        	String strSign = MD5.MD5Encode(str).toUpperCase();
+				        	if(strSign.equals(resObj.getString("signature"))){
+				        		JSONArray arr = JSONObject.fromObject(result_content).getJSONArray("lists");
+					        	JSONObject obj = arr.getJSONObject(0);
+					        	String order_status = obj.getString("order_status");
+								if("2".equals(order_status)){
+									draw.setRespType("S");
+									draw.setRespCode("000");
+								}else if("3".equals(order_status)){
+									draw.setRespType("E");
+									draw.setRespCode(order_status);
+								}
+								
+								if(obj.containsKey("err_msg")){
+									draw.setRespMsg(obj.getString("err_msg"));
+								}
+								if(obj.containsKey("pay_time")){
+									draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("pay_time"))));
+								}else{
+									draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+								}
+								draw.setUpdateDate(new Date());
+								routewayDrawService.updateByPrimaryKey(draw);
+				        	}
+						}
+				    }
 					
 				}
 			}
