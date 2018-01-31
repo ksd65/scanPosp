@@ -28,4 +28,6 @@ public class RouteCodeConstant {
 	
 	public static String ZHZF_ROUTE_CODE = "1013";//综合支付
 	
+	public static String HX_ROUTE_CODE = "1014";//环迅支付
+	
 }
