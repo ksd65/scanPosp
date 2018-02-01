@@ -2839,7 +2839,7 @@ public class DebitNoteController {
 			
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(debitNote.getMemberId());
 			String routeCode = debitNote.getRouteId();
-			if(!RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)&&!RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
+			if(!RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)&&!RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)&&!RouteCodeConstant.POSP_ROUTE_CODE.equals(routeCode)){
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
 				if (serverUrl.startsWith("https://ipay")) {
@@ -2902,7 +2902,65 @@ public class DebitNoteController {
 					JSONObject resEntity = respJSONObject.getJSONObject("resEntity");
 						result.put("resData", resEntity);
 				}
-			}else{
+			}else if(RouteCodeConstant.POSP_ROUTE_CODE.equals(routeCode)){
+				
+				MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return result;
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        String serverUrl = POSPConfig.msServerUrl;
+		        
+		        
+		        Map<String, String> params = new HashMap<String, String>();
+				params.put("order_no", debitNote.getOrderCode());
+				
+				params = ApiUtils.formatRequestParams("charge.query", params, merchantKey.getAppId(), merchantKey.getPrivateKey());
+				logger.info("POSP网关订单查询请求报文[{}]", JSONObject.fromObject(params).toString());
+				String respString = com.epay.scanposp.common.utils.posp.HttpUtils.doPost(serverUrl, params, 60000, 60000);
+				logger.info("POSP网关订单查询返回报文[{}]", new Object[] { respString });
+				
+		       
+		        
+		        JSONObject resultObj = JSONObject.fromObject(respString);
+		        
+		        String result_code = resultObj.getString("code");
+		        String result_msg = resultObj.getString("message");
+		        
+		        String result_content = "";
+		        if(resultObj.containsKey("data")){
+		        	result_content = resultObj.getString("data");
+		        }
+		        if("0".equals(result_code)){
+		        	JSONObject bizObj = JSONObject.fromObject(result_content);
+		        	JSONObject resEntity = new JSONObject();
+		        	//if("00".equals(bizObj.getString("failure_code"))){
+	        		if(bizObj.getInt("status")==20&&bizObj.getInt("paid")==1){
+	        			resEntity.put("oriRespType", "S");
+	        			resEntity.put("oriRespCode", "000000");
+	        			resEntity.put("oriRespMsg", "支付成功");
+	        			resEntity.put("totalAmount", String.valueOf(Float.parseFloat(bizObj.getString("amount"))/100.0));
+	        		}else if(bizObj.getInt("status")==10&&bizObj.getInt("paid")==0){
+	        			resEntity.put("oriRespType", "R");
+	        			resEntity.put("oriRespCode", "000001");
+	        			resEntity.put("oriRespMsg", "未支付");
+	        		}else{
+	        			resEntity.put("oriRespType", "E");
+	        			resEntity.put("oriRespCode", "000002");
+	        			resEntity.put("oriRespMsg", "支付失败");
+					}
+	        		result.put("resData", resEntity);
+		        	
+		        }else{
+		        	result.put("returnCode", "0012");
+					result.put("returnMsg", result_msg);
+		        }
+		    }else{
 				
 				// 调用支付通道
 				String serverUrl = ESKConfig.msServerUrl;
