@@ -30,4 +30,6 @@ public class RouteCodeConstant {
 	
 	public static String HX_ROUTE_CODE = "1014";//环迅支付
 	
+	public static String POSP_ROUTE_CODE = "1015";//环迅支付
+	
 }
