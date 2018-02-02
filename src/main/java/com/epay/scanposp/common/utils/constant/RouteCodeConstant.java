@@ -32,4 +32,14 @@ public class RouteCodeConstant {
 	
 	public static String POSP_ROUTE_CODE = "1015";//环迅支付
 	
+	public static String ESKHMF_ROUTE_CODE = "1016";//河马付（易收款）
+	
+	public static String ESKDBQ_ROUTE_CODE = "1017";//点百趣（易收款）
+	
+	public static String ESKZX_ROUTE_CODE = "1018";//祯祥（易收款）
+	
+	public static String ESKYL_ROUTE_CODE = "1019";//云路（易收款）
+	
+	public static String WW_ROUTE_CODE = "1020";//微微
+	
 }
