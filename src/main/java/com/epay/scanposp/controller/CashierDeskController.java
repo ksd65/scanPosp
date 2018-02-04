@@ -60,6 +60,7 @@ import com.epay.scanposp.common.utils.FileUtil;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.IdcardValidator;
 import com.epay.scanposp.common.utils.JsonBeanReleaseUtil;
+import com.epay.scanposp.common.utils.Probability;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
@@ -113,7 +114,11 @@ import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.PayType;
+import com.epay.scanposp.entity.PayTypeDefault;
+import com.epay.scanposp.entity.PayTypeDefaultExample;
 import com.epay.scanposp.entity.PayTypeExample;
+import com.epay.scanposp.entity.PayTypeRule;
+import com.epay.scanposp.entity.PayTypeRuleExample;
 import com.epay.scanposp.entity.RegisterTmp;
 import com.epay.scanposp.entity.RouteWay;
 import com.epay.scanposp.entity.RouteWayExample;
@@ -122,6 +127,8 @@ import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.StTradeDetail;
 import com.epay.scanposp.entity.StTradeDetailAll;
 import com.epay.scanposp.entity.StTradeDetailExample;
+import com.epay.scanposp.entity.SysCommonConfig;
+import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
@@ -146,6 +153,8 @@ import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.PayRouteService;
+import com.epay.scanposp.service.PayTypeDefaultService;
+import com.epay.scanposp.service.PayTypeRuleService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RegisterTmpService;
 import com.epay.scanposp.service.RouteWayService;
@@ -259,6 +268,12 @@ public class CashierDeskController {
 	@Resource
 	private PayResultNotifyService payResultNotifyService;
 	
+	@Resource
+	private PayTypeRuleService payTypeRuleService;
+	
+	@Resource
+	private PayTypeDefaultService payTypeDefaultService;
+	
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/getQrcodePay")
@@ -269,7 +284,7 @@ public class CashierDeskController {
 		String payType = reqDataJson.getString("payType");
 		String orderNum = reqDataJson.getString("orderNum");
 		String memberCode = reqDataJson.getString("memberCode");
-		String isMoneyFilled = reqDataJson.getString("isMoneyFilled");
+		String ip = reqDataJson.getString("ip");
 		String callbackUrl = reqDataJson.getString("callbackUrl");
 		String platformType = reqDataJson.getString("platformType");
 		String signStr = reqDataJson.getString("signStr");
@@ -287,13 +302,13 @@ public class CashierDeskController {
 			return result;
 		}
 		srcStr.append("callbackUrl="+callbackUrl);
-		if("1".equals(isMoneyFilled) || "0".equals(isMoneyFilled)){
-			srcStr.append("&isMoneyFilled="+isMoneyFilled);
-		}else{
+		
+		if(ip == null || "".equals(ip)){
 			result.put("returnCode", "0007");
-			result.put("returnMsg", "订单金额传送标志isMoneyFilled参数值错误");
+			result.put("returnMsg", "IP缺失");
 			return result;
 		}
+		srcStr.append("&ip="+ip);
 		
 		if(memberCode == null || "".equals(memberCode)){
 			result.put("returnCode", "0007");
@@ -312,15 +327,12 @@ public class CashierDeskController {
 			return result;
 		}
 		srcStr.append("&orderNum="+orderNum);
-		if("1".equals(isMoneyFilled)){
-			srcStr.append("&payMoney="+payMoney);
-		}
+		srcStr.append("&payMoney="+payMoney);
 		if(!"1".equals(platformType) && !"2".equals(platformType)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "收银台平台类型错误或缺失");
 			return result;
 		}
-		srcStr.append("&platformType="+platformType);
 		
 		if(signStr == null || "".equals(signStr)){ 
 			result.put("returnCode", "0007");
@@ -328,13 +340,13 @@ public class CashierDeskController {
 			return result;
 		}
 		
-		if(!"1".equals(payType) && !"2".equals(payType)){
+		if(!"1".equals(payType) && !"2".equals(payType)&&!"3".equals(payType) && !"5".equals(payType)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "支付方式异常");
 			return result;
 		}
-		
-		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, platformType, payType, srcStr.toString(), signStr, callbackUrl ,CommonUtil.getRemoteHost(request));
+		srcStr.append("&payType="+payType);
+		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, platformType, payType, srcStr.toString(), signStr, callbackUrl ,ip);
 		
 		return result;
 	}
@@ -348,6 +360,7 @@ public class CashierDeskController {
 		String memberCode = request.getParameter("memberCode");
 		String callbackUrl = request.getParameter("callbackUrl");
 		String signStr = request.getParameter("signStr");
+		String ip = request.getParameter("ip");
 		
 		StringBuilder srcStr = new StringBuilder();
 		JSONObject result = new JSONObject();
@@ -358,6 +371,13 @@ public class CashierDeskController {
 		}
 		srcStr.append("callbackUrl="+callbackUrl);
 		
+		if(ip == null || "".equals(ip)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "IP缺失");
+			return signReturn(result);
+		}
+		srcStr.append("&ip="+ip);
+		
 		if(memberCode == null || "".equals(memberCode)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "商户号缺失");
@@ -366,7 +386,7 @@ public class CashierDeskController {
 		srcStr.append("&memberCode="+memberCode);
 		if(orderNum == null || "".equals(orderNum)){
 			result.put("returnCode", "0007");
-			result.put("returnMsg", "平台订单号缺失");
+			result.put("returnMsg", "商户订单号缺失");
 			return signReturn(result);
 		}
 		if(orderNum.length() > 32){
@@ -395,7 +415,7 @@ public class CashierDeskController {
 			return signReturn(result);
 		}
 		
-		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3", payType, srcStr.toString(), signStr, callbackUrl ,CommonUtil.getRemoteHost(request));
+		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3", payType, srcStr.toString(), signStr, callbackUrl ,ip);
 		
 		return signReturn(result);
 	}
@@ -769,7 +789,12 @@ public class CashierDeskController {
 					debitNoteService.updateByPrimaryKey(debitNote);
 					
 					MsResultNotice msResultNotice = new MsResultNotice();
-					msResultNotice.setMoney(new BigDecimal(respJSONObject.getString("buyerPayAmount")));
+					if(respJSONObject.containsKey("buyerPayAmount")){
+						msResultNotice.setMoney(new BigDecimal(respJSONObject.getString("buyerPayAmount")));
+					}else{
+						msResultNotice.setMoney(debitNote.getMoney());
+					}
+					
 					msResultNotice.setOrderCode(reqMsgId);
 					msResultNotice.setPtSerialNo(respJSONObject.getString("OrderNo"));
 					String respTime = respJSONObject.getString("respTime");
@@ -1140,6 +1165,8 @@ public class CashierDeskController {
 			payTypeStr = "ZFB";
 		}else if("3".equals(payType)){
 			payTypeStr = "QQ";
+		}else if("5".equals(payType)){
+			payTypeStr = "JD";
 		}
 		
 		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_SMZF,payTypeStr);
@@ -1159,6 +1186,160 @@ public class CashierDeskController {
 		}
 		
 		MemberMerchantCode merchantCode = merchantCodes.get(0);
+		if("1".equals(payType)){
+			if(merchantCode.getWxMerchantCode()==null || "".equals(merchantCode.getWxMerchantCode())){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+		}else if("2".equals(payType)){
+			if(merchantCode.getZfbMerchantCode()==null || "".equals(merchantCode.getZfbMerchantCode())){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+		}else if("3".equals(payType)){
+			if(merchantCode.getQqMerchantCode()==null || "".equals(merchantCode.getQqMerchantCode())){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+		}else if("5".equals(payType)){
+			if(merchantCode.getJdMerchantCode()==null || "".equals(merchantCode.getJdMerchantCode())){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+		}
+		
+		
+		boolean merchantFlag = false;
+		PayTypeDefaultExample payTypeDefaultExample = new PayTypeDefaultExample();
+		payTypeDefaultExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_SMZF).andPayTypeEqualTo(payTypeStr).andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+		List<PayTypeDefault> payTypeDefaultList = payTypeDefaultService.selectByExample(payTypeDefaultExample);
+		if(payTypeDefaultList == null || payTypeDefaultList.size()==0){
+			payTypeDefaultExample = new PayTypeDefaultExample();
+			payTypeDefaultExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_SMZF).andPayTypeEqualTo(payTypeStr).andMemberIdEqualTo(0).andDelFlagEqualTo("0");
+			payTypeDefaultList = payTypeDefaultService.selectByExample(payTypeDefaultExample);
+		}
+		
+		if(payTypeDefaultList == null || payTypeDefaultList.size()==0){//走概率计算
+			PayTypeRuleExample payTypeRuleExample = new PayTypeRuleExample();
+			
+			boolean memberType = false;
+			payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_SMZF).andPayTypeEqualTo(payTypeStr).andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
+			List<PayTypeRule> memPayTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
+			if(memPayTypeRuleList !=null && memPayTypeRuleList.size()>0){
+				memberType = true;
+			}
+			
+			String time = DateFormatUtils.format(new Date(), "HHmmss");
+			Integer ruleMemberId = 0;
+			if(memberType){
+				logger.info(orderNum+"进入指定商户规则概率计算");
+				ruleMemberId = memberInfo.getId();
+			}
+			if(StringUtil.isRealDouble(payMoney)){//订单金额有小数点
+				payTypeRuleExample = new PayTypeRuleExample();
+				payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_SMZF).andPayTypeEqualTo(payTypeStr).andMemberIdEqualTo(ruleMemberId).andRuleTypeEqualTo("3").andMinMoneyLessThan(new BigDecimal(payMoney)).andMaxMoneyGreaterThanOrEqualTo(new BigDecimal(payMoney)).andBeginTimeLessThanOrEqualTo(time).andEndTimeGreaterThanOrEqualTo(time).andDelFlagEqualTo("0");//小数点金额概率规则
+				payTypeRuleExample.setOrderByClause(" id asc ");
+				List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
+				if(payTypeRuleList !=null && payTypeRuleList.size()>0){
+					logger.info(orderNum+"进入小数点规则概率计算");
+					List<Map<String,Object>> rateList=new ArrayList<>();
+		            for(int i=0;i<payTypeRuleList.size();i++){
+						Map<String, Object> rateMap = new HashMap<String, Object>();
+						rateMap.put("rate", payTypeRuleList.get(i).getRuleRate().doubleValue());
+						rateList.add(rateMap);
+					}
+		            int index = Probability.getProbabilityRange(rateList);
+		            if(index >= payTypeRuleList.size()){
+		            	logger.info(orderNum+"不在小数点规则概率计算范围内");
+		            }else{
+		            	PayTypeRule payTypeRule = payTypeRuleList.get(index);
+		            	logger.info(orderNum+"小数点规则概率计算商户编码："+payTypeRule.getMerchantCode()+"，通道编码："+payTypeRule.getRouteCode());
+		            	if("1".equals(payType)){
+		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("3".equals(payType)){
+		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}
+		            	routeCode = payTypeRule.getRouteCode();
+		            	aisleType = payTypeRule.getAisleType();
+		            	merchantFlag = true;
+		            }
+				}
+			}
+			
+			if(!merchantFlag){
+				payTypeRuleExample = new PayTypeRuleExample();
+				payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_SMZF).andPayTypeEqualTo(payTypeStr).andMemberIdEqualTo(ruleMemberId).andRuleTypeEqualTo("2").andMinMoneyLessThan(new BigDecimal(payMoney)).andMaxMoneyGreaterThanOrEqualTo(new BigDecimal(payMoney)).andBeginTimeLessThanOrEqualTo(time).andEndTimeGreaterThanOrEqualTo(time).andDelFlagEqualTo("0");//金额概率规则
+				payTypeRuleExample.setOrderByClause(" id asc ");
+				List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
+				if(payTypeRuleList !=null && payTypeRuleList.size()>0){
+					logger.info(orderNum+"进入金额规则概率计算");
+					List<Map<String,Object>> rateList=new ArrayList<>();
+		            for(int i=0;i<payTypeRuleList.size();i++){
+						Map<String, Object> rateMap = new HashMap<String, Object>();
+						rateMap.put("rate", payTypeRuleList.get(i).getRuleRate().doubleValue());
+						rateList.add(rateMap);
+					}
+		            int index = Probability.getProbabilityRange(rateList);
+		            if(index >= payTypeRuleList.size()){
+		            	logger.info(orderNum+"不在金额规则概率计算范围内");
+		            }else{
+		            	PayTypeRule payTypeRule = payTypeRuleList.get(index);
+		            	logger.info(orderNum+"金额规则概率计算商户编码："+payTypeRule.getMerchantCode()+"，通道编码："+payTypeRule.getRouteCode());
+		            	if("1".equals(payType)){
+		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("3".equals(payType)){
+		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}
+		            	routeCode = payTypeRule.getRouteCode();
+		            	aisleType = payTypeRule.getAisleType();
+		            	merchantFlag = true;
+		            }
+				}
+			}
+			
+			if(!merchantFlag){
+				payTypeRuleExample = new PayTypeRuleExample();
+				payTypeRuleExample.createCriteria().andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_SMZF).andPayTypeEqualTo(payTypeStr).andMemberIdEqualTo(ruleMemberId).andRuleTypeEqualTo("1").andBeginTimeLessThanOrEqualTo(time).andEndTimeGreaterThanOrEqualTo(time).andDelFlagEqualTo("0");//默认规则
+				payTypeRuleExample.setOrderByClause(" id asc ");
+				List<PayTypeRule> payTypeRuleList = payTypeRuleService.selectByExample(payTypeRuleExample);
+				if(payTypeRuleList !=null && payTypeRuleList.size()>0){
+					logger.info(orderNum+"进入默认规则概率计算");
+					List<Map<String,Object>> rateList=new ArrayList<>();
+		            for(int i=0;i<payTypeRuleList.size();i++){
+						Map<String, Object> rateMap = new HashMap<String, Object>();
+						rateMap.put("rate", payTypeRuleList.get(i).getRuleRate().doubleValue());
+						rateList.add(rateMap);
+					}
+		            int index = Probability.getProbabilityRange(rateList);
+		            if(index >= payTypeRuleList.size()){
+		            	logger.info(orderNum+"不在默认规则概率计算范围内，退出");
+		            }else{
+		            	PayTypeRule payTypeRule = payTypeRuleList.get(index);
+		            	logger.info(orderNum+"默认规则概率计算商户编码："+payTypeRule.getMerchantCode()+"，通道编码："+payTypeRule.getRouteCode());
+		            	if("1".equals(payType)){
+		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("3".equals(payType)){
+		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}
+		            	routeCode = payTypeRule.getRouteCode();
+		            	aisleType = payTypeRule.getAisleType();
+		            	merchantFlag = true;
+		            }
+				}
+			}
+			if(!merchantFlag){
+				logger.info(orderNum+"没有轮询到商户编码，退出");
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "通道维护中，请稍后再试");
+				return result;
+			}
+		}
+		
+		
 		
 		SysOfficeExample sysOfficeExample = new SysOfficeExample();
 		sysOfficeExample.or().andIdEqualTo(epayCodeList.get(0).getOfficeId()).andAgtTypeEqualTo("3");
@@ -1179,29 +1360,23 @@ public class CashierDeskController {
 		}
 		
 		SysOffice sysOffice = sysOfficeList.get(0);
-//		String singedStr = EpaySignUtil.sign(sysOffice.getPrivateKeyRsa(), signOrginalStr);
-//		System.out.println(singedStr);  
 		if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
 			result.put("returnCode", "0004");
 			result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 			return result;
 		}
 		
-		//校验交易额是否超出限制
-	    /*
-		JSONObject checkResult = checkPayLimit(memberInfo.getId(), new BigDecimal(payMoney), memberInfo.getSingleLimit(), memberInfo.getDayLimit());
-		if(null != checkResult){
-			return checkResult;
-		}
-		*/
+		
 		
 		if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
-			result = eskScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,aisleType);
+			result = eskScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else if(RouteCodeConstant.FT_ROUTE_CODE.equals(routeCode)){
 			result = ftScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,aisleType,clientIp);
 		}else if(RouteCodeConstant.YL_ROUTE_CODE.equals(routeCode)){
 			result = ylScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,aisleType);
-		} else{
+		}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)){
+			result = eskScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
+		}else{
 			result = msScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl);
 		}
 		
@@ -1399,49 +1574,112 @@ public class CashierDeskController {
 	 * @param request
 	 * @return
 	 */
-	public JSONObject eskScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String aisleType) {
+	public JSONObject eskScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
 		JSONObject result = new JSONObject();
-		JSONObject resData = new JSONObject();
 		try {
 			// 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
 			
+			String payTypeStr = "";
+			String payMethod = PayTypeConstant.PAY_METHOD_SMZF;
+			String merCode = "";
+			if(routeCode.equals(RouteCodeConstant.ESKHLB_ROUTE_CODE)){
+				memberInfo.setSettleType("0");
+			}
 			DebitNote debitNote = new DebitNote();
 			debitNote.setCreateDate(new Date());
 			debitNote.setMemberId(memberInfo.getId());
 			debitNote.setMoney(new BigDecimal(payMoney));
 			debitNote.setOrderCode(orderCode);
 			debitNote.setOrderNumOuter(orderNumOuter);
-			debitNote.setRouteId(RouteCodeConstant.ESK_ROUTE_CODE);
+			debitNote.setRouteId(routeCode);
 			debitNote.setStatus("0");
-			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_SMZF);
+			debitNote.setTxnMethod(payMethod);
 			if("1".equals(payType)){
 				debitNote.setTxnType("1");
 				debitNote.setMemberCode(memberInfo.getWxMemberCode());
 				debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
+				payTypeStr = "WX";
+				merCode = merchantCode.getWxMerchantCode();
 			}else if("2".equals(payType)){
 				debitNote.setTxnType("2");
 				debitNote.setMemberCode(memberInfo.getZfbMemberCode());
 				debitNote.setMerchantCode(merchantCode.getZfbMerchantCode());
+				payTypeStr = "ZFB";
+				merCode = merchantCode.getZfbMerchantCode();
 			}else if("3".equals(payType)){
 				debitNote.setTxnType("3");
 				debitNote.setMemberCode(memberInfo.getQqMemberCode());
 				debitNote.setMerchantCode(merchantCode.getQqMerchantCode());
+				payTypeStr = "QQ";
+				merCode = merchantCode.getQqMerchantCode();
 			}else if("4".equals(payType)){
 				debitNote.setTxnType("4");
 				debitNote.setMemberCode(memberInfo.getBdMemberCode());
 				debitNote.setMerchantCode(merchantCode.getBdMerchantCode());
+				payTypeStr = "BD";
 			}else if("5".equals(payType)){
 				debitNote.setTxnType("5");
 				debitNote.setMemberCode(memberInfo.getJdMemberCode());
 				debitNote.setMerchantCode(merchantCode.getJdMerchantCode());
+				payTypeStr = "JD";
+				merCode = merchantCode.getJdMerchantCode();
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				debitNote.setTradeRate(merchantCode.getT0TradeRate());
+				if("1".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getT0TradeRate());
+				}else if("2".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getZfbT0TradeRate());
+				}else if("3".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getQqT0TradeRate());
+				}else if("5".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getJdT0TradeRate());
+				}
 			}else{
-				debitNote.setTradeRate(merchantCode.getT1TradeRate());
+				if("1".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getT1TradeRate());
+				}else if("2".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getZfbT1TradeRate());
+				}else if("3".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getQqT1TradeRate());
+				}else if("5".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getJdT1TradeRate());
+				}
 			}
+			
+			
+			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_"+payMethod+"_"+payTypeStr;
+			JSONObject memResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != memResult){
+				debitNote.setStatus("9");
+				debitNoteService.insertSelective(debitNote);
+				return memResult;
+			} 
+			
+			configName = "SINGLE_MIN_"+routeCode+"_"+payMethod+"_"+payTypeStr;
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payTypeStr;
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+			JSONObject mResult = checkLimitMerchantMoney(routeCode,merCode);
+			if(null != mResult){
+				debitNote.setStatus("7");
+				debitNoteService.insertSelective(debitNote);
+				return mResult;
+			}
+			
 			
 			debitNoteService.insertSelective(debitNote);
 			
@@ -1450,17 +1688,7 @@ public class CashierDeskController {
 			payResultNotice.setOrderNumOuter(orderNumOuter);
 			payResultNotice.setPayMoney(debitNote.getMoney());
 			payResultNotice.setMemberCode(memberInfo.getCode());
-			if("1".equals(payType)){
-				payResultNotice.setPayType("1");
-			}else if("2".equals(payType)){
-				payResultNotice.setPayType("2");
-			}else if("3".equals(payType)){
-				payResultNotice.setPayType("3");
-			}else if("4".equals(payType)){
-				payResultNotice.setPayType("4");
-			}else if("5".equals(payType)){
-				payResultNotice.setPayType("5");
-			}
+			payResultNotice.setPayType(payType);
 			payResultNotice.setReturnUrl(callbackUrl);
 			payResultNotice.setStatus("1");
 			payResultNotice.setCreateDate(new Date());
@@ -1484,26 +1712,17 @@ public class CashierDeskController {
 			String serverUrl = ESKConfig.msServerUrl;
 			
 			String tranCode = "001";
-//			String tranCode = "SMZF002";
 			String charset = "utf-8";
 			
 			JSONObject reqData = new JSONObject();
 			String eskPayType = payType;
-			if("1".equals(payType)){
-				reqData.put("merchantCode", merchantCode.getWxMerchantCode());
-				//bodyjson.put("subAppid", WxConfig.appid);暂时不用
-			}else if("2".equals(payType)){
-				reqData.put("merchantCode", merchantCode.getZfbMerchantCode());
+			if("2".equals(payType)){
 				eskPayType="0";
-			}else if("3".equals(payType)){
-				reqData.put("merchantCode", merchantCode.getQqMerchantCode());
-			}else if("4".equals(payType)){
-				reqData.put("merchantCode", merchantCode.getBdMerchantCode());
 			}else if("5".equals(payType)){
-				reqData.put("merchantCode", merchantCode.getJdMerchantCode());
+				eskPayType="4";
 			}
 			
-			
+			reqData.put("merchantCode", merCode);
 			reqData.put("scene", "1");
 			reqData.put("tranCode", tranCode);
 			reqData.put("totalAmount", payMoney);
@@ -1513,7 +1732,8 @@ public class CashierDeskController {
 			reqData.put("PayType", eskPayType);
 			reqData.put("desc", memberInfo.getName() + " 收款");
 			reqData.put("callback", callBack);
-			System.out.println("待加密数据: "+reqData);
+			reqData.put("terminalId", ip);
+			logger.info("易收款扫码请求待加密数据[{}]", new Object[] { reqData.toString() });
 			
 			String plainXML = reqData.toString();
 			byte[] plainBytes = plainXML.getBytes(charset);
@@ -1533,15 +1753,12 @@ public class CashierDeskController {
 			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
 			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
 			String respStr = new String(b, charset);
-			logger.info("返回报文[{}]", new Object[] { respStr });
+			logger.info("易收款扫码返回报文[{}]", new Object[] { respStr });
 			
 			JSONObject jsonObject = JSONObject.fromObject(respStr);
 			String resEncryptData = jsonObject.getString("Context");
 			String resEncryptKey = jsonObject.getString("encrtpKey");
 			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
-			// 解密encryptKey得到merchantAESKey
-			//先用对方给的私钥调试 by linxf
-			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
 			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
 			// 使用base64解码商户请求报文
 			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
@@ -1549,16 +1766,31 @@ public class CashierDeskController {
 			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
 			String resXml = new String(merchantXmlDataBytes, charset);
 			JSONObject respJSONObject = JSONObject.fromObject(resXml);
-			logger.info("返回报文[{}]",  respJSONObject );
-//			resData.put("orderCode", orderCode);     //暂不回传我方的订单编码
+			logger.info("易收款扫码返回报文解密[{}]",  respJSONObject );
+
 			if (respJSONObject.containsKey("qrCode")) {//民生传回qrCode时 不一定是S状态
 				result.put("qrCode", SecurityUtil.base64Encode(respJSONObject.get("qrCode").toString()));
 				//result.put("resData", resData);
 				result.put("returnCode", "0000");
 				result.put("returnMsg", "成功");
 			}else{
+				String result_message = respJSONObject.getString("respMsg");
 				result.put("returnCode", "0003");
-				result.put("returnMsg", "MS-"+respJSONObject.getString("respCode")+ ":" +respJSONObject.getString("respMsg"));
+				result.put("returnMsg", result_message);
+				
+				DebitNoteExample debitNoteExample = new DebitNoteExample();
+				debitNoteExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
+				if (debitNotes != null && debitNotes.size() > 0) {
+					DebitNote debitNote_1 = debitNotes.get(0);
+					debitNote_1.setStatus("2");
+					debitNote_1.setUpdateDate(new Date());
+					debitNote_1.setRespCode(respJSONObject.getString("respCode"));
+					if(!"".equals(result_message)){
+						debitNote_1.setRespMsg(result_message.length()>250?result_message.substring(0, 250):result_message);
+					}
+					debitNoteService.updateByPrimaryKey(debitNote_1);
+				}
 			}
 		} catch (ArgException e) {
 			result.put("returnCode", "0096");
@@ -5239,5 +5471,83 @@ public class CashierDeskController {
 
 	}
 	
+	
+	private JSONObject checkLimitMoney(String configName, BigDecimal tradeMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal singleLimit = new BigDecimal(value);
+			if (null != singleLimit && singleLimit.compareTo(BigDecimal.ZERO) > 0){
+				if (tradeMoney.compareTo(singleLimit) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "单笔交易限额为"+singleLimit+"元,当前交易已超出限额");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
+	private JSONObject checkMinMoney(String configName, BigDecimal tradeMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal singleMin = new BigDecimal(value);
+			if (null != singleMin && singleMin.compareTo(BigDecimal.ZERO) > 0){
+				if (tradeMoney.compareTo(singleMin) < 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "单笔交易最小金额为"+singleMin+"元,当前交易已小于最小金额");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
+	private JSONObject checkLimitMerchantMoney(String routeId,String merchantCode){
+		
+		JSONObject result = new JSONObject();
+		String configName = "LIMIT_MERCHANT_"+routeId+"_"+merchantCode;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal merchantLimit = new BigDecimal(value);
+			if (null != merchantLimit && merchantLimit.compareTo(BigDecimal.ZERO) > 0){
+				Map<String,Object> param = new HashMap<String, Object>();
+				param.put("merchantCode", merchantCode);
+				param.put("routeId", routeId);
+				param.put("txnDate", DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+				Double count = tradeDetailDailyService.countTradeDetailDaily(param);
+				count = count == null ? 0 : count;
+				if (new BigDecimal(count).compareTo(merchantLimit) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "已超过商户当日交易总金额，无法交易");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
 	
 }

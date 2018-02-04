@@ -34,11 +34,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alibaba.fastjson.JSON;
+import com.epay.scanposp.common.constant.HXConfig;
 import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.SLFConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
-import com.epay.scanposp.common.constant.ZHZFConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.DateUtil;
@@ -63,12 +63,13 @@ import com.epay.scanposp.common.utils.slf.vo.ReceivePayResponse;
 import com.epay.scanposp.common.utils.yzf.AESTool;
 import com.epay.scanposp.common.utils.yzf.Base64Utils;
 import com.epay.scanposp.common.utils.yzf.EncryptUtil;
-import com.epay.scanposp.common.utils.yzf.Md5Utils;
 import com.epay.scanposp.common.utils.yzf.RSATool;
 import com.epay.scanposp.common.utils.zhzf.HttpUtils;
 import com.epay.scanposp.common.utils.zhzf.MD5;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
+import com.epay.scanposp.entity.BankRoute;
+import com.epay.scanposp.entity.BankRouteExample;
 import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 import com.epay.scanposp.entity.EpayCode;
@@ -97,6 +98,7 @@ import com.epay.scanposp.entity.TradeDetail;
 import com.epay.scanposp.entity.TradeDetailDaily;
 import com.epay.scanposp.entity.TradeDetailExample;
 import com.epay.scanposp.service.AccountService;
+import com.epay.scanposp.service.BankRouteService;
 import com.epay.scanposp.service.CommonService;
 import com.epay.scanposp.service.DebitNoteIpService;
 import com.epay.scanposp.service.DebitNoteService;
@@ -181,6 +183,9 @@ public class BankPayController {
 	@Autowired
 	private SysCommonConfigService sysCommonConfigService;
 	
+	@Autowired
+	private BankRouteService bankRouteService;
+	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/toPay")
 	public JSONObject toPay(HttpServletRequest request,HttpServletResponse response){
@@ -208,7 +213,11 @@ public class BankPayController {
 			callbackUrl = reqDataJson.getString("callbackUrl");
 		}
 	//	String gateWayType = reqDataJson.getString("gateWayType");
-	//	String goodsName = reqDataJson.getString("goodsName");
+		
+		String goodsName = "";
+		if(reqDataJson.containsKey("goodsName")){
+			goodsName = reqDataJson.getString("goodsName");
+		}
 		
 		String signStr = "";
 		if(reqDataJson.containsKey("signStr")){
@@ -223,19 +232,21 @@ public class BankPayController {
 			return result;
 		}
 		
-		if(bankCode == null || "".equals(bankCode)){
+	/*	if(bankCode == null || "".equals(bankCode)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "银行编码缺失");
 			return result;
+		}*/
+		if(bankCode != null && !"".equals(bankCode)){
+			srcStr.append("bankCode="+bankCode+"&");
 		}
-		srcStr.append("bankCode="+bankCode);
 		
 		if(callbackUrl == null || "".equals(callbackUrl)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "平台支付结果通知回调地址缺失");
 			return result;
 		}
-		srcStr.append("&callbackUrl="+callbackUrl);
+		srcStr.append("callbackUrl="+callbackUrl);
 		
 	/*	if(gateWayType == null || "".equals(gateWayType)){
 			result.put("returnCode", "0007");
@@ -248,9 +259,12 @@ public class BankPayController {
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "商品名称缺失");
 			return result;
+		}*/
+		
+		if(goodsName != null && !"".equals(goodsName)){
+			srcStr.append("&goodsName="+goodsName);
 		}
-		srcStr.append("&goodsName="+goodsName);
-		*/
+		
 		if(memberCode == null || "".equals(memberCode)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "商户号缺失");
@@ -279,14 +293,14 @@ public class BankPayController {
 		
 		
 		
-		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3",  srcStr.toString(), signStr, callbackUrl ,bankCode);
+		result = validMemberInfoForBank(memberCode, orderNum, payMoney, "3",  srcStr.toString(), signStr, callbackUrl ,bankCode ,goodsName);
 		
 		return result;
 	}
 	
 	
 	
-	public JSONObject validMemberInfoForQrcode(String memberCode,String orderNum,String payMoney,String platformType,String signOrginalStr,String signedStr,String callbackUrl,String bankCode){
+	public JSONObject validMemberInfoForBank(String memberCode,String orderNum,String payMoney,String platformType,String signOrginalStr,String signedStr,String callbackUrl,String bankCode,String goodsName){
 		JSONObject result = new JSONObject();
 		
 		MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -385,14 +399,20 @@ public class BankPayController {
 		*/
 		
 		if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
-			result = bankPay(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode , bankCode);
+			result = bankPay(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode);
+			result.put("routeCode", routeCode);
+		}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){
+			result = bankPayHx(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName);
+			result.put("routeCode", routeCode);
+		}else if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){
+			result = bankPayRf(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName);
 			result.put("routeCode", routeCode);
 		}
 		
 		return result;
 	}
 	
-	public JSONObject bankPay(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String bankCode) {
+	public JSONObject bankPay(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String bankCode) {
 		JSONObject result = new JSONObject();
 		try {
 			// 插入一条收款记录
@@ -434,7 +454,7 @@ public class BankPayController {
 				return limitResult;
 			}
 			
-			JSONObject tResult = checkLimitCounts(RouteCodeConstant.ESK_ROUTE_CODE);
+			JSONObject tResult = checkLimitCounts(RouteCodeConstant.SLF_ROUTE_CODE);
 			if(null != tResult){
 				debitNote.setStatus("8");
 				debitNoteService.insertSelective(debitNote);
@@ -519,6 +539,229 @@ public class BankPayController {
 		return result;
 	}
 	
+	//环迅网银支付
+	public JSONObject bankPayHx(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String bankCode,String goodsName) {
+		JSONObject result = new JSONObject();
+		try {
+			// 插入一条收款记录
+			String orderCode = CommonUtil.getOrderCode();
+			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(payMoney));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setOrderNumOuter(orderNumOuter);
+			debitNote.setRouteId(RouteCodeConstant.HX_ROUTE_CODE);
+			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_YL);
+			debitNote.setTxnType("8");
+			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
+			
+			debitNote.setSettleType(memberInfo.getSettleType());
+			if("0".equals(memberInfo.getSettleType())){
+				debitNote.setTradeRate(merchantCode.getT0TradeRate());
+			}else{
+				debitNote.setTradeRate(merchantCode.getT1TradeRate());
+			}
+			
+			String configName = "SINGLE_MIN_1014_005_YL";
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_1014_005_YL";
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+			JSONObject tResult = checkLimitCounts(RouteCodeConstant.HX_ROUTE_CODE);
+			if(null != tResult){
+				debitNote.setStatus("8");
+				debitNoteService.insertSelective(debitNote);
+				return tResult;
+			}
+			
+			debitNoteService.insertSelective(debitNote);
+			
+			PayResultNotice payResultNotice = new PayResultNotice();
+			payResultNotice.setOrderCode(debitNote.getOrderCode());
+			payResultNotice.setOrderNumOuter(orderNumOuter);
+			payResultNotice.setPayMoney(debitNote.getMoney());
+			payResultNotice.setMemberCode(memberInfo.getCode());
+			payResultNotice.setPayType("8");
+			
+			payResultNotice.setReturnUrl(callbackUrl);
+			payResultNotice.setStatus("1");
+			payResultNotice.setCreateDate(new Date());
+			payResultNotice.setPlatformType(platformType);
+			if("3".equals(platformType)){
+				payResultNotice.setInterfaceType("2");
+			}else{
+				payResultNotice.setInterfaceType("1");
+			}
+			
+			
+			
+			payResultNoticeService.insertSelective(payResultNotice);
+			
+			String callBack = SysConfig.serverUrl + "/bankPay/hxPayNotify";
+			
+			if(StringUtil.isEmpty(goodsName)){
+				goodsName = memberInfo.getName()+" 收款";
+			}
+			if(!StringUtil.isEmpty(bankCode)){
+				BankRouteExample bankRouteExample = new BankRouteExample();
+				bankRouteExample.createCriteria().andCodeEqualTo(bankCode).andRouteCodeEqualTo(RouteCodeConstant.HX_ROUTE_CODE).andDelFlagEqualTo("0");
+				List<BankRoute> list = bankRouteService.selectByExample(bankRouteExample);
+				if(list!=null && list.size()>0){
+					bankCode = list.get(0).getRouteBankCode();
+				}
+			}
+			
+			result.put("payUrl", HXConfig.payURL);
+			result.put("privateKey", HXConfig.privateKey);
+			result.put("merchantCode", HXConfig.ipsMerCode);
+			result.put("merchantName", HXConfig.ipsMerName);
+			result.put("merchantAccount", HXConfig.ipsMerAccount);
+			result.put("callBack", callBack);
+			result.put("frontUrl", HXConfig.frontUrl);
+			result.put("goodsName", goodsName);
+			result.put("bankCode", bankCode);
+			result.put("orderCode", orderCode);
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "成功");
+			
+        } catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
+	
+	//瑞付网银支付
+	public JSONObject bankPayRf(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String bankCode,String goodsName) {
+		JSONObject result = new JSONObject();
+		try {
+			String merCode = merchantCode.getWyMerchantCode();
+			memberInfo.setSettleType("0");//D0
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+			
+	        // 插入一条收款记录
+	     	String orderCode = CommonUtil.getOrderCode();
+	     			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(payMoney));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setOrderNumOuter(orderNumOuter);
+			debitNote.setRouteId(routeCode);
+			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_YL);
+			debitNote.setTxnType("8");
+			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setMerchantCode(merCode);
+			
+			debitNote.setSettleType(memberInfo.getSettleType());
+			if("0".equals(memberInfo.getSettleType())){
+				debitNote.setTradeRate(merchantCode.getWyT0TradeRate());
+			}else{
+				debitNote.setTradeRate(merchantCode.getWyT1TradeRate());
+			}
+			
+			String configName = "SINGLE_MIN_"+routeCode+"_005_YL";
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_005_YL";
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+		/*	JSONObject tResult = checkLimitCounts(routeCode);
+			if(null != tResult){
+				debitNote.setStatus("8");
+				debitNoteService.insertSelective(debitNote);
+				return tResult;
+			}*/
+			
+			debitNoteService.insertSelective(debitNote);
+			
+			PayResultNotice payResultNotice = new PayResultNotice();
+			payResultNotice.setOrderCode(debitNote.getOrderCode());
+			payResultNotice.setOrderNumOuter(orderNumOuter);
+			payResultNotice.setPayMoney(debitNote.getMoney());
+			payResultNotice.setMemberCode(memberInfo.getCode());
+			payResultNotice.setPayType("8");
+			
+			payResultNotice.setReturnUrl(callbackUrl);
+			payResultNotice.setStatus("1");
+			payResultNotice.setCreateDate(new Date());
+			payResultNotice.setPlatformType(platformType);
+			if("3".equals(platformType)){
+				payResultNotice.setInterfaceType("2");
+			}else{
+				payResultNotice.setInterfaceType("1");
+			}
+			payResultNoticeService.insertSelective(payResultNotice);
+			
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("AppKey", merCode);
+			reqData.put("OrderNum", orderCode);
+			reqData.put("PayMoney", payMoney);
+			reqData.put("SuccessUrl", RFConfig.frontUrl+"?orderCode="+orderCode);
+			
+			String srcStr = StringUtil.orderedKey(reqData);
+			String privateKey = merchantKey.getPrivateKey();
+			String signData = EpaySignUtil.signSha1(privateKey, srcStr);
+			reqData.put("SignStr", signData);
+			
+			logger.info("瑞付网银支付请求报文[{}]", new Object[] { JSON.toJSONString(reqData) });
+
+			//http://pay.ruifuzhifu.com/api.php/Rpay/wg_pay
+			result.put("payUrl", RFConfig.msServerUrl+"/wg_pay");
+			result.put("merchantCode", merCode);
+			result.put("frontUrl", RFConfig.frontUrl+"?orderCode="+orderCode);
+			result.put("orderCode", orderCode);
+			result.put("signStr", signData);
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "成功");
+			
+        } catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
 	
 	@RequestMapping("/bankPay/slfPayNotify")
 	public void slfPayNotify(HttpServletRequest request,HttpServletResponse response) {
@@ -940,6 +1183,18 @@ public class BankPayController {
 	        double amount = (new BigDecimal(payMoney)).doubleValue()-merchantCode.getT0DrawFee().doubleValue();
 				
 	        MemberMerchantKey merchantKey = keyList.get(0);
+	        
+	        String bankCode = draw.getBankCode();
+			BankRouteExample bankRouteExample = new BankRouteExample();
+			bankRouteExample.createCriteria().andCodeEqualTo(bankCode).andRouteCodeEqualTo(RouteCodeConstant.RF_ROUTE_CODE).andDelFlagEqualTo("0");
+			List<BankRoute> list = bankRouteService.selectByExample(bankRouteExample);
+			if(list!=null && list.size()>0){
+				bankCode = list.get(0).getRouteBankCode();
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "提现银行不支持");
+				return result;
+			}
 			
 			String orderCode = CommonUtil.getOrderCode();
 			
@@ -952,7 +1207,7 @@ public class BankPayController {
 			reqData.put("Bank_general_name", draw.getBankName());
 			reqData.put("Bank_name", draw.getSubName());
 			reqData.put("Bank_code", draw.getSubId());
-			reqData.put("Code", draw.getBankCode());
+			reqData.put("Code", bankCode);
 			
 			
 			String srcStr = StringUtil.orderedKey(reqData);
@@ -1070,10 +1325,10 @@ public class BankPayController {
 			map.put("idcard_no", draw.getCertNo());
 			map.put("mobile", draw.getTel());
 			String bankCode = draw.getBankCode();
-			if("BCOM".equals(bankCode)){
+			if("BOCOM".equals(bankCode)){
 				bankCode = "COMM_DEBIT";
-			}else if("PABC".equals(bankCode)){
-				bankCode = "PAB_DEBIT";
+			}else if("CNCB".equals(bankCode)){
+				bankCode = "CITIC_DEBIT";
 			}else{
 				bankCode = bankCode + "_DEBIT";
 			}
@@ -1603,11 +1858,11 @@ public class BankPayController {
 			}
 			
 			SysOffice sysOffice = sysOfficeList.get(0);
-		/*	if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
+			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 				return signReturn(result);
-			}*/
+			}
 			
 			
 			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
