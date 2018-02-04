@@ -11,6 +11,7 @@
     <result column="qq_merchant_code" jdbcType="VARCHAR" property="qqMerchantCode" />
     <result column="bd_merchant_code" jdbcType="VARCHAR" property="bdMerchantCode" />
     <result column="jd_merchant_code" jdbcType="VARCHAR" property="jdMerchantCode" />
+    <result column="wy_merchant_code" jdbcType="VARCHAR" property="wyMerchantCode" />
     <result column="t0_draw_fee" jdbcType="DECIMAL" property="t0DrawFee" />
     <result column="t0_trade_rate" jdbcType="DECIMAL" property="t0TradeRate" />
     <result column="t1_draw_fee" jdbcType="DECIMAL" property="t1DrawFee" />
@@ -27,6 +28,16 @@
     <result column="qq_t0_trade_rate" jdbcType="DECIMAL" property="qqT0TradeRate" />
     <result column="qq_t1_draw_fee" jdbcType="DECIMAL" property="qqT1DrawFee" />
     <result column="qq_t1_trade_rate" jdbcType="DECIMAL" property="qqT1TradeRate" />
+    
+    <result column="jd_t0_draw_fee" jdbcType="DECIMAL" property="jdT0DrawFee" />
+    <result column="jd_t0_trade_rate" jdbcType="DECIMAL" property="jdT0TradeRate" />
+    <result column="jd_t1_draw_fee" jdbcType="DECIMAL" property="jdT1DrawFee" />
+    <result column="jd_t1_trade_rate" jdbcType="DECIMAL" property="jdT1TradeRate" />
+    
+    <result column="wy_t0_draw_fee" jdbcType="DECIMAL" property="wyT0DrawFee" />
+    <result column="wy_t0_trade_rate" jdbcType="DECIMAL" property="wyT0TradeRate" />
+    <result column="wy_t1_draw_fee" jdbcType="DECIMAL" property="wyT1DrawFee" />
+    <result column="wy_t1_trade_rate" jdbcType="DECIMAL" property="wyT1TradeRate" />
     
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
@@ -93,9 +104,9 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, member_id, route_code,aisle_type,wx_merchant_code, zfb_merchant_code, qq_merchant_code,bd_merchant_code,jd_merchant_code,
+    id, member_id, route_code,aisle_type,wx_merchant_code, zfb_merchant_code, qq_merchant_code,bd_merchant_code,jd_merchant_code,wy_merchant_code,
     t0_draw_fee, t0_trade_rate,t0_draw_rate, t1_draw_fee, t1_trade_rate,t1_draw_rate,zfb_t0_draw_fee,zfb_t0_trade_rate,zfb_t1_draw_fee,zfb_t1_trade_rate,qq_t0_draw_fee,qq_t0_trade_rate,
-    qq_t1_draw_fee,qq_t1_trade_rate,create_by, create_date, update_by, update_date,del_flag
+    qq_t1_draw_fee,qq_t1_trade_rate,jd_t0_draw_fee,jd_t0_trade_rate,jd_t1_draw_fee,jd_t1_trade_rate,wy_t0_draw_fee,wy_t0_trade_rate,wy_t1_draw_fee,wy_t1_trade_rate,create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberMerchantCodeExample" resultMap="BaseResultMap">
     select

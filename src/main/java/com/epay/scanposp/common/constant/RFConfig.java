@@ -31,6 +31,7 @@ public class RFConfig {
 	public static String yhPublicKey;
 	public static String privateKey;
 	public static String jsDomain;
+	public static String frontUrl;
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "rf_config");
@@ -52,5 +53,6 @@ public class RFConfig {
 		yhPublicKey=bundle.getString("yhPublicKey");
 		privateKey=bundle.getString("privateKey");
 		jsDomain=bundle.getString("jsDomain");
+		frontUrl = bundle.getString("frontUrl");
 	}
 }

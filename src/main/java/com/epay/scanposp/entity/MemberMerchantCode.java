@@ -23,6 +23,8 @@ public class MemberMerchantCode {
 	
 	private String jdMerchantCode;
 	
+	private String wyMerchantCode;
+	
     private BigDecimal t0DrawFee;
     
     private BigDecimal t0DrawRate;
@@ -50,6 +52,22 @@ public class MemberMerchantCode {
     private BigDecimal qqT1DrawFee;
 
     private BigDecimal qqT1TradeRate;
+    
+    private BigDecimal jdT0DrawFee;
+
+    private BigDecimal jdT0TradeRate;
+
+    private BigDecimal jdT1DrawFee;
+
+    private BigDecimal jdT1TradeRate;
+    
+    private BigDecimal wyT0DrawFee;
+
+    private BigDecimal wyT0TradeRate;
+
+    private BigDecimal wyT1DrawFee;
+
+    private BigDecimal wyT1TradeRate;
 	
 	private String delFlag;
 	
@@ -285,6 +303,78 @@ public class MemberMerchantCode {
 
 	public void setT1DrawRate(BigDecimal t1DrawRate) {
 		this.t1DrawRate = t1DrawRate;
+	}
+
+	public String getWyMerchantCode() {
+		return wyMerchantCode;
+	}
+
+	public void setWyMerchantCode(String wyMerchantCode) {
+		this.wyMerchantCode = wyMerchantCode;
+	}
+
+	public BigDecimal getWyT0DrawFee() {
+		return wyT0DrawFee;
+	}
+
+	public void setWyT0DrawFee(BigDecimal wyT0DrawFee) {
+		this.wyT0DrawFee = wyT0DrawFee;
+	}
+
+	public BigDecimal getWyT0TradeRate() {
+		return wyT0TradeRate;
+	}
+
+	public void setWyT0TradeRate(BigDecimal wyT0TradeRate) {
+		this.wyT0TradeRate = wyT0TradeRate;
+	}
+
+	public BigDecimal getWyT1DrawFee() {
+		return wyT1DrawFee;
+	}
+
+	public void setWyT1DrawFee(BigDecimal wyT1DrawFee) {
+		this.wyT1DrawFee = wyT1DrawFee;
+	}
+
+	public BigDecimal getWyT1TradeRate() {
+		return wyT1TradeRate;
+	}
+
+	public void setWyT1TradeRate(BigDecimal wyT1TradeRate) {
+		this.wyT1TradeRate = wyT1TradeRate;
+	}
+
+	public BigDecimal getJdT0DrawFee() {
+		return jdT0DrawFee;
+	}
+
+	public void setJdT0DrawFee(BigDecimal jdT0DrawFee) {
+		this.jdT0DrawFee = jdT0DrawFee;
+	}
+
+	public BigDecimal getJdT0TradeRate() {
+		return jdT0TradeRate;
+	}
+
+	public void setJdT0TradeRate(BigDecimal jdT0TradeRate) {
+		this.jdT0TradeRate = jdT0TradeRate;
+	}
+
+	public BigDecimal getJdT1DrawFee() {
+		return jdT1DrawFee;
+	}
+
+	public void setJdT1DrawFee(BigDecimal jdT1DrawFee) {
+		this.jdT1DrawFee = jdT1DrawFee;
+	}
+
+	public BigDecimal getJdT1TradeRate() {
+		return jdT1TradeRate;
+	}
+
+	public void setJdT1TradeRate(BigDecimal jdT1TradeRate) {
+		this.jdT1TradeRate = jdT1TradeRate;
 	}
     
     
