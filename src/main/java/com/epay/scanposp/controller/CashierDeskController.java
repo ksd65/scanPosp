@@ -4987,6 +4987,22 @@ public class CashierDeskController {
 		        	result.put("returnCode", "0012");
 					result.put("returnMsg", result_msg);
 		        }
+		    }else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){
+
+		    	TradeDetailExample tradeDetailExample = new TradeDetailExample();
+				tradeDetailExample.createCriteria().andOrderCodeEqualTo(debitNote.getOrderCode());
+				List<TradeDetail> list = tradeDetailService.selectByExample(tradeDetailExample);
+				if(list!=null && list.size()>0){
+					TradeDetail detail = list.get(0);
+					result.put("oriRespType", "S");
+					result.put("oriRespCode", "000000");
+					result.put("oriRespMsg", "支付成功");
+					result.put("totalAmount", String.valueOf(detail.getMoney()));
+				}else{
+					result.put("oriRespType", "E");
+					result.put("oriRespCode", "000002");
+					result.put("oriRespMsg", "支付失败");
+				}
 		    }else{
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;

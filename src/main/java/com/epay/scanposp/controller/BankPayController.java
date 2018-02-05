@@ -48,6 +48,7 @@ import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
+import com.epay.scanposp.common.utils.hx.HxUtils;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
 import com.epay.scanposp.common.utils.slf.MerchantClient;
@@ -956,6 +957,190 @@ public class BankPayController {
 	}
 	
 	
+	@RequestMapping("/bankPay/hxPayNotify")
+	public void hxPayNotify(HttpServletRequest request,HttpServletResponse response) {
+		String respString = "ipscheckok";
+		String res = "";
+		try {
+			request.setCharacterEncoding("UTF-8");
+			String resultXml = request.getParameter("paymentResult");
+			//String resultXml = "<Ips><GateWayRsp><head><ReferenceID></ReferenceID><RspCode>000000</RspCode><RspMsg><![CDATA[交易成功！]]></RspMsg><ReqDate>20180205111434</ReqDate><RspDate>20180205111628</RspDate><Signature>d57cd7bc36603fef4e3549c38cc44404</Signature></head><body><MerBillNo>20180205111434071834</MerBillNo><CurrencyType>156</CurrencyType><Amount>1</Amount><Date>20180205</Date><Status>Y</Status><Msg><![CDATA[支付成功！]]></Msg><IpsBillNo>BO201802051114349351</IpsBillNo><IpsTradeNo>2018020511143498854</IpsTradeNo><RetEncodeType>17</RetEncodeType><BankBillNo>710003961177</BankBillNo><ResultType>0</ResultType><IpsBillTime>20180205111628</IpsBillTime></body></GateWayRsp></Ips>";
+			logger.info("hxPayNotify回调通知返回报文[{}]",  resultXml );
+			
+			String merCode = HXConfig.ipsMerCode;
+			String directStr = HXConfig.privateKey;
+			if(resultXml != null&&!"".equals(resultXml)){
+				boolean checkSign = HxUtils.checkSign(resultXml, merCode, directStr, null);
+				if(!checkSign){
+					res = "验证签名不通过";
+	                respString = "fail";
+	                logger.info(res);
+	                response.getWriter().write(respString);
+	        		return;
+				}
+				
+				String reqMsgId = HxUtils.getNodeText(resultXml, "MerBillNo");
+            	TradeDetailExample tradeDetailExample = new TradeDetailExample();
+            	tradeDetailExample.or().andOrderCodeEqualTo(reqMsgId);
+            	List<TradeDetail> tradeDetailList = tradeDetailService.selectByExample(tradeDetailExample);
+            	if(tradeDetailList!=null && tradeDetailList.size()>0){
+            		response.getWriter().write(respString);
+            		return;
+            	}
+            	
+            	DebitNoteExample debitNoteExample = new DebitNoteExample();
+    			debitNoteExample.createCriteria().andOrderCodeEqualTo(reqMsgId);
+    			List<DebitNote> debitNotes_tmp = debitNoteService.selectByExample(debitNoteExample);
+    			if (debitNotes_tmp == null || debitNotes_tmp.size() == 0) {
+    				res = "订单不存在";
+                    respString = "fail";
+                    logger.info(res);
+                    response.getWriter().write(respString);
+            		return;
+    				
+    			}
+    			DebitNote debitNote = debitNotes_tmp.get(0);
+    			
+    			MsResultNoticeExample msResultNoticeExample = new MsResultNoticeExample();
+    			msResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
+    			List<MsResultNotice> msResultNoticeList = msResultNoticeService.selectByExample(msResultNoticeExample);
+            	if(null == msResultNoticeList || msResultNoticeList.size() == 0){
+    				if (debitNote != null ) {
+    					String result_code = HxUtils.getRspCode(resultXml);
+    					String result_message = HxUtils.getNodeText(resultXml, "RspMsg");
+    					String status = HxUtils.getStatus(resultXml);
+    					debitNote.setRespCode(result_code);
+    					debitNote.setRespMsg(result_message);
+    					
+    					//新增一条交易明细记录
+    					TradeDetail tradeDetail=new TradeDetail();
+    					tradeDetail.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+    					tradeDetail.setMemberId(debitNote.getMemberId());
+    					tradeDetail.setMerchantCode(debitNote.getMerchantCode());
+    					String channelNo = HxUtils.getNodeText(resultXml, "IpsBillNo");
+    					if(channelNo != null){
+    						tradeDetail.setChannelNo(channelNo);
+    					}
+    					tradeDetail.setMemberCode(debitNote.getMemberCode());
+    					tradeDetail.setMoney(new BigDecimal(HxUtils.getAmount(resultXml)));
+    					tradeDetail.setPayTime(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
+    					tradeDetail.setPtSerialNo(debitNote.getOrderCode());
+    					tradeDetail.setOrderCode(debitNote.getOrderCode());
+    					tradeDetail.setReqDate(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
+    					//tradeDetail.setRespCode(respJSONObject.get("respCode").toString());
+    					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
+    					tradeDetail.setRespMsg(result_message);
+    					tradeDetail.setRouteId(debitNote.getRouteId());
+    					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
+    					tradeDetail.setTxnType(debitNote.getTxnType());
+    					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
+    					tradeDetail.setDelFlag("0");
+    					tradeDetail.setCreateDate(new Date());
+    					if ("000000".equals(result_code)&&"Y".equals(status)) {
+    						debitNote.setStatus("1");
+    						tradeDetail.setRespType("S");
+    						tradeDetail.setRespCode("000000");
+    					}else if("P".equals(status)){
+    						debitNote.setStatus("3");
+    						tradeDetail.setRespType("R");
+    						tradeDetail.setRespCode(result_code);
+    					}else{
+    						debitNote.setStatus("2");
+    						tradeDetail.setRespType("E");
+    						tradeDetail.setRespCode(result_code);
+    					}
+    					debitNote.setUpdateDate(new Date());
+    					debitNoteService.updateByPrimaryKey(debitNote);
+    					
+    					MsResultNotice msResultNotice = new MsResultNotice();
+    					msResultNotice.setMoney(new BigDecimal(HxUtils.getAmount(resultXml)));
+    					msResultNotice.setOrderCode(reqMsgId);
+    					if(channelNo != null){
+    						msResultNotice.setPtSerialNo(channelNo);
+    					}
+    					//SimpleDateFormat dateSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    					msResultNotice.setRespDate(DateUtil.getDateTimeStr(new Date()));
+    					msResultNotice.setRespType(status);
+    					msResultNotice.setRespCode(result_code);
+    					msResultNotice.setRespMsg(result_message);
+    					msResultNotice.setPayTime(DateUtil.getDateTimeStr(new Date()));
+    					msResultNotice.setCreateDate(new Date());
+    					msResultNotice.setUpdateDate(new Date());
+    					msResultNoticeService.insertSelective(msResultNotice);
+    					
+    					if("0".equals(debitNote.getSettleType())){
+    						tradeDetail.setSettleType("0");
+    					}else{
+    						tradeDetail.setSettleType("1");
+    					}
+    					PayResultNoticeExample payResultNoticeExample = new PayResultNoticeExample();
+    					payResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
+    					List<PayResultNotice> payResultNoticeList = payResultNoticeService.selectByExample(payResultNoticeExample);
+    					PayResultNotice payResultNotice = null;
+    					if(payResultNoticeList.size()>0){
+    						payResultNotice = payResultNoticeList.get(0);
+    						payResultNotice.setResultMessage(debitNote.getRespMsg());
+    						payResultNotice.setStatus("2");
+    						payResultNotice.setPayTime(msResultNotice.getPayTime());
+    						payResultNotice.setUpdateDate(new Date());
+    						if ("000000".equals(result_code)&&"Y".equals(status)) {
+    							payResultNotice.setRespType("2");
+    							payResultNotice.setResultCode("0000");
+    							payResultNotice.setResultMessage("交易成功");
+    						}else if("P".equals(status)){
+    							payResultNotice.setRespType("1");
+    							payResultNotice.setResultCode("0009");   
+    							payResultNotice.setResultMessage("交易正在处理中...");
+    						}else{
+    							payResultNotice.setRespType("3");
+    							payResultNotice.setResultCode("0003");   
+    							payResultNotice.setResultMessage("交易失败："+result_message);
+    						}
+    						
+    						tradeDetail.setInterfaceType(payResultNotice.getInterfaceType());
+    						tradeDetail.setPlatformType(payResultNotice.getPlatformType());
+    						tradeDetail.setOrderNumOuter(payResultNotice.getOrderNumOuter());
+    					}
+    					//更改逻辑  只有交易成功的记录才写进交易记录表  单独写在此处防止后面再次更改逻辑会不理解
+    					if ("000000".equals(result_code)&&"Y".equals(status)) {
+    						tradeDetail.setCardType(msResultNotice.getCardType());
+    						tradeDetailService.insertSelective(tradeDetail);
+    						
+    						
+    						TradeDetailDaily tradeDetailDaily = new TradeDetailDaily();
+    						tradeDetailDaily.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+    						tradeDetailDaily.setMemberId(debitNote.getMemberId());
+    						tradeDetailDaily.setMerchantCode(debitNote.getMerchantCode());
+    						tradeDetailDaily.setMoney(debitNote.getMoney());
+    						tradeDetailDaily.setOrderCode(debitNote.getOrderCode());
+    						tradeDetailDaily.setRouteId(debitNote.getRouteId());
+    						tradeDetailDaily.setDelFlag("0");
+    						tradeDetailDaily.setCreateDate(new Date());
+    						tradeDetailDailyService.insertSelective(tradeDetailDaily);
+    					}
+    					
+    					if(payResultNoticeList.size() > 0){
+    						payResultNotifyService.notify(payResultNotice);
+    					}
+    					
+    				}
+    			
+    			}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+		try {
+			response.getWriter().write(respString);
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+
+	}
+	
+	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/draw")
 	public JSONObject draw(HttpServletRequest request,HttpServletResponse response){
@@ -1138,7 +1323,7 @@ public class BankPayController {
 		return result;
 	}
 	
-	
+	//瑞付代付
 	public JSONObject receivePayRf(String memberId,String payMoney,RoutewayDraw draw){
 		JSONObject result = new JSONObject();
 		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
