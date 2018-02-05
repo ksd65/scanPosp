@@ -6,6 +6,8 @@
     <result column="name" jdbcType="VARCHAR" property="name" />
     <result column="sort" jdbcType="INTEGER" property="sort" />
     <result column="kbin_id" jdbcType="INTEGER" property="kbinId" />
+    <result column="ft_bank_id" jdbcType="INTEGER" property="ftBankId" />
+    <result column="code" jdbcType="VARCHAR" property="code" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -66,7 +68,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, name, sort, kbin_id
+    id, name, sort, kbin_id,ft_bank_id,code
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.BankExample" resultMap="BaseResultMap">
     select

@@ -8,6 +8,10 @@ public class Bank {
     private Integer sort;
 
     private Integer kbinId;
+    
+    private Integer ftBankId;
+    
+    private String code;
 
     public Integer getId() {
         return id;
@@ -40,4 +44,22 @@ public class Bank {
     public void setKbinId(Integer kbinId) {
         this.kbinId = kbinId;
     }
+
+	public Integer getFtBankId() {
+		return ftBankId;
+	}
+
+	public void setFtBankId(Integer ftBankId) {
+		this.ftBankId = ftBankId;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+    
+    
 }
