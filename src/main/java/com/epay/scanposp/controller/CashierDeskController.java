@@ -6042,7 +6042,7 @@ public class CashierDeskController {
 			String rt7_timestamp = request.getParameter("rt7_timestamp");
 			String rt8_desc = request.getParameter("rt8_desc");
 			String sign = request.getParameter("sign");
-			
+				
 			String result_code = rt4_status;
 			String result_message = rt8_desc;
 			
@@ -6100,9 +6100,9 @@ public class CashierDeskController {
 			sb.append(split).append(rt6_currency);
 			sb.append(split).append(rt7_timestamp);
 			sb.append(split).append(rt8_desc);
+			sb.append(split).append(keyList.get(0).getPrivateKey());
 			String mySign = Disguiser.disguiseMD5(sb.toString());
-            
-            if (!sign.equals(mySign)){
+			if (!sign.equals(mySign)){
 				res = "验证签名不通过";
                 respString = "fail";
                 logger.info(res);
