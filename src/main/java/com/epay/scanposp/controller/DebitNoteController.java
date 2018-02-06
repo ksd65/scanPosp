@@ -3878,6 +3878,10 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 							payTypeStr = "1";
 						}else if("QQ".equals(payType)){
 							payTypeStr = "3";
+						}else if("ZFB".equals(payType)){
+							payTypeStr = "2";
+						}else if("JD".equals(payType)){
+							payTypeStr = "5";
 						}
 						param.put("txnType", payTypeStr);
 						param.put("ip", ip);
@@ -3917,6 +3921,10 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 							payTypeStr = "1";
 						}else if("QQ".equals(payType)){
 							payTypeStr = "3";
+						}else if("ZFB".equals(payType)){
+							payTypeStr = "2";
+						}else if("JD".equals(payType)){
+							payTypeStr = "5";
 						}
 						param.put("txnType", payTypeStr);
 						param.put("ip", ip);
@@ -4635,10 +4643,12 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		*/
 		
 		if(RouteCodeConstant.TB_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("1");
 			if("1".equals(payType)){
 				result = tbH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent );
 			}
 		}else if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("1");
 			if("1".equals(payType)){
 				result = eskH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType );
 			}else if("3".equals(payType)){
@@ -4649,28 +4659,34 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}else if(RouteCodeConstant.XF_ROUTE_CODE.equals(routeCode)){
 			result = xfH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode );
 		}else if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");
 			if("1".equals(payType)){
 				result = rfH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent );
 			}
 		}else if(RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("1");
 			if("1".equals(payType)){
 				result = eskH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType );
 			}else if("3".equals(payType)){
 				result = esk001H5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,routeCode,aisleType,payType);
 			}
 		}else if(RouteCodeConstant.ZHZF_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");
 			if("3".equals(payType)){
 				result = zhzfH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent );
 			}
 		}else if(RouteCodeConstant.POSP_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");
 			if("1".equals(payType)){
 				result = pospH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent );
 			}
 		}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");
 			if("3".equals(payType)){
 				result = esk001H5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,routeCode,aisleType,payType);
 			}
 		}else if(RouteCodeConstant.WW_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");
 			if("1".equals(payType)||"3".equals(payType)){
 				result = wwH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,payType);
 			}
