@@ -4,9 +4,12 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import net.sf.json.JSONArray;
@@ -19,12 +22,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.alibaba.fastjson.JSON;
+import com.epay.scanposp.common.constant.HLBConfig;
 import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
+import com.epay.scanposp.common.utils.hlb.Disguiser;
+import com.epay.scanposp.common.utils.hlb.RSA;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
 import com.epay.scanposp.common.utils.slf.MerchantClient;
@@ -287,6 +293,78 @@ public class QueryReceivePayResultNoticeTigger {
 								}else{
 									draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 								}
+								draw.setUpdateDate(new Date());
+								routewayDrawService.updateByPrimaryKey(draw);
+				        	}
+						}
+				    }else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
+						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+				        if(keyList == null || keyList.size()!=1){
+				        	continue;
+				        }
+				        MemberMerchantKey merchantKey = keyList.get(0);
+				        
+				        String serverUrl = HLBConfig.agentPayUrl;
+				        String charset = "utf-8";
+						
+						Map<String,String> sPara = new HashMap<String,String>();
+						sPara.put("P1_bizType","TransferQuery");
+						sPara.put("P2_orderId",draw.getOrderCode());
+						sPara.put("P3_customerNumber",draw.getMerchantCode());
+						
+						String split = "&";
+						StringBuffer sb = new StringBuffer();
+						sb.append(split).append("TransferQuery").append(split).append(draw.getOrderCode()).append(split).append(draw.getMerchantCode());
+						
+						String sign = RSA.sign(sb.toString(), RSA.getPrivateKey(HLBConfig.rsaPrivateKey));
+						sPara.put("sign",sign);
+						logger.info("合利宝代付订单查询请求数据[{}]", new Object[] { JSONObject.fromObject(sPara).toString() });
+						
+						List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+						List<String> keys = new ArrayList<String>(sPara.keySet());
+						for (int i = 0; i < keys.size(); i++) {
+							 String name=(String) keys.get(i);
+							 String value=(String) sPara.get(name);
+							if(value!=null && !"".equals(value)){
+								nvps.add(new BasicNameValuePair(name, value));
+							}
+						}
+						
+						byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+						String respStr = new String(b, charset);
+						logger.info("合利宝代付订单查询返回报文[{}]", new Object[] { respStr });
+				        
+						JSONObject resObj = JSONObject.fromObject(respStr);
+						String code = resObj.getString("rt2_retCode");
+				        
+				     	if("0000".equals(code)){
+							sb = new StringBuffer();
+							sb.append(split).append(resObj.getString("rt1_bizType"));
+							sb.append(split).append(resObj.getString("rt2_retCode"));
+							sb.append(split).append(resObj.getString("rt4_customerNumber"));
+							sb.append(split).append(resObj.getString("rt5_orderId"));
+							sb.append(split).append(resObj.getString("rt6_serialNumber"));
+							sb.append(split).append(resObj.getString("rt7_orderStatus"));
+							//sb.append(split).append(resObj.getString("rt8_reason"));
+							sb.append(split).append(merchantKey.getPrivateKeyPassword());
+							sign = Disguiser.disguiseMD5(sb.toString());
+				     		boolean checkSign = sign.equals(resObj.getString("sign"));
+							if(checkSign){
+				        		String order_status = resObj.getString("rt7_orderStatus");
+								if("SUCCESS".equals(order_status)){
+									draw.setRespType("S");
+									draw.setRespCode("000");
+								}else if("FAIL".equals(order_status)||"REFUND".equals(order_status)){
+									draw.setRespType("E");
+									draw.setRespCode(order_status);
+								}
+								
+								if(resObj.containsKey("rt8_reason")){
+									draw.setRespMsg(resObj.getString("rt8_reason"));
+								}
+								draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 								draw.setUpdateDate(new Date());
 								routewayDrawService.updateByPrimaryKey(draw);
 				        	}

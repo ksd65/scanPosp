@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.ESKConfig;
+import com.epay.scanposp.common.constant.HLBConfig;
 import com.epay.scanposp.common.constant.MSConfig;
 import com.epay.scanposp.common.constant.POSPConfig;
 import com.epay.scanposp.common.constant.RFConfig;
@@ -61,6 +62,7 @@ import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.TranCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.esk.Key;
+import com.epay.scanposp.common.utils.hlb.Disguiser;
 import com.epay.scanposp.common.utils.ms.CryptoUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
@@ -4690,6 +4692,11 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			if("1".equals(payType)||"3".equals(payType)){
 				result = wwH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,payType);
 			}
+		}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");
+			if("3".equals(payType)){
+				result = hlbH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,routeCode,aisleType,payType);
+			}
 		}
 		result.put("routeCode", routeCode);
 		return result;
@@ -7991,5 +7998,249 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	}
 	
 	
+	public JSONObject hlbH5Pay(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String sceneInfo,String ip,String callbackUrl,MemberMerchantCode merchantCode,String userAgent,String routeCode,String aisleType,String payType) {
+		JSONObject result = new JSONObject();
+		try {
+			String merCode = "";
+			String memberCode = "";
+			String payTypeStr = "";
+			String eskPayType = "";
+			if("3".equals(payType)){
+				merCode = merchantCode.getQqMerchantCode();
+				memberCode = memberInfo.getQqMemberCode();
+				payTypeStr = PayTypeConstant.PAY_TYPE_QQ;
+				eskPayType = "QQPAY";
+			}
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+			
+			// 插入一条收款记录
+			String orderCode = CommonUtil.getOrderCode();
+			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(payMoney));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setOrderNumOuter(orderNumOuter);
+			debitNote.setRouteId(routeCode);
+			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
+			debitNote.setTxnType(payType);
+			debitNote.setMemberCode(memberCode);
+			debitNote.setMerchantCode(merCode);
+			debitNote.setIp(ip);
+			debitNote.setUserAgent(userAgent.length()>1000?userAgent.substring(0, 1000):userAgent);
+			debitNote.setBrowser(DeviceRequestUtil.getBrowser(userAgent));
+			debitNote.setDeviceInfo(DeviceRequestUtil.getDevice(userAgent));
+			debitNote.setSettleType(memberInfo.getSettleType());
+			if("0".equals(memberInfo.getSettleType())){
+				if("3".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getQqT0TradeRate());
+				}
+			}else{
+				if("3".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getQqT1TradeRate());
+				}
+			}
+			
+			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_006_"+payTypeStr;
+			JSONObject memResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != memResult){
+				debitNote.setStatus("9");
+				debitNoteService.insertSelective(debitNote);
+				return memResult;
+			} 
+			
+			configName = "SINGLE_MIN_"+routeCode+"_006_"+payTypeStr;
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_006_"+payTypeStr;
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+			JSONObject ipResult = checkLimitIp(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), routeCode, merCode, ip);
+			if(null != ipResult){
+				debitNote.setStatus("6");
+				debitNoteService.insertSelective(debitNote);
+				return ipResult;
+			}
+			
+			JSONObject mResult = checkLimitMerchantMoney(routeCode,merCode);
+			if(null != mResult){
+				debitNote.setStatus("7");
+				debitNoteService.insertSelective(debitNote);
+				return mResult;
+			}
+			
+			JSONObject tResult = checkLimitCounts(routeCode);
+			if(null != tResult){
+				debitNote.setStatus("8");
+				debitNoteService.insertSelective(debitNote);
+				return tResult;
+			}
+			
+			debitNoteService.insertSelective(debitNote);
+			
+			PayResultNotice payResultNotice = new PayResultNotice();
+			payResultNotice.setOrderCode(debitNote.getOrderCode());
+			payResultNotice.setOrderNumOuter(orderNumOuter);
+			payResultNotice.setPayMoney(debitNote.getMoney());
+			payResultNotice.setMemberCode(memberInfo.getCode());
+			payResultNotice.setPayType(payType);
+			
+			payResultNotice.setReturnUrl(callbackUrl);
+			payResultNotice.setStatus("1");
+			payResultNotice.setCreateDate(new Date());
+			payResultNotice.setPlatformType(platformType);
+			if("3".equals(platformType)){
+				payResultNotice.setInterfaceType("2");
+			}else{
+				payResultNotice.setInterfaceType("1");
+			}
+			payResultNoticeService.insertSelective(payResultNotice);
+			
+			String callBack = SysConfig.serverUrl + "/cashierDesk/hlbPayNotify";
+			String serverUrl = HLBConfig.msServerUrl;
+			String charset = "utf-8";
+			
+			Map<String,String> sPara = new HashMap<String,String>();
+			String goodsName = memberInfo.getName() + " 收款";
+			sPara.put("P1_bizType","AppPay");
+			sPara.put("P2_orderId",orderCode);
+			sPara.put("P3_customerNumber",merCode);
+			sPara.put("P4_payType","SCAN");//SWIPE:刷卡(被扫) SCAN:扫码(主扫)
+			sPara.put("P5_orderAmount",payMoney);
+			sPara.put("P6_currency","CNY");
+			sPara.put("P7_authcode","1");//payType为刷卡(被扫)时传入一组字符串(付款码),主扫支付类型传入1即可
+			sPara.put("P8_appType",eskPayType);
+			sPara.put("P9_notifyUrl",callBack);
+			sPara.put("P10_successToUrl","");
+			sPara.put("P11_orderIp",ip);
+			sPara.put("P12_goodsName",goodsName);
+			sPara.put("P13_goodsDetail","");
+			sPara.put("P14_desc","");
+			
+			String split = "&";
+			StringBuffer sb = new StringBuffer();
+			sb.append(split).append("AppPay").append(split).append(orderCode).append(split)
+					.append(merCode).append(split).append("SCAN").append(split).append(payMoney)
+					.append(split).append("CNY");
+			sb.append(split).append("1");
+			sb.append(split).append(eskPayType);
+			sb.append(split).append(callBack);
+			sb.append(split).append("");
+			sb.append(split).append(ip);
+			sb.append(split).append(goodsName);
+			sb.append(split).append("");
+			sb.append(split).append("");
+			sb.append(split).append(merchantKey.getPrivateKey());
+			
+			String sign = Disguiser.disguiseMD5(sb.toString());
+			sPara.put("sign",sign);
+			logger.info("合利宝H5请求数据[{}]", new Object[] { JSONObject.fromObject(sPara).toString() });
+			
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			List<String> keys = new ArrayList<String>(sPara.keySet());
+			
+			for (int i = 0; i < keys.size(); i++) {
+				 String name=(String) keys.get(i);
+				 String value=(String) sPara.get(name);
+				if(value!=null && !"".equals(value)){
+					nvps.add(new BasicNameValuePair(name, value));
+				}
+			}
+			
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("合利宝H5返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			
+			String resultCode = jsonObject.getString("rt2_retCode");
+			String resultMsg = jsonObject.getString("rt3_retMsg");
+			boolean flag = false;
+			if ("0000".equals(resultCode)) {
+				sb = new StringBuffer();
+				sb.append(split).append(jsonObject.getString("rt1_bizType"));
+				sb.append(split).append(jsonObject.getString("rt2_retCode"));
+				sb.append(split).append(jsonObject.getString("rt4_customerNumber"));
+				sb.append(split).append(jsonObject.getString("rt5_orderId"));
+				sb.append(split).append(jsonObject.getString("rt6_serialNumber"));
+				sb.append(split).append(jsonObject.getString("rt7_payType"));
+				sb.append(split).append(jsonObject.getString("rt8_qrcode"));
+				sb.append(split).append(jsonObject.getString("rt9_wapurl"));
+				sb.append(split).append(jsonObject.getString("rt10_orderAmount"));
+				sb.append(split).append(jsonObject.getString("rt11_currency"));
+				sb.append(split).append(merchantKey.getPrivateKey());
+				sign = Disguiser.disguiseMD5(sb.toString());
+				if(!sign.equals(jsonObject.getString("sign"))){
+					resultMsg = "验签失败";
+				}else{
+					result.put("payUrl", jsonObject.getString("rt8_qrcode"));
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "成功");
+					flag = true;
+				}
+			}
+			if(!flag){
+				result.put("returnCode", "0009");
+				result.put("returnMsg", resultMsg);
+				
+				DebitNoteExample debitNoteExample = new DebitNoteExample();
+				debitNoteExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
+				if (debitNotes != null && debitNotes.size() > 0) {
+					DebitNote debitNote_1 = debitNotes.get(0);
+					debitNote_1.setStatus("2");
+					debitNote_1.setUpdateDate(new Date());
+					debitNote_1.setRespCode(resultCode);
+					if(!"".equals(resultMsg)){
+						debitNote_1.setRespMsg(resultMsg.length()>250?resultMsg.substring(0, 250):resultMsg);
+					}
+					debitNoteService.updateByPrimaryKey(debitNote_1);
+				}
+			}
+			
+			try{
+		        DebitNoteIp debitNoteIp = new DebitNoteIp();
+		        debitNoteIp.setMemberId(memberInfo.getId());
+		        debitNoteIp.setMerchantCode(merCode);
+		        debitNoteIp.setOrderCode(orderCode);
+		        debitNoteIp.setRouteId(routeCode);
+		        debitNoteIp.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
+		        debitNoteIp.setTxnType(payType);
+		        debitNoteIp.setIp(ip);
+		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
+				debitNoteIpService.insertSelective(debitNoteIp);
+	        }catch(Exception ex){
+	        	logger.error(ex.getMessage());
+	        }
+			
+        } catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
 	
 }

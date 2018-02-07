@@ -5049,7 +5049,90 @@ public class CashierDeskController {
 					result.put("oriRespCode", "000002");
 					result.put("oriRespMsg", "支付失败");
 				}
-		    }else{
+		    }else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
+		    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return signReturn(result);
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        String serverUrl = HLBConfig.msServerUrl;
+		        String charset = "utf-8";
+				
+				Map<String,String> sPara = new HashMap<String,String>();
+				sPara.put("P1_bizType","AppPayQuery");
+				sPara.put("P2_orderId",debitNote.getOrderCode());
+				sPara.put("P3_customerNumber",debitNote.getMerchantCode());
+				
+				String split = "&";
+				StringBuffer sb = new StringBuffer();
+				sb.append(split).append("AppPayQuery").append(split).append(debitNote.getOrderCode()).append(split)
+						.append(debitNote.getMerchantCode()).append(split).append(merchantKey.getPrivateKey());
+				
+				String sign = Disguiser.disguiseMD5(sb.toString());
+				sPara.put("sign",sign);
+				
+				logger.info("合利宝订单查询请求数据[{}]", new Object[] { JSONObject.fromObject(sPara).toString() });
+				
+				List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+				List<String> keys = new ArrayList<String>(sPara.keySet());
+				for (int i = 0; i < keys.size(); i++) {
+					 String name=(String) keys.get(i);
+					 String value=(String) sPara.get(name);
+					if(value!=null && !"".equals(value)){
+						nvps.add(new BasicNameValuePair(name, value));
+					}
+				}
+				
+				byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+				String respStr = new String(b, charset);
+				logger.info("合利宝订单查询返回报文[{}]", new Object[] { respStr });
+				
+				JSONObject jsonObject = JSONObject.fromObject(respStr);
+				
+				String resultCode = jsonObject.getString("rt2_retCode");
+				String resultMsg = jsonObject.getString("rt3_retMsg");
+				if ("0000".equals(resultCode)) {
+					sb = new StringBuffer();
+					sb.append(split).append(jsonObject.getString("rt1_bizType"));
+					sb.append(split).append(jsonObject.getString("rt2_retCode"));
+					sb.append(split).append(jsonObject.getString("rt4_customerNumber"));
+					sb.append(split).append(jsonObject.getString("rt5_orderId"));
+					sb.append(split).append(jsonObject.getString("rt6_serialNumber"));
+					sb.append(split).append(jsonObject.getString("rt7_orderStatus"));
+					sb.append(split).append(jsonObject.getString("rt8_orderAmount"));
+					sb.append(split).append(jsonObject.getString("rt9_currency"));
+					sb.append(split).append(merchantKey.getPrivateKey());
+					sign = Disguiser.disguiseMD5(sb.toString());
+					if(!sign.equals(jsonObject.getString("sign"))){
+						result.put("returnCode", "0012");
+						result.put("returnMsg", "验签失败");
+					}else{
+						String status = jsonObject.getString("rt7_orderStatus");
+						if("SUCCESS".equals(status)){
+		        			result.put("oriRespType", "S");
+							result.put("oriRespCode", "000000");
+							result.put("oriRespMsg", "支付成功");
+							result.put("totalAmount", jsonObject.getString("rt8_orderAmount"));
+		        		}else if("DOING".equals(status)){
+		        			result.put("oriRespType", "R");
+							result.put("oriRespCode", "000001");
+							result.put("oriRespMsg", "支付中");
+		        		}else{
+							result.put("oriRespType", "E");
+							result.put("oriRespCode", "000002");
+							result.put("oriRespMsg", "支付失败");
+						}
+					}
+				}else{
+		        	result.put("returnCode", "0012");
+					result.put("returnMsg", resultMsg);
+		        }
+			}else{
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
 				if (serverUrl.startsWith("https://ipay")) {
@@ -5892,10 +5975,7 @@ public class CashierDeskController {
 			
 			
 			String callBack = SysConfig.serverUrl + "/cashierDesk/hlbPayNotify";
-			
-			
 			String serverUrl = HLBConfig.msServerUrl;
-			
 			String charset = "utf-8";
 			
 			Map<String,String> sPara = new HashMap<String,String>();
