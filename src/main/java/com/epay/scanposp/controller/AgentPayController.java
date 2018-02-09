@@ -80,7 +80,7 @@ import com.epay.scanposp.service.TradeDetailDailyService;
 @Controller
 public class AgentPayController {
 	
-	private static Logger logger = LoggerFactory.getLogger(CommomServiceController.class);
+	private static Logger logger = LoggerFactory.getLogger(AgentPayController.class);
 	
 	@Resource
 	ThreadPoolTaskExecutor threadPoolTaskExecutor;

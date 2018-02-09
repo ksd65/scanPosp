@@ -184,7 +184,7 @@ import com.epay.scanposp.thread.DrawResultNoticeThread;
 
 @Controller
 public class CashierDeskController {
-	private static Logger logger = LoggerFactory.getLogger(CommomServiceController.class);
+	private static Logger logger = LoggerFactory.getLogger(CashierDeskController.class);
 	
 	@Resource
 	ThreadPoolTaskExecutor threadPoolTaskExecutor;

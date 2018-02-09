@@ -415,21 +415,21 @@ public class MemberInfoController {
 			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
 			if (merchantCodes == null || merchantCodes.size() != 1) {
 				result.put("returnCode", "0008");
-				result.put("returnMsg", "对不起，商户编码不存在");
+				result.put("returnMsg", "对不起，没有该通道的提现权限");
 				return result.toString();
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
 			
 			double tradeRate = 0 , drawFee = 0;
-			if("0".equals(memberInfo.getSettleType())){
-				tradeRate = merchantCode.getT0TradeRate().doubleValue();
-				drawFee = merchantCode.getT0DrawFee().doubleValue();
-			}else{
-				tradeRate = merchantCode.getT1TradeRate().doubleValue();
-				drawFee = merchantCode.getT1DrawFee().doubleValue();
-			}
 			
 			if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
+				if("0".equals(memberInfo.getSettleType())){
+					tradeRate = merchantCode.getT0TradeRate().doubleValue();
+					drawFee = merchantCode.getT0DrawFee().doubleValue();
+				}else{
+					tradeRate = merchantCode.getT1TradeRate().doubleValue();
+					drawFee = merchantCode.getT1DrawFee().doubleValue();
+				}
 				Double drawPercent = 0.7;//D0 70%
 				
 				AccountExample accountExample = new AccountExample();
@@ -466,8 +466,58 @@ public class MemberInfoController {
 				resData.put("drawFee", new DecimalFormat("#.00").format(drawFee));
 				resData.put("memberInfo", memberInfo);
 				result.put("resData", resData);
-			}else{
+			}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){//环迅，走D1
+				drawFee = merchantCode.getWyT1DrawFee().doubleValue();
 				
+				paramMap = new HashMap<String, Object>();
+				paramMap.put("memberId", reqDataJson.getInt("memberId"));
+				paramMap.put("routeId", routeCode);
+				paramMap.put("startDate", df.format(begin));
+				paramMap.put("endDate", df.format(end));
+				paramMap.put("settleType", "1");//D1
+				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
+				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
+				
+				Double canDrawToday = 0d;//当天可提现的金额
+				
+				Double balanceHis = 0d;
+				RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
+				routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+				List<RoutewayAccount> accountList = routewayAccountService.selectByExample(routewayAccountExample);
+				if(accountList != null && accountList.size()>0){
+					RoutewayAccount account = accountList.get(0);
+					balanceHis = account.getBalance().doubleValue();
+				}
+				
+				Double balance = balanceHis + balanceToday - drawMoneyCountToday;//总账户余额
+				
+				//可提现总额
+				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
+				
+				resData.put("balance", new DecimalFormat("0.00").format(balance));
+				resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
+				resData.put("canDrawMoneyCount", new DecimalFormat("0.00").format(canDrawMoneyCount));
+				resData.put("drawFee", new DecimalFormat("0.00").format(drawFee));
+				result.put("resData", resData);
+				
+			}else{
+				if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){//瑞付  网银，微信h5
+					if(merchantCode.getWyT0DrawFee()!=null){
+						drawFee = merchantCode.getWyT0DrawFee().doubleValue();
+					}else if(merchantCode.getT0DrawFee()!=null){
+						drawFee = merchantCode.getT0DrawFee().doubleValue();
+					}
+				}else if(RouteCodeConstant.ZHZF_ROUTE_CODE.equals(routeCode)){//综合支付 qqH5
+					drawFee = merchantCode.getQqT0DrawFee().doubleValue();
+				}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){//合利宝 微信H5
+					drawFee = merchantCode.getT0DrawFee().doubleValue();
+				}else{
+					if("0".equals(memberInfo.getSettleType())){
+						drawFee = merchantCode.getT0DrawFee().doubleValue();
+					}else{
+						drawFee = merchantCode.getT1DrawFee().doubleValue();
+					}
+				}
 				paramMap = new HashMap<String, Object>();
 				paramMap.put("memberId", reqDataJson.getInt("memberId"));
 				paramMap.put("routeId", routeCode);
@@ -697,14 +747,34 @@ public class MemberInfoController {
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
 			
 			double tradeRate = 0 , drawFee = 0;
-			if("0".equals(memberInfo.getSettleType())){
-				tradeRate = merchantCode.getT0TradeRate().doubleValue();
-				drawFee = merchantCode.getT0DrawFee().doubleValue();
-			}else{
-				tradeRate = merchantCode.getT1TradeRate().doubleValue();
-				drawFee = merchantCode.getT1DrawFee().doubleValue();
-			}
 			
+			if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){//瑞付  网银，微信h5
+				if(merchantCode.getWyT0DrawFee()!=null){
+					drawFee = merchantCode.getWyT0DrawFee().doubleValue();
+				}else if(merchantCode.getT0DrawFee()!=null){
+					drawFee = merchantCode.getT0DrawFee().doubleValue();
+				}
+			}else if(RouteCodeConstant.ZHZF_ROUTE_CODE.equals(routeCode)){//综合支付 qqH5
+				drawFee = merchantCode.getQqT0DrawFee().doubleValue();
+			}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){//合利宝 微信H5
+				drawFee = merchantCode.getT0DrawFee().doubleValue();
+			}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){//环迅网银，走D1
+				drawFee = merchantCode.getWyT1DrawFee().doubleValue();
+			}else if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
+				if("0".equals(memberInfo.getSettleType())){
+					tradeRate = merchantCode.getT0TradeRate().doubleValue();
+					drawFee = merchantCode.getT0DrawFee().doubleValue();
+				}else{
+					tradeRate = merchantCode.getT1TradeRate().doubleValue();
+					drawFee = merchantCode.getT1DrawFee().doubleValue();
+				}
+			}else{
+				if("0".equals(memberInfo.getSettleType())){
+					drawFee = merchantCode.getT0DrawFee().doubleValue();
+				}else{
+					drawFee = merchantCode.getT1DrawFee().doubleValue();
+				}
+			}
 			if(Double.parseDouble(drawMoney)<=drawFee){
 				result.put("returnCode", "4004");
 				result.put("returnMsg", "提现金额必须大于提现手续费");
@@ -789,11 +859,17 @@ public class MemberInfoController {
 				paramMap.put("routeId", routeCode);
 				paramMap.put("startDate", df.format(begin));
 				paramMap.put("endDate", df.format(end));
-				paramMap.put("settleType", "0");//D0
+				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){
+					paramMap.put("settleType", "1");//D1
+				}else{
+					paramMap.put("settleType", "0");//D0
+				}
 				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
 				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
-				
 				Double canDrawToday = balanceToday;//当天可提现的金额
+				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){
+					canDrawToday = 0d;
+				}
 				
 				Double balanceHis = 0d;
 				RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();

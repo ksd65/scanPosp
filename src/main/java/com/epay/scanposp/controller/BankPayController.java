@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
@@ -406,9 +407,11 @@ public class BankPayController {
 			result = bankPay(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode);
 			result.put("routeCode", routeCode);
 		}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("1");
 			result = bankPayHx(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName);
 			result.put("routeCode", routeCode);
 		}else if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");//D0
 			result = bankPayRf(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName);
 			result.put("routeCode", routeCode);
 		}
@@ -547,6 +550,7 @@ public class BankPayController {
 	public JSONObject bankPayHx(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String bankCode,String goodsName) {
 		JSONObject result = new JSONObject();
 		try {
+			String merCode = merchantCode.getWyMerchantCode();
 			// 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
 			
@@ -561,13 +565,13 @@ public class BankPayController {
 			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_YL);
 			debitNote.setTxnType("8");
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
-			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
+			debitNote.setMerchantCode(merCode);
 			
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				debitNote.setTradeRate(merchantCode.getT0TradeRate());
+				debitNote.setTradeRate(merchantCode.getWyT0TradeRate());
 			}else{
-				debitNote.setTradeRate(merchantCode.getT1TradeRate());
+				debitNote.setTradeRate(merchantCode.getWyT1TradeRate());
 			}
 			
 			String configName = "SINGLE_MIN_1014_005_YL";
@@ -632,7 +636,7 @@ public class BankPayController {
 			
 			result.put("payUrl", HXConfig.payURL);
 			result.put("privateKey", HXConfig.privateKey);
-			result.put("merchantCode", HXConfig.ipsMerCode);
+			result.put("merchantCode", merCode);
 			result.put("merchantName", HXConfig.ipsMerName);
 			result.put("merchantAccount", HXConfig.ipsMerAccount);
 			result.put("callBack", callBack);
@@ -657,7 +661,6 @@ public class BankPayController {
 		JSONObject result = new JSONObject();
 		try {
 			String merCode = merchantCode.getWyMerchantCode();
-			memberInfo.setSettleType("0");//D0
 			
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
@@ -1360,9 +1363,27 @@ public class BankPayController {
 				return result;
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			String merCode = "";
+			Double drawFee = 0d;
+			if(!StringUtils.isBlank(merchantCode.getWyMerchantCode())&&merchantCode.getWyT0DrawFee()!=null){
+				merCode = merchantCode.getWyMerchantCode();
+				drawFee = merchantCode.getWyT0DrawFee().doubleValue();
+			}
+			if("".equals(merCode)){
+				if(!StringUtils.isBlank(merchantCode.getWxMerchantCode())&&merchantCode.getT0DrawFee()!=null){
+					merCode = merchantCode.getWxMerchantCode();
+					drawFee = merchantCode.getT0DrawFee().doubleValue();
+				}
+			}
+			if("".equals(merCode)){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+			
 			
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
-	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merchantCode.getWxMerchantCode()).andDelFlagEqualTo("0");
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
 	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
 	        if(keyList == null || keyList.size()!=1){
 	            result.put("returnCode", "0003");
@@ -1370,7 +1391,7 @@ public class BankPayController {
 				return result;
 	        }
 	        
-	        double amount = (new BigDecimal(payMoney)).doubleValue()-merchantCode.getT0DrawFee().doubleValue();
+	        double amount = (new BigDecimal(payMoney)).doubleValue()- drawFee;
 				
 	        MemberMerchantKey merchantKey = keyList.get(0);
 	        
@@ -1389,7 +1410,7 @@ public class BankPayController {
 			String orderCode = CommonUtil.getOrderCode();
 			
 			JSONObject reqData = new JSONObject();
-			reqData.put("AppKey", merchantCode.getWxMerchantCode());
+			reqData.put("AppKey", merCode);
 			reqData.put("OrderNum", orderCode);
 			reqData.put("Amount", new DecimalFormat("0.00").format(amount));
 			reqData.put("Account_no", draw.getBankAccount());//收款账号
@@ -1439,7 +1460,7 @@ public class BankPayController {
 				result.put("respMsg", result_msg);
 			}
 			result.put("orderCode", orderCode);
-			result.put("merchantCode", merchantCode.getWxMerchantCode());
+			result.put("merchantCode", merCode);
 			result.put("reqDate", reqDate);
 		}catch(Exception e){
 			logger.error(e.getMessage());
