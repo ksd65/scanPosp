@@ -17,8 +17,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang3.StringUtils;
@@ -71,8 +69,6 @@ import com.epay.scanposp.entity.MlTradeDetail;
 import com.epay.scanposp.entity.MlTradeDetailAll;
 import com.epay.scanposp.entity.MlTradeDetailAllExample;
 import com.epay.scanposp.entity.MlTradeResNotice;
-import com.epay.scanposp.entity.PayRoute;
-import com.epay.scanposp.entity.PayRouteExample;
 import com.epay.scanposp.entity.PayType;
 import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.RequestMsg;
