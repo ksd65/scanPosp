@@ -35,6 +35,7 @@ import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.DateUtil;
+import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.cj.entity.ConsumeRequestEntity;
 import com.epay.scanposp.common.utils.cj.entity.ConsumeResponseEntity;
@@ -167,7 +168,12 @@ public class QuickPayController {
 	private TradeDetailService tradeDetailService;
 
 	
-	
+	/**
+	 * 快捷支付短信发送接口
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	@ResponseBody
 	@RequestMapping("/quickPay/sendSms")
 	public JSONObject sendSms(HttpServletRequest request,HttpServletResponse response){
@@ -584,13 +590,18 @@ public class QuickPayController {
 		return result;
 	}
 	
-	
+	/**
+	 * 快捷支付
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	@ResponseBody
 	@RequestMapping("/api/quickPay/toPay")
 	public JSONObject toPay(HttpServletRequest request,HttpServletResponse response){
 		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
-		System.out.println("请求参数==="+reqDataJson.toString());
+		logger.info("请求参数==="+reqDataJson.toString());
 		String orderNum = "";
 		if(reqDataJson.containsKey("orderNum")){
 			orderNum = reqDataJson.getString("orderNum");
@@ -643,8 +654,6 @@ public class QuickPayController {
 			result.put("returnMsg", "缺少签名信息");
 			return result;
 		}
-		
-		
 		
 		result = validMemberInfoToQuickPay(memberCode, orderNum,smsCode, srcStr.toString(), signStr);
 		
@@ -744,7 +753,14 @@ public class QuickPayController {
 		}
 		return result;
 	}
-	
+	/**
+	 * 畅捷快捷支付
+	 * @param platformType
+	 * @param memberInfo
+	 * @param quickPaySms
+	 * @param smsCode
+	 * @return
+	 */
 	public JSONObject cjQuickPay(String platformType,MemberInfo memberInfo,QuickPaySms quickPaySms,String smsCode) {
 		JSONObject result = new JSONObject();
 		try {
@@ -824,12 +840,16 @@ public class QuickPayController {
 	}
 	
 	
-	
+	/**
+	 * 畅捷快捷支付回调
+	 * @param request
+	 * @param response
+	 */
 	@RequestMapping("/quickPay/cjPayNotify")
 	public void cjPayNotify(HttpServletRequest request,HttpServletResponse response) {
 		JSONObject rtObj = new JSONObject();
 		try {
-			String v_code = request.getParameter("v_code");
+			/*String v_code = request.getParameter("v_code");
 			String v_status = request.getParameter("v_status");
 			String v_msg = request.getParameter("v_msg");
 			String v_txnAmt = request.getParameter("v_txnAmt");
@@ -846,9 +866,36 @@ public class QuickPayController {
 			rtMap.put("v_mid", v_mid);
 			rtMap.put("v_oid", v_oid);
 			rtMap.put("v_attach", v_attach);
-			rtMap.put("v_sign", v_sign);
+			rtMap.put("v_sign", v_sign);*/
 			
-			logger.info("cjPayNotify回调返回报文[{}]",  JSONObject.fromObject(rtMap).toString() );
+			String responseStr = HttpUtil.getPostString(request);
+		//	String responseStr = "v_mid=10034272896&v_oid=20180212145220045041&v_txnAmt=2&v_code=00&v_msg=支付成功&v_time=&v_attach=苹果&v_status=0000&sign=";
+			logger.info("cjPayNotify回调返回报文[{}]",  responseStr );
+			/*JSONObject resJo = JSONObject.fromObject(responseStr);
+			String v_code = resJo.getString("v_code");
+			String v_status = resJo.getString("v_status");
+			String v_msg = resJo.getString("v_msg");
+			String v_txnAmt = resJo.getString("v_txnAmt");
+			String v_mid = resJo.getString("v_mid");
+			String v_oid = resJo.getString("v_oid");
+			String v_attach =  resJo.getString("v_attach");
+			String v_sign =  resJo.getString("v_sign");*/
+			String[] arr = responseStr.split("&");
+			Map<String,String> resJo = new HashMap<String, String>();
+			for(int i=0;i<arr.length;i++){
+				String str = arr[i];
+				String[] arr1 = str.split("=");
+				if(arr1.length==2){
+					resJo.put(arr1[0], arr1[1]);
+				}
+			}
+			String v_code = resJo.get("v_code");
+			String v_status = resJo.get("v_status");
+			String v_msg = resJo.get("v_msg");
+			String v_txnAmt = resJo.get("v_txnAmt");
+			String v_mid = resJo.get("v_mid");
+			String v_oid = resJo.get("v_oid");
+			String v_attach =  resJo.get("v_attach");
 			
 			String reqMsgId = v_oid;
         	
@@ -881,7 +928,7 @@ public class QuickPayController {
                 response.getWriter().write(rtObj.toString());
         		return;
             }
-            ConsumeResponseEntity respEntity = new ConsumeResponseEntity();
+        /*    ConsumeResponseEntity respEntity = new ConsumeResponseEntity();
             respEntity.setV_code(v_code);
             respEntity.setV_status(v_status);
             respEntity.setV_msg(v_msg);
@@ -898,7 +945,7 @@ public class QuickPayController {
                 response.getWriter().write(rtObj.toString());
         		return;
 			}
-            
+            */
             
         	
         	String result_message = v_msg;
