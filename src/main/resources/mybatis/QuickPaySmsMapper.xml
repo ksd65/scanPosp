@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.QuickPaySmsMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.QuickPaySms">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="money" jdbcType="DECIMAL" property="money" />
+    <result column="member_id" jdbcType="INTEGER" property="memberId" />
+    <result column="member_code" jdbcType="VARCHAR" property="memberCode" />
+    <result column="merchant_code" jdbcType="VARCHAR" property="merchantCode" />
+    <result column="order_code" jdbcType="VARCHAR" property="orderCode" />
+    <result column="order_num_outer" jdbcType="VARCHAR" property="orderNumOuter" />
+    <result column="settle_type" jdbcType="CHAR" property="settleType" />
+    <result column="txn_method" jdbcType="VARCHAR" property="txnMethod" />
+    <result column="txn_type" jdbcType="CHAR" property="txnType" />
+    <result column="trade_rate" property="tradeRate" jdbcType="DECIMAL" />
+    <result column="status" jdbcType="CHAR" property="status" />
+    <result column="route_id" jdbcType="VARCHAR" property="routeId" />
+    <result column="resp_code" jdbcType="VARCHAR" property="respCode" />
+    <result column="resp_msg" jdbcType="VARCHAR" property="respMsg" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="remarks" jdbcType="VARCHAR" property="remarks" />
+    <result column="account_type" jdbcType="VARCHAR" property="accountType" />
+    <result column="account_name" jdbcType="VARCHAR" property="accountName" />
+    <result column="bank_account" jdbcType="VARCHAR" property="bankAccount" />
+    <result column="tel" jdbcType="VARCHAR" property="tel" />
+    <result column="bank_cvv" jdbcType="VARCHAR" property="bankCvv" />
+    <result column="bank_yxq" jdbcType="VARCHAR" property="bankYxq" />
+    <result column="return_url" jdbcType="VARCHAR" property="returnUrl" />
+    
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, money, member_id, member_code, merchant_code, order_code, order_num_outer,settle_type,txn_method, txn_type, trade_rate,
+    status, route_id, resp_code, resp_msg, create_by, create_date, update_by, update_date, 
+    remarks,account_type,account_name,bank_account,tel,bank_cvv,bank_yxq,return_url
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.QuickPaySmsExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_quickpay_sms
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from bu_quickpay_sms
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from bu_quickpay_sms
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.QuickPaySmsExample">
+    delete from bu_quickpay_sms
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.QuickPaySms">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_quickpay_sms (money, member_id, member_code, 
+      merchant_code, order_code,order_num_outer, settle_type, 
+      txn_type, trade_rate,status, route_id, 
+      resp_code, resp_msg, create_by, 
+      create_date, update_by, update_date, 
+      remarks)
+    values (#{money,jdbcType=DECIMAL}, #{memberId,jdbcType=INTEGER}, #{memberCode,jdbcType=VARCHAR}, 
+      #{merchantCode,jdbcType=VARCHAR}, #{orderCode,jdbcType=VARCHAR},#{orderNumOuter,jdbcType=VARCHAR}, #{settleType,jdbcType=CHAR}, 
+      #{txnType,jdbcType=CHAR}, #{tradeRate,jdbcType=DECIMAL},#{status,jdbcType=CHAR}, #{routeId,jdbcType=VARCHAR}, 
+      #{respCode,jdbcType=VARCHAR}, #{respMsg,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, 
+      #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
+      #{remarks,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.QuickPaySms">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_quickpay_sms
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="money != null">
+        money,
+      </if>
+      <if test="memberId != null">
+        member_id,
+      </if>
+      <if test="memberCode != null">
+        member_code,
+      </if>
+      <if test="merchantCode != null">
+        merchant_code,
+      </if>
+      <if test="orderCode != null">
+        order_code,
+      </if>
+      <if test="orderNumOuter != null">
+        order_num_outer,
+      </if>
+      <if test="settleType != null">
+        settle_type,
+      </if>
+      <if test="txnMethod != null">
+        txn_method,
+      </if>
+      <if test="txnType != null">
+        txn_type,
+      </if>
+      <if test="tradeRate != null">
+        trade_rate,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="routeId != null">
+        route_id,
+      </if>
+      <if test="respCode != null">
+        resp_code,
+      </if>
+      <if test="respMsg != null">
+        resp_msg,
+      </if>
+      <if test="createBy != null">
+        create_by,
+      </if>
+      <if test="createDate != null">
+        create_date,
+      </if>
+      <if test="updateBy != null">
+        update_by,
+      </if>
+      <if test="updateDate != null">
+        update_date,
+      </if>
+      <if test="remarks != null">
+        remarks,
+      </if>
+      <if test="accountType != null">
+        account_type,
+      </if>
+      <if test="accountName != null">
+        account_name,
+      </if>
+      <if test="bankAccount != null">
+        bank_account,
+      </if>
+      <if test="tel != null">
+        tel,
+      </if>
+      <if test="bankCvv != null">
+        bank_cvv,
+      </if>
+      <if test="bankYxq != null">
+        bank_yxq,
+      </if>
+      <if test="returnUrl != null">
+        return_url,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="money != null">
+        #{money,jdbcType=DECIMAL},
+      </if>
+      <if test="memberId != null">
+        #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="memberCode != null">
+        #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantCode != null">
+        #{merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="orderCode != null">
+        #{orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNumOuter != null">
+       #{orderNumOuter,jdbcType=VARCHAR},
+      </if>
+      <if test="settleType != null">
+        #{settleType,jdbcType=CHAR},
+      </if>
+      <if test="txnMethod != null">
+        #{txnMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="txnType != null">
+        #{txnType,jdbcType=CHAR},
+      </if>
+      <if test="tradeRate != null">
+        #{tradeRate,jdbcType=CHAR},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=CHAR},
+      </if>
+      <if test="routeId != null">
+        #{routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="respCode != null">
+        #{respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="respMsg != null">
+        #{respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="accountType != null">
+        #{accountType,jdbcType=VARCHAR},
+      </if>
+      <if test="accountName != null">
+        #{accountName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankAccount != null">
+        #{bankAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="tel != null">
+        #{tel,jdbcType=VARCHAR},
+      </if>
+      <if test="bankCvv != null">
+        #{bankCvv,jdbcType=VARCHAR},
+      </if>
+      <if test="returnUrl != null">
+        #{returnUrl,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.QuickPaySmsExample" resultType="java.lang.Integer">
+    select count(*) from bu_quickpay_sms
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update bu_quickpay_sms
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.money != null">
+        money = #{record.money,jdbcType=DECIMAL},
+      </if>
+      <if test="record.memberId != null">
+        member_id = #{record.memberId,jdbcType=INTEGER},
+      </if>
+      <if test="record.memberCode != null">
+        member_code = #{record.memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.merchantCode != null">
+        merchant_code = #{record.merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderCode != null">
+        order_code = #{record.orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderNumOuter != null">
+        order_num_outer = #{record.orderNumOuter,jdbcType=VARCHAR},
+      </if>
+      <if test="record.settleType != null">
+        settle_type = #{record.settleType,jdbcType=CHAR},
+      </if>
+      <if test="record.txnType != null">
+        txn_type = #{record.txnType,jdbcType=CHAR},
+      </if>
+      <if test="record.status != null">
+        status = #{record.status,jdbcType=CHAR},
+      </if>
+      <if test="record.routeId != null">
+        route_id = #{record.routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respCode != null">
+        resp_code = #{record.respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.respMsg != null">
+        resp_msg = #{record.respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createBy != null">
+        create_by = #{record.createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createDate != null">
+        create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateBy != null">
+        update_by = #{record.updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateDate != null">
+        update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.remarks != null">
+        remarks = #{record.remarks,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update bu_quickpay_sms
+    set id = #{record.id,jdbcType=INTEGER},
+      money = #{record.money,jdbcType=DECIMAL},
+      member_id = #{record.memberId,jdbcType=INTEGER},
+      member_code = #{record.memberCode,jdbcType=VARCHAR},
+      merchant_code = #{record.merchantCode,jdbcType=VARCHAR},
+      order_code = #{record.orderCode,jdbcType=VARCHAR},
+      settle_type = #{record.settleType,jdbcType=CHAR},
+      txn_type = #{record.txnType,jdbcType=CHAR},
+      status = #{record.status,jdbcType=CHAR},
+      route_id = #{record.routeId,jdbcType=VARCHAR},
+      resp_code = #{record.respCode,jdbcType=VARCHAR},
+      resp_msg = #{record.respMsg,jdbcType=VARCHAR},
+      create_by = #{record.createBy,jdbcType=VARCHAR},
+      create_date = #{record.createDate,jdbcType=TIMESTAMP},
+      update_by = #{record.updateBy,jdbcType=VARCHAR},
+      update_date = #{record.updateDate,jdbcType=TIMESTAMP},
+      remarks = #{record.remarks,jdbcType=VARCHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.QuickPaySms">
+    update bu_quickpay_sms
+    <set>
+      <if test="money != null">
+        money = #{money,jdbcType=DECIMAL},
+      </if>
+      <if test="memberId != null">
+        member_id = #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="memberCode != null">
+        member_code = #{memberCode,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantCode != null">
+        merchant_code = #{merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="orderCode != null">
+        order_code = #{orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="settleType != null">
+        settle_type = #{settleType,jdbcType=CHAR},
+      </if>
+      <if test="txnType != null">
+        txn_type = #{txnType,jdbcType=CHAR},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+      <if test="routeId != null">
+        route_id = #{routeId,jdbcType=VARCHAR},
+      </if>
+      <if test="respCode != null">
+        resp_code = #{respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="respMsg != null">
+        resp_msg = #{respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remarks != null">
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.QuickPaySms">
+    update bu_quickpay_sms
+    set money = #{money,jdbcType=DECIMAL},
+      member_id = #{memberId,jdbcType=INTEGER},
+      member_code = #{memberCode,jdbcType=VARCHAR},
+      merchant_code = #{merchantCode,jdbcType=VARCHAR},
+      order_code = #{orderCode,jdbcType=VARCHAR},
+      settle_type = #{settleType,jdbcType=CHAR},
+      txn_type = #{txnType,jdbcType=CHAR},
+      status = #{status,jdbcType=CHAR},
+      route_id = #{routeId,jdbcType=VARCHAR},
+      resp_code = #{respCode,jdbcType=VARCHAR},
+      resp_msg = #{respMsg,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      remarks = #{remarks,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+</mapper>

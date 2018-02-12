@@ -1,5 +1,11 @@
 package com.epay.scanposp.common.utils;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,6 +15,9 @@ import java.util.Map;
 import java.util.Random;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.epay.scanposp.common.constant.SysConfig;
+import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 
 import net.sf.json.JSONObject;
 
@@ -143,5 +152,58 @@ public class CommonUtil {
 	    return ip.equals("0:0:0:0:0:0:0:1")?"127.0.0.1":ip;
 	}
 	
+	public static JSONObject signReturn(JSONObject result){
+		String rtSrc = StringUtil.orderedKey(result);
+		result.put("signStr", EpaySignUtil.sign(SysConfig.platPrivateKey, rtSrc));
+		return result;
+	}
+	
+	/**
+	 * bean 转化为实体
+	 * 
+	 * @param bean
+	 * @return
+	 */
+	public static HashMap<String, Object> beanToMap(Object bean) {
+		HashMap<String, Object> map = new HashMap<String, Object>();
+		if (null == bean) {
+			return map;
+		}
+		Class<?> clazz = bean.getClass();
+		BeanInfo beanInfo = null;
+		try {
+			beanInfo = Introspector.getBeanInfo(clazz);
+		} catch (IntrospectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
+		for (PropertyDescriptor descriptor : descriptors) {
+			String propertyName = descriptor.getName();
+			if (!"class".equals(propertyName)) {
+				Method method = descriptor.getReadMethod();
+				String result;
+				try {
+					result = (String) method.invoke(bean);
+					if (null != result) {
+						map.put(propertyName, result);
+					} else {
+						map.put(propertyName, "");
+					}
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return map;
+	}
 	
 }

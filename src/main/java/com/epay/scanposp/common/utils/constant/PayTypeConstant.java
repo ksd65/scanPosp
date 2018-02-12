@@ -19,4 +19,6 @@ public class PayTypeConstant {
 	public static String PAY_TYPE_QQ = "QQ";//QQ支付
 	  
 	public static String PAY_TYPE_JD = "JD";//京东支付
+	
+	public static String PAY_TYPE_KJ = "KJ";//快捷支付
 }

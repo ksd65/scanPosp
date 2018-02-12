@@ -25,6 +25,8 @@ public class MemberMerchantCode {
 	
 	private String wyMerchantCode;
 	
+	private String kjMerchantCode;
+	
     private BigDecimal t0DrawFee;
     
     private BigDecimal t0DrawRate;
@@ -68,6 +70,14 @@ public class MemberMerchantCode {
     private BigDecimal wyT1DrawFee;
 
     private BigDecimal wyT1TradeRate;
+    
+    private BigDecimal kjT0DrawFee;
+
+    private BigDecimal kjT0TradeRate;
+
+    private BigDecimal kjT1DrawFee;
+
+    private BigDecimal kjT1TradeRate;
 	
 	private String delFlag;
 	
@@ -375,6 +385,46 @@ public class MemberMerchantCode {
 
 	public void setJdT1TradeRate(BigDecimal jdT1TradeRate) {
 		this.jdT1TradeRate = jdT1TradeRate;
+	}
+
+	public String getKjMerchantCode() {
+		return kjMerchantCode;
+	}
+
+	public void setKjMerchantCode(String kjMerchantCode) {
+		this.kjMerchantCode = kjMerchantCode;
+	}
+
+	public BigDecimal getKjT0DrawFee() {
+		return kjT0DrawFee;
+	}
+
+	public void setKjT0DrawFee(BigDecimal kjT0DrawFee) {
+		this.kjT0DrawFee = kjT0DrawFee;
+	}
+
+	public BigDecimal getKjT0TradeRate() {
+		return kjT0TradeRate;
+	}
+
+	public void setKjT0TradeRate(BigDecimal kjT0TradeRate) {
+		this.kjT0TradeRate = kjT0TradeRate;
+	}
+
+	public BigDecimal getKjT1DrawFee() {
+		return kjT1DrawFee;
+	}
+
+	public void setKjT1DrawFee(BigDecimal kjT1DrawFee) {
+		this.kjT1DrawFee = kjT1DrawFee;
+	}
+
+	public BigDecimal getKjT1TradeRate() {
+		return kjT1TradeRate;
+	}
+
+	public void setKjT1TradeRate(BigDecimal kjT1TradeRate) {
+		this.kjT1TradeRate = kjT1TradeRate;
 	}
     
     

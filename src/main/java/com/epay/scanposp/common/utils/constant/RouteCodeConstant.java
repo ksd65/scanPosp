@@ -44,4 +44,6 @@ public class RouteCodeConstant {
 	
 	public static String HLB_ROUTE_CODE = "1021";//合利宝
 	
+	public static String CJ_ROUTE_CODE = "1022";//畅捷
+	
 }
