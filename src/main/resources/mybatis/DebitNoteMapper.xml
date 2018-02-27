@@ -26,6 +26,11 @@
     <result column="user_agent" jdbcType="VARCHAR" property="userAgent" />
     <result column="browser" jdbcType="VARCHAR" property="browser" />
     <result column="device_info" jdbcType="VARCHAR" property="deviceInfo" />
+    <result column="pay_qr_code_id" jdbcType="INTEGER" property="payQrCodeId" />
+    <result column="pay_account" jdbcType="VARCHAR" property="payAccount" />
+    <result column="pay_user_name" jdbcType="VARCHAR" property="payUserName" />
+    <result column="payee_id" jdbcType="INTEGER" property="payeeId" />
+    <result column="qrorder_deal_status" jdbcType="VARCHAR" property="qrorderDealStatus" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -88,7 +93,7 @@
   <sql id="Base_Column_List">
     id, money, member_id, member_code, merchant_code, order_code, order_num_outer,settle_type,txn_method, txn_type, trade_rate,
     status, route_id, resp_code, resp_msg, create_by, create_date, update_by, update_date, 
-    remarks,ip,user_agent,browser,device_info
+    remarks,ip,user_agent,browser,device_info,pay_qr_code_id,pay_account,pay_user_name,payee_id,qrorder_deal_status
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.DebitNoteExample" resultMap="BaseResultMap">
     select
@@ -215,6 +220,18 @@
       <if test="deviceInfo != null">
         device_info,
       </if>
+      <if test="payQrCodeId != null">
+        pay_qr_code_id,
+      </if>
+      <if test="payAccount != null">
+        pay_account,
+      </if>
+      <if test="payUserName != null">
+        pay_user_name,
+      </if>
+      <if test="payeeId != null">
+        payee_id,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="money != null">
@@ -285,6 +302,18 @@
       </if>
       <if test="deviceInfo != null">
         #{deviceInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="payQrCodeId != null">
+        #{payQrCodeId,jdbcType=INTEGER},
+      </if>
+      <if test="payAccount != null">
+        #{payAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="payUserName != null">
+        #{payUserName,jdbcType=VARCHAR},
+      </if>
+      <if test="payeeId != null">
+        #{payeeId,jdbcType=INTEGER},
       </if>
     </trim>
   </insert>
@@ -450,7 +479,8 @@
       create_date = #{createDate,jdbcType=TIMESTAMP},
       update_by = #{updateBy,jdbcType=VARCHAR},
       update_date = #{updateDate,jdbcType=TIMESTAMP},
-      remarks = #{remarks,jdbcType=VARCHAR}
+      remarks = #{remarks,jdbcType=VARCHAR},
+      qrorder_deal_status = #{qrorderDealStatus,jdbcType=VARCHAR}
     where id = #{id,jdbcType=INTEGER}
   </update>
   

@@ -46,4 +46,8 @@ public class RouteCodeConstant {
 	
 	public static String CJ_ROUTE_CODE = "1022";//畅捷
 	
+	public static String DDB_ROUTE_CODE = "1023";//多得宝
+	
+	public static String GRSM_ROUTE_CODE = "1024";//个人扫码
+	
 }

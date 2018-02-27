@@ -51,6 +51,16 @@ public class DebitNote {
     private String browser;
     
     private String deviceInfo;
+    
+    private Integer payQrCodeId;
+    
+    private String payAccount;
+    
+    private String payUserName;
+    
+    private Integer payeeId;
+    
+    private String qrorderDealStatus;
 
     public Integer getId() {
         return id;
@@ -242,6 +252,46 @@ public class DebitNote {
 
 	public void setDeviceInfo(String deviceInfo) {
 		this.deviceInfo = deviceInfo;
+	}
+
+	public Integer getPayQrCodeId() {
+		return payQrCodeId;
+	}
+
+	public void setPayQrCodeId(Integer payQrCodeId) {
+		this.payQrCodeId = payQrCodeId;
+	}
+
+	public String getPayAccount() {
+		return payAccount;
+	}
+
+	public void setPayAccount(String payAccount) {
+		this.payAccount = payAccount;
+	}
+
+	public String getPayUserName() {
+		return payUserName;
+	}
+
+	public void setPayUserName(String payUserName) {
+		this.payUserName = payUserName;
+	}
+
+	public Integer getPayeeId() {
+		return payeeId;
+	}
+
+	public void setPayeeId(Integer payeeId) {
+		this.payeeId = payeeId;
+	}
+
+	public String getQrorderDealStatus() {
+		return qrorderDealStatus;
+	}
+
+	public void setQrorderDealStatus(String qrorderDealStatus) {
+		this.qrorderDealStatus = qrorderDealStatus;
 	}
     
     
