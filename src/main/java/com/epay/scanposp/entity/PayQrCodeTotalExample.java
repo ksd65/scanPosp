@@ -337,7 +337,65 @@ public class PayQrCodeTotalExample {
             return (Criteria) this;
         }
         
-        
+        public Criteria andPayeeIdIsNull() {
+            addCriterion("payee_id is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdIsNotNull() {
+            addCriterion("payee_id is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdEqualTo(Integer value) {
+            addCriterion("payee_id =", value, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdNotEqualTo(Integer value) {
+            addCriterion("payee_id <>", value, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdGreaterThan(Integer value) {
+            addCriterion("payee_id >", value, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdGreaterThanOrEqualTo(Integer value) {
+            addCriterion("payee_id >=", value, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdLessThan(Integer value) {
+            addCriterion("payee_id <", value, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdLessThanOrEqualTo(Integer value) {
+            addCriterion("payee_id <=", value, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdIn(List<Integer> values) {
+            addCriterion("payee_id in", values, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdNotIn(List<Integer> values) {
+            addCriterion("payee_id not in", values, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdBetween(Integer value1, Integer value2) {
+            addCriterion("payee_id between", value1, value2, "payeeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andPayeeIdNotBetween(Integer value1, Integer value2) {
+            addCriterion("payee_id not between", value1, value2, "payeeId");
+            return (Criteria) this;
+        }
         
         
         

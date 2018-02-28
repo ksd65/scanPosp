@@ -191,4 +191,15 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
   
+  <select id="countPayeeOrder" parameterType="java.util.Map" resultMap="BaseResultMap">
+  		SELECT count(1) counts,IFNULL(SUM(t.money),0)  total_money FROM bu_debit_note t
+  		WHERE t.route_id=#{routeId,jdbcType=VARCHAR}
+  		AND (t.`status`='1'  OR (t.`status`='0' AND t.qrorder_deal_status='0')) 
+  		AND t.create_date>= #{beginTime}
+		<if test="endTime != null and endTime != ''">
+			AND t.create_date &lt;= #{endTime}
+		</if>
+		AND t.payee_id = #{payeeId}
+  </select>
+  
 </mapper>

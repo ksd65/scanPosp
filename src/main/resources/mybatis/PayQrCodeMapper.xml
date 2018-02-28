@@ -138,4 +138,28 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
   
+  <select id="selectByMap"  parameterType="java.util.Map" resultMap="BaseResultMap">
+  	SELECT a.id,a.money,a.payee_id,a.qr_code,a.qr_code_remark,a.pay_type,a.file_path,a.status,
+  	a.create_by, a.create_date, a.update_by, a.update_date,a.del_flag,a.remarks FROM (
+  		SELECT q.id,q.money,q.qr_code,q.qr_code_remark,q.payee_id,q.pay_type,q.file_path,q.status,
+  		q.create_by, q.create_date, q.update_by, q.update_date,q.del_flag,q.remarks,IFNULL(s.counts,0) counts FROM bu_pay_qrcode q 
+  		LEFT JOIN(
+		SELECT t.payee_id,t.counts FROM bu_pay_qrcode_total t where t.trade_date=#{tradeDate,jdbcType=VARCHAR} )s 
+		ON q.payee_id=s.payee_id
+  		WHERE q.money=#{money,jdbcType=DECIMAL} AND q.pay_type= #{payType,jdbcType=VARCHAR}
+  		 AND q.`status`='0' AND q.del_flag='0'
+  		 <if test="payeeList != null and payeeList != ''">
+  		 	AND q.payee_id NOT IN 
+  		 	<foreach close=")" collection="payeeList" item="listItem" open="(" separator=",">
+              #{listItem}
+            </foreach>
+  		 </if>
+  	) a ORDER BY a.counts,id 
+  	<if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  
+  </select>
+  
+  
 </mapper>

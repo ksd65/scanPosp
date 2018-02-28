@@ -6512,7 +6512,7 @@ public class CashierDeskController {
 					payeeList.add(total.getPayeeId());
 				}
 			}
-			PayQrCodeExample payQrCodeExample = new PayQrCodeExample();
+		/*	PayQrCodeExample payQrCodeExample = new PayQrCodeExample();
 			if(payeeList!=null && payeeList.size()>0){
 				payQrCodeExample.createCriteria().andMoneyEqualTo(new BigDecimal(payMoney)).andPayTypeEqualTo(payType).andStatusEqualTo("0").andDelFlagEqualTo("0").andPayeeIdNotIn(payeeList);
 			}else{
@@ -6521,8 +6521,19 @@ public class CashierDeskController {
 			payQrCodeExample.setOrderByClause(" create_date asc");
 			payQrCodeExample.setLimitStart(0);
 			payQrCodeExample.setLimitSize(10);
-			
 			List<PayQrCode> qrCodeList = payQrCodeService.selectByExample(payQrCodeExample);
+			*/
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("money", new BigDecimal(payMoney));
+			param.put("payType", payType);
+			param.put("tradeDate", DateUtil.getDateStr());
+			param.put("limitStart", 0);
+			param.put("limitSize", 10);
+			if(payeeList!=null && payeeList.size()>0){
+				param.put("payeeList", payeeList);
+			}
+			List<PayQrCode> qrCodeList = payQrCodeService.selectByMap(param);
+			
 			PayQrCode payQrCode = null;
 			if(qrCodeList!=null && qrCodeList.size()>0){
 				for(PayQrCode qrcode :qrCodeList){

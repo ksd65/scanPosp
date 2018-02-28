@@ -1,6 +1,7 @@
 package com.epay.scanposp.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import com.epay.scanposp.common.base.BaseDao;
 import com.epay.scanposp.common.base.MyBatisRepository;
@@ -19,4 +20,6 @@ public interface PayQrCodeMapper extends BaseDao<PayQrCode, PayQrCodeExample>{
     PayQrCode selectByPrimaryKey(Integer id);
 
     int updateByPrimaryKey(PayQrCode record);
+    
+    List<PayQrCode> selectByMap(Map<String,Object> param);
 }

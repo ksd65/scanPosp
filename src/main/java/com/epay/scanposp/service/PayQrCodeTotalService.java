@@ -1,5 +1,8 @@
 package com.epay.scanposp.service;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,5 +22,9 @@ public class PayQrCodeTotalService extends BaseService<PayQrCodeTotal,PayQrCodeT
 	public void setPayQrCodeTotalMapper(PayQrCodeTotalMapper payQrCodeTotalMapper) {
 		super.setDao(payQrCodeTotalMapper);
 		this.payQrCodeTotalMapper = payQrCodeTotalMapper;
+	}
+	
+	public List<PayQrCodeTotal> countPayeeOrder(Map<String,String> param){
+		return payQrCodeTotalMapper.countPayeeOrder(param);
 	}
 }
