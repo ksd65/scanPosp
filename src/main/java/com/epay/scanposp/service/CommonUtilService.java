@@ -21,6 +21,8 @@ import com.epay.scanposp.entity.MemberIpRule;
 import com.epay.scanposp.entity.MemberIpRuleExample;
 import com.epay.scanposp.entity.MemberIpWhiteList;
 import com.epay.scanposp.entity.MemberIpWhiteListExample;
+import com.epay.scanposp.entity.PayQrCodeTotal;
+import com.epay.scanposp.entity.PayQrCodeTotalExample;
 import com.epay.scanposp.entity.PayType;
 import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.SysCommonConfig;
@@ -48,6 +50,9 @@ public class CommonUtilService {
 	
 	@Resource
 	private PayTypeService payTypeService;
+	
+	@Resource
+	private PayQrCodeTotalService payQrCodeTotalService;
 	
 	public JSONObject checkLimitMoney(String configName, BigDecimal tradeMoney){
 		
@@ -277,6 +282,49 @@ public class CommonUtilService {
 		map.put("routeCode", routeCode);
 		map.put("aisleType", aisleType);
 		return map;
+	}
+	
+	//取超出限额的收款人
+	public List<PayQrCodeTotal> getExceedPayeeList( BigDecimal tradeMoney){
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo("SINGLE_PAYEE_LIMIT").andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value) && !"0".equals(value)){
+			String tradeDate = DateUtil.getDateFormat(new Date(), "yyyyMMdd");
+			BigDecimal singleLimit = new BigDecimal(value);
+			PayQrCodeTotalExample payQrCodeTotalExample = new PayQrCodeTotalExample();
+			payQrCodeTotalExample.createCriteria().andTradeDateEqualTo(tradeDate).andTotalMoneyGreaterThan(singleLimit.subtract(tradeMoney)).andDelFlagEqualTo("0");
+			List<PayQrCodeTotal> list = payQrCodeTotalService.selectByExample(payQrCodeTotalExample);
+			
+			return list;
+		}
+		return null;
+	}
+	//取超出次数的收款人
+	public List<PayQrCodeTotal> getExceedCountsPayeeList( ){
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo("SINGLE_PAYEE_COUNTS_LIMIT").andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value) && !"0".equals(value)){
+			String tradeDate = DateUtil.getDateFormat(new Date(), "yyyyMMdd");
+			Integer singleLimit = new Integer(value);
+			PayQrCodeTotalExample payQrCodeTotalExample = new PayQrCodeTotalExample();
+			payQrCodeTotalExample.createCriteria().andTradeDateEqualTo(tradeDate).andCountsGreaterThan(singleLimit-1).andDelFlagEqualTo("0");
+			List<PayQrCodeTotal> list = payQrCodeTotalService.selectByExample(payQrCodeTotalExample);
+			
+			return list;
+		}
+		return null;
 	}
 
 }

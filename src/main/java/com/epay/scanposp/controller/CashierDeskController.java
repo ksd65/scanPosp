@@ -42,23 +42,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.ESKConfig;
@@ -84,7 +67,6 @@ import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
 import com.epay.scanposp.common.utils.XmlConvertUtil;
-import com.epay.scanposp.common.utils.cj.entity.MessAgeResponseEntity;
 import com.epay.scanposp.common.utils.cj.entity.QueryRequestEntity;
 import com.epay.scanposp.common.utils.cj.entity.QueryResponseEntity;
 import com.epay.scanposp.common.utils.cj.util.Bean2QueryStrUtil;
@@ -119,10 +101,10 @@ import com.epay.scanposp.entity.BusinessCategory;
 import com.epay.scanposp.entity.BusinessCategoryExample;
 import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
+import com.epay.scanposp.entity.DebitNoteIp;
 import com.epay.scanposp.entity.DrawResultNotice;
 import com.epay.scanposp.entity.DrawResultNoticeExample;
 import com.epay.scanposp.entity.DrawResultNoticeExample.Criteria;
-import com.epay.scanposp.entity.DebitNoteIp;
 import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
 import com.epay.scanposp.entity.Kbin;
@@ -147,7 +129,6 @@ import com.epay.scanposp.entity.PayQrCode;
 import com.epay.scanposp.entity.PayQrCodeExample;
 import com.epay.scanposp.entity.PayQrCodeTemp;
 import com.epay.scanposp.entity.PayQrCodeTotal;
-import com.epay.scanposp.entity.PayQrCodeTotalExample;
 import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.PayType;
@@ -178,6 +159,7 @@ import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.BuAreaCodeService;
 import com.epay.scanposp.service.BusinessCategoryService;
 import com.epay.scanposp.service.CommonService;
+import com.epay.scanposp.service.CommonUtilService;
 import com.epay.scanposp.service.DebitNoteIpService;
 import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.DrawResultNoticeService;
@@ -193,7 +175,6 @@ import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayQrCodeService;
 import com.epay.scanposp.service.PayQrCodeTempService;
-import com.epay.scanposp.service.PayQrCodeTotalService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.PayRouteService;
@@ -338,8 +319,9 @@ public class CashierDeskController {
 	@Resource
 	private PayeeService payeeService;
 	
-	@Resource
-	private PayQrCodeTotalService payQrCodeTotalService;
+	
+	@Autowired
+	private CommonUtilService commonUtilService;
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/getQrcodePay")
@@ -6517,8 +6499,8 @@ public class CashierDeskController {
 				return mResult;
 			}
 			//取超出限额的收款人
-			List<PayQrCodeTotal> exceedList = getExceedPayeeList(new BigDecimal(payMoney));
-			List<PayQrCodeTotal> exceedCountsList = getExceedCountsPayeeList();
+			List<PayQrCodeTotal> exceedList = commonUtilService.getExceedPayeeList(new BigDecimal(payMoney));
+			List<PayQrCodeTotal> exceedCountsList = commonUtilService.getExceedCountsPayeeList();
 			List<Integer> payeeList = new ArrayList<Integer>();
 			if(exceedList!=null && exceedList.size()>0){
 				for(PayQrCodeTotal total:exceedList){
@@ -6628,50 +6610,6 @@ public class CashierDeskController {
 		}
 		return result;
 	}
-	
-	//取超出限额的收款人
-	private List<PayQrCodeTotal> getExceedPayeeList( BigDecimal tradeMoney){
-		
-		String value = "";
-		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
-		sysCommonConfigExample.or().andNameEqualTo("SINGLE_PAYEE_LIMIT").andDelFlagEqualTo("0");
-		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
-		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
-			value = sysCommonConfig.get(0).getValue();
-		}
-		if(!"".equals(value) && !"0".equals(value)){
-			String tradeDate = DateUtil.getDateFormat(new Date(), "yyyyMMdd");
-			BigDecimal singleLimit = new BigDecimal(value);
-			PayQrCodeTotalExample payQrCodeTotalExample = new PayQrCodeTotalExample();
-			payQrCodeTotalExample.createCriteria().andTradeDateEqualTo(tradeDate).andTotalMoneyGreaterThan(singleLimit.subtract(tradeMoney)).andDelFlagEqualTo("0");
-			List<PayQrCodeTotal> list = payQrCodeTotalService.selectByExample(payQrCodeTotalExample);
-			
-			return list;
-		}
-		return null;
-	}
-	//取超出次数的收款人
-	private List<PayQrCodeTotal> getExceedCountsPayeeList( ){
-		
-		String value = "";
-		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
-		sysCommonConfigExample.or().andNameEqualTo("SINGLE_PAYEE_COUNTS_LIMIT").andDelFlagEqualTo("0");
-		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
-		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
-			value = sysCommonConfig.get(0).getValue();
-		}
-		if(!"".equals(value) && !"0".equals(value)){
-			String tradeDate = DateUtil.getDateFormat(new Date(), "yyyyMMdd");
-			Integer singleLimit = new Integer(value);
-			PayQrCodeTotalExample payQrCodeTotalExample = new PayQrCodeTotalExample();
-			payQrCodeTotalExample.createCriteria().andTradeDateEqualTo(tradeDate).andCountsGreaterThan(singleLimit-1).andDelFlagEqualTo("0");
-			List<PayQrCodeTotal> list = payQrCodeTotalService.selectByExample(payQrCodeTotalExample);
-			
-			return list;
-		}
-		return null;
-	}
-	
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/grsmSuccess")

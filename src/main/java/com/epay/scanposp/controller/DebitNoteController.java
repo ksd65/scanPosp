@@ -107,6 +107,10 @@ import com.epay.scanposp.entity.MemberMerchantKey;
 import com.epay.scanposp.entity.MemberMerchantKeyExample;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
+import com.epay.scanposp.entity.PayQrCode;
+import com.epay.scanposp.entity.PayQrCodeExample;
+import com.epay.scanposp.entity.PayQrCodeTemp;
+import com.epay.scanposp.entity.PayQrCodeTotal;
 import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.PayType;
@@ -115,6 +119,7 @@ import com.epay.scanposp.entity.PayTypeDefaultExample;
 import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.PayTypeRule;
 import com.epay.scanposp.entity.PayTypeRuleExample;
+import com.epay.scanposp.entity.Payee;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.SysCommonConfig;
@@ -133,6 +138,7 @@ import com.epay.scanposp.request.SandOrderPayRequest.SandOrderPayRequestBody;
 import com.epay.scanposp.response.SandOrderPayResponse;
 import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.BusinessCategoryService;
+import com.epay.scanposp.service.CommonUtilService;
 import com.epay.scanposp.service.DebitNoteIpService;
 import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.EpayCodeService;
@@ -145,6 +151,8 @@ import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MemberOpenidService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.MsbillService;
+import com.epay.scanposp.service.PayQrCodeService;
+import com.epay.scanposp.service.PayQrCodeTempService;
 import com.epay.scanposp.service.PayResultNoticeLogService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
@@ -152,6 +160,7 @@ import com.epay.scanposp.service.PayRouteService;
 import com.epay.scanposp.service.PayTypeDefaultService;
 import com.epay.scanposp.service.PayTypeRuleService;
 import com.epay.scanposp.service.PayTypeService;
+import com.epay.scanposp.service.PayeeService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeConfigOemService;
@@ -256,6 +265,18 @@ public class DebitNoteController {
 	
 	@Resource
 	private MemberIpRuleService memberIpRuleService;
+	
+	@Autowired
+	private CommonUtilService commonUtilService;
+	
+	@Resource
+	private PayQrCodeService payQrCodeService;
+	
+	@Resource
+	private PayQrCodeTempService payQrCodeTempService;
+	
+	@Resource
+	private PayeeService payeeService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -4514,6 +4535,8 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			payTypeStr = PayTypeConstant.PAY_TYPE_QQ;
 		}else if("5".equals(payType)){
 			payTypeStr = PayTypeConstant.PAY_TYPE_JD;
+		}else if("2".equals(payType)){
+			payTypeStr = PayTypeConstant.PAY_TYPE_ZFB;
 		}
 		
 		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_H5,payTypeStr);
@@ -4536,13 +4559,19 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		if("1".equals(payType)){
 			if(merchantCode.getWxMerchantCode()==null || "".equals(merchantCode.getWxMerchantCode())){
 				result.put("returnCode", "0008");
-				result.put("returnMsg", "对不起，商户编码不存在");
+				result.put("returnMsg", "对不起，商户未开通微信H5支付权限");
 				return result;
 			}
 		}else if("3".equals(payType)){
 			if(merchantCode.getQqMerchantCode()==null || "".equals(merchantCode.getQqMerchantCode())){
 				result.put("returnCode", "0008");
-				result.put("returnMsg", "对不起，商户编码不存在");
+				result.put("returnMsg", "对不起，商户未开通QQH5支付权限");
+				return result;
+			}
+		}else if("2".equals(payType)){
+			if(merchantCode.getZfbMerchantCode()==null || "".equals(merchantCode.getZfbMerchantCode())){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户未开通支付宝H5支付权限");
 				return result;
 			}
 		}
@@ -4767,6 +4796,11 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			memberInfo.setSettleType("1");
 			if("1".equals(payType)||"3".equals(payType)){
 				result = ddbH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType,payType );
+			}
+		}else if(RouteCodeConstant.GRSM_ROUTE_CODE.equals(routeCode)){//多得宝
+			memberInfo.setSettleType("1");
+			if("2".equals(payType)){
+				result = grsmH5Pay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,ip);
 			}
 		}
 		result.put("routeCode", routeCode);
@@ -8540,5 +8574,199 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}
 		return result;
 	}
+	
+	
+	//个人扫码支付
+	public JSONObject grsmH5Pay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
+		JSONObject result = new JSONObject();
+		try {
+			String payTypeStr = "";
+			String payMethod = PayTypeConstant.PAY_METHOD_H5;
+			String merCode = "";
+			if("2".equals(payType)){
+				payTypeStr = "ZFB";
+				merCode = merchantCode.getZfbMerchantCode();
+			}
+			
+			// 插入一条收款记录
+			String orderCode = CommonUtil.getOrderCode();
+			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(payMoney));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setOrderNumOuter(orderNumOuter);
+			debitNote.setRouteId(routeCode);
+			debitNote.setStatus("0");
+			debitNote.setIp(ip);
+			debitNote.setTxnMethod(payMethod);
+			debitNote.setTxnType(payType);
+			debitNote.setMerchantCode(merCode);
+			if("2".equals(payType)){
+				debitNote.setMemberCode(memberInfo.getZfbMemberCode());
+			}
+			debitNote.setSettleType(memberInfo.getSettleType());
+			if("0".equals(memberInfo.getSettleType())){
+				if("2".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getZfbT0TradeRate());
+				}
+			}else{
+				if("2".equals(payType)){
+					debitNote.setTradeRate(merchantCode.getZfbT1TradeRate());
+				}
+			}
+			
+			
+			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_"+payMethod+"_"+payTypeStr;
+			JSONObject memResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != memResult){
+				debitNote.setStatus("9");
+				debitNoteService.insertSelective(debitNote);
+				return memResult;
+			} 
+			
+			configName = "SINGLE_MIN_"+routeCode+"_"+payMethod+"_"+payTypeStr;
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payTypeStr;
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+			JSONObject ipResult = checkLimitIp(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), routeCode, merCode, ip);
+			if(null != ipResult){
+				debitNote.setStatus("6");
+				debitNoteService.insertSelective(debitNote);
+				return ipResult;
+			}
+			
+			JSONObject mResult = checkLimitMerchantMoney(routeCode,merCode);
+			if(null != mResult){
+				debitNote.setStatus("7");
+				debitNoteService.insertSelective(debitNote);
+				return mResult;
+			}
+			//取超出限额的收款人
+			List<PayQrCodeTotal> exceedList = commonUtilService.getExceedPayeeList(new BigDecimal(payMoney));
+			List<PayQrCodeTotal> exceedCountsList = commonUtilService.getExceedCountsPayeeList();
+			List<Integer> payeeList = new ArrayList<Integer>();
+			if(exceedList!=null && exceedList.size()>0){
+				for(PayQrCodeTotal total:exceedList){
+					payeeList.add(total.getPayeeId());
+				}
+			}
+			if(exceedCountsList!=null && exceedCountsList.size()>0){
+				for(PayQrCodeTotal total:exceedCountsList){
+					payeeList.add(total.getPayeeId());
+				}
+			}
+			PayQrCodeExample payQrCodeExample = new PayQrCodeExample();
+			if(payeeList!=null && payeeList.size()>0){
+				payQrCodeExample.createCriteria().andMoneyEqualTo(new BigDecimal(payMoney)).andPayTypeEqualTo(payType).andStatusEqualTo("0").andDelFlagEqualTo("0").andPayeeIdNotIn(payeeList);
+			}else{
+				payQrCodeExample.createCriteria().andMoneyEqualTo(new BigDecimal(payMoney)).andPayTypeEqualTo(payType).andStatusEqualTo("0").andDelFlagEqualTo("0");
+			}
+			payQrCodeExample.setOrderByClause(" create_date asc");
+			payQrCodeExample.setLimitStart(0);
+			payQrCodeExample.setLimitSize(10);
+			
+			List<PayQrCode> qrCodeList = payQrCodeService.selectByExample(payQrCodeExample);
+			PayQrCode payQrCode = null;
+			if(qrCodeList!=null && qrCodeList.size()>0){
+				for(PayQrCode qrcode :qrCodeList){
+					try{
+						PayQrCodeTemp payQrCodeTemp = new PayQrCodeTemp();
+						payQrCodeTemp.setQrCodeId(qrcode.getId());
+						payQrCodeTempService.insertSelective(payQrCodeTemp);
+						payQrCode = qrcode;
+						break;
+					}catch(Exception e){
+						//e.printStackTrace();
+					}
+					
+				}
+			}
+			if(payQrCode == null){
+				debitNote.setStatus("2");
+				debitNote.setRespMsg("没有对应金额的收款码，无法支付");
+				debitNoteService.insertSelective(debitNote);
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "没有对应金额的收款码，无法支付");
+				return result;
+			}
+			
+			Payee payee = payeeService.selectByPrimaryKey(payQrCode.getPayeeId());
+			if(payee == null){
+				debitNote.setStatus("2");
+				debitNote.setRespMsg("收款人不存在，无法支付");
+				debitNoteService.insertSelective(debitNote);
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "收款人不存在，无法支付");
+				return result;
+			}
+			debitNote.setPayQrCodeId(payQrCode.getId());
+			debitNote.setPayeeId(payQrCode.getPayeeId());
+			debitNote.setPayAccount(payee.getPayAccount());
+			debitNote.setPayUserName(payee.getUserName());
+			debitNote.setRemarks(payQrCode.getQrCodeRemark());
+			debitNoteService.insertSelective(debitNote);
+			
+			payQrCode.setStatus("1");
+			payQrCode.setUpdateDate(new Date());
+			payQrCodeService.updateByPrimaryKey(payQrCode);
+			
+			PayResultNotice payResultNotice = new PayResultNotice();
+			payResultNotice.setOrderCode(debitNote.getOrderCode());
+			payResultNotice.setOrderNumOuter(orderNumOuter);
+			payResultNotice.setPayMoney(debitNote.getMoney());
+			payResultNotice.setMemberCode(memberInfo.getCode());
+			payResultNotice.setPayType(payType);
+			payResultNotice.setReturnUrl(callbackUrl);
+			payResultNotice.setStatus("1");
+			payResultNotice.setCreateDate(new Date());
+			payResultNotice.setPlatformType(platformType);
+			if("3".equals(platformType)){
+				payResultNotice.setInterfaceType("2");
+			}else{
+				payResultNotice.setInterfaceType("1");
+			}
+			payResultNoticeService.insertSelective(payResultNotice);
+			
+			result.put("payUrl", payQrCode.getQrCode());
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "成功");
+			
+			try{
+		        DebitNoteIp debitNoteIp = new DebitNoteIp();
+		        debitNoteIp.setMemberId(memberInfo.getId());
+		        debitNoteIp.setMerchantCode(merCode);
+		        debitNoteIp.setOrderCode(orderCode);
+		        debitNoteIp.setRouteId(routeCode);
+		        debitNoteIp.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
+		        debitNoteIp.setTxnType(payType);
+		        debitNoteIp.setIp(ip);
+		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
+				debitNoteIpService.insertSelective(debitNoteIp);
+	        }catch(Exception ex){
+	        	logger.error(ex.getMessage());
+	        }
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
+	
 	
 }
