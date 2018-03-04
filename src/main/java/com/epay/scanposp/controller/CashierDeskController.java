@@ -6628,6 +6628,10 @@ public class CashierDeskController {
 		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
 		String orderCode = reqDataJson.getString("orderCode");
+		String dealAddFlag = "";
+		if(reqDataJson.containsKey("dealAddFlag")){
+			dealAddFlag = reqDataJson.getString("dealAddFlag");//补处理标识
+		}
 		JSONObject result = new JSONObject();
 		result.put("returnCode", "0007");
 		result.put("returnMsg", "操作失败");
@@ -6693,15 +6697,17 @@ public class CashierDeskController {
 					debitNote.setQrorderDealStatus("1");
 					debitNoteService.updateByPrimaryKey(debitNote);
 					
-					PayQrCodeTemp payQrCodeTemp = new PayQrCodeTemp();
-					payQrCodeTemp.setQrCodeId(debitNote.getPayQrCodeId());
-					payQrCodeTempService.delete(payQrCodeTemp);
-					
-					PayQrCode payQrCode = payQrCodeService.selectByPrimaryKey(debitNote.getPayQrCodeId());
-					if(payQrCode!=null){
-						payQrCode.setStatus("0");
-						payQrCode.setUpdateDate(new Date());
-						payQrCodeService.updateByPrimaryKey(payQrCode);
+					if(!"1".equals(dealAddFlag)){//不是补处理
+						PayQrCodeTemp payQrCodeTemp = new PayQrCodeTemp();
+						payQrCodeTemp.setQrCodeId(debitNote.getPayQrCodeId());
+						payQrCodeTempService.delete(payQrCodeTemp);
+						
+						PayQrCode payQrCode = payQrCodeService.selectByPrimaryKey(debitNote.getPayQrCodeId());
+						if(payQrCode!=null){
+							payQrCode.setStatus("0");
+							payQrCode.setUpdateDate(new Date());
+							payQrCodeService.updateByPrimaryKey(payQrCode);
+						}
 					}
 					
 					MsResultNotice msResultNotice = new MsResultNotice();
