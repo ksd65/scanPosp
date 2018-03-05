@@ -123,6 +123,7 @@ import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberMerchantKey;
 import com.epay.scanposp.entity.MemberMerchantKeyExample;
+import com.epay.scanposp.entity.MemberPayee;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayQrCode;
@@ -172,6 +173,7 @@ import com.epay.scanposp.service.MemberIpRuleService;
 import com.epay.scanposp.service.MemberIpWhiteListService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
+import com.epay.scanposp.service.MemberPayeeService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayQrCodeService;
 import com.epay.scanposp.service.PayQrCodeTempService;
@@ -318,6 +320,9 @@ public class CashierDeskController {
 	
 	@Resource
 	private PayeeService payeeService;
+	
+	@Resource
+	private MemberPayeeService memberPayeeService;
 	
 	
 	@Autowired
@@ -6502,6 +6507,7 @@ public class CashierDeskController {
 			List<PayQrCodeTotal> exceedList = commonUtilService.getExceedPayeeList(new BigDecimal(payMoney));
 			List<PayQrCodeTotal> exceedCountsList = commonUtilService.getExceedCountsPayeeList();
 			List<Integer> payeeList = new ArrayList<Integer>();
+			List<Integer> includePayeeList = new ArrayList<Integer>();
 			if(exceedList!=null && exceedList.size()>0){
 				for(PayQrCodeTotal total:exceedList){
 					payeeList.add(total.getPayeeId());
@@ -6524,6 +6530,27 @@ public class CashierDeskController {
 			List<PayQrCode> qrCodeList = payQrCodeService.selectByExample(payQrCodeExample);
 			*/
 			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("memberId", memberInfo.getId());
+			param.put("payType", payType);
+			param.put("memberType", "1");
+			List<MemberPayee> memberPayeeList = memberPayeeService.selectByMap(param);//专用收款人
+			if(memberPayeeList != null && memberPayeeList.size()>0){
+				for(MemberPayee memberPayee : memberPayeeList){
+					includePayeeList.add(memberPayee.getPayeeId());
+				}
+			}
+			param = new HashMap<String, Object>();
+			param.put("memberId", memberInfo.getId());
+			param.put("payType", payType);
+			param.put("memberType", "2");
+			List<MemberPayee> otherMemberPayeeList = memberPayeeService.selectByMap(param);//其他商户专用收款人
+			if(otherMemberPayeeList !=null && otherMemberPayeeList.size()>0){
+				for(MemberPayee memberPayee : otherMemberPayeeList){
+					payeeList.add(memberPayee.getPayeeId());
+				}
+			}
+			
+			param = new HashMap<String, Object>();
 			param.put("money", new BigDecimal(payMoney));
 			param.put("payType", payType);
 			param.put("tradeDate", DateUtil.getDateStr());
@@ -6531,6 +6558,9 @@ public class CashierDeskController {
 			param.put("limitSize", 10);
 			if(payeeList!=null && payeeList.size()>0){
 				param.put("payeeList", payeeList);
+			}
+			if(includePayeeList != null && includePayeeList.size()>0){
+				param.put("memberPayeeList", includePayeeList);
 			}
 			List<PayQrCode> qrCodeList = payQrCodeService.selectByMap(param);
 			
