@@ -1,21 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.epay.scanposp.dao.PayQrCodeMapper">
-  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.PayQrCode">
+<mapper namespace="com.epay.scanposp.dao.MemberPayeeMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.MemberPayee">
     <id column="id" jdbcType="INTEGER" property="id" />
-    <result column="money" jdbcType="DECIMAL" property="money" />
+    <result column="member_id" jdbcType="INTEGER" property="memberId" />
     <result column="payee_id" jdbcType="INTEGER" property="payeeId" />
-    <result column="qr_code_remark" jdbcType="VARCHAR" property="qrCodeRemark" />
-    <result column="qr_code" jdbcType="VARCHAR" property="qrCode" />
-    <result column="pay_type" jdbcType="VARCHAR" property="payType" />
-    <result column="file_path" jdbcType="VARCHAR" property="filePath" />
-    <result column="status" jdbcType="CHAR" property="status" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
     <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
     <result column="del_flag" jdbcType="CHAR" property="delFlag" />
-    <result column="remarks" jdbcType="VARCHAR" property="remarks" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -76,16 +70,16 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, money, qr_code_remark, payee_id, qr_code, pay_type, file_path,status,
-    create_by, create_date, update_by, update_date,del_flag,remarks 
+    id, member_id, payee_id, 
+    create_by, create_date, update_by, update_date,del_flag
   </sql>
-  <select id="selectByExample" parameterType="com.epay.scanposp.entity.PayQrCodeExample" resultMap="BaseResultMap">
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberPayeeExample" resultMap="BaseResultMap">
     select
     <if test="distinct">
       distinct
     </if>
     <include refid="Base_Column_List" />
-    from bu_pay_qrcode
+    from bu_member_payee
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
@@ -99,74 +93,48 @@
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    from bu_pay_qrcode
+    from bu_member_payee
     where id = #{id,jdbcType=INTEGER}
   </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-    delete from bu_pay_qrcode
+    delete from bu_member_payee
     where id = #{id,jdbcType=INTEGER}
   </delete>
-  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.PayQrCodeExample">
-    delete from bu_pay_qrcode
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.MemberPayeeExample">
+    delete from bu_member_payee
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
   
-  <select id="countByExample" parameterType="com.epay.scanposp.entity.PayQrCodeExample" resultType="java.lang.Integer">
-    select count(*) from bu_pay_qrcode
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.MemberPayeeExample" resultType="java.lang.Integer">
+    select count(*) from bu_member_payee
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
   </select>
  
-  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.PayQrCode">
-    update bu_pay_qrcode
-    set money = #{money,jdbcType=DECIMAL},
-      qr_code_remark = #{qrCodeRemark,jdbcType=VARCHAR},
-      payee_id = #{payeeId,jdbcType=INTEGER},
-      qr_code = #{qrCode,jdbcType=VARCHAR},
-      pay_type = #{payType,jdbcType=VARCHAR},
-      file_path = #{filePath,jdbcType=CHAR},
-      status = #{status,jdbcType=CHAR},
-      create_by = #{createBy,jdbcType=VARCHAR},
-      create_date = #{createDate,jdbcType=TIMESTAMP},
-      update_by = #{updateBy,jdbcType=VARCHAR},
-      update_date = #{updateDate,jdbcType=TIMESTAMP},
-      remarks = #{remarks,jdbcType=VARCHAR},
-      del_flag = #{delFlag,jdbcType=VARCHAR}
-    where id = #{id,jdbcType=INTEGER}
-  </update>
-  
-  <select id="selectByMap"  parameterType="java.util.Map" resultMap="BaseResultMap">
-  	SELECT a.id,a.money,a.payee_id,a.qr_code,a.qr_code_remark,a.pay_type,a.file_path,a.status,
-  	a.create_by, a.create_date, a.update_by, a.update_date,a.del_flag,a.remarks FROM (
-  		SELECT q.id,q.money,q.qr_code,q.qr_code_remark,q.payee_id,q.pay_type,q.file_path,q.status,
-  		q.create_by, q.create_date, q.update_by, q.update_date,q.del_flag,q.remarks,IFNULL(s.counts,0) counts FROM bu_pay_qrcode q
-  		LEFT JOIN	bu_payee y ON q.payee_id=y.id AND y.`status` = '0' AND y.del_flag = '0' 
-  		LEFT JOIN(
-		SELECT t.payee_id,t.counts FROM bu_pay_qrcode_total t where t.trade_date=#{tradeDate,jdbcType=VARCHAR} )s 
-		ON q.payee_id=s.payee_id
-  		WHERE q.money=#{money,jdbcType=DECIMAL} AND q.pay_type= #{payType,jdbcType=VARCHAR}
-  		 AND q.`status`='0' AND q.del_flag='0' 
-  		 <if test="payeeList != null and payeeList != ''">
-  		 	AND q.payee_id NOT IN 
-  		 	<foreach close=")" collection="payeeList" item="listItem" open="(" separator=",">
-              #{listItem}
-            </foreach>
-  		 </if>
-  		 <if test="memberPayeeList != null and memberPayeeList != ''">
-  		 	AND q.payee_id IN 
-  		 	<foreach close=")" collection="memberPayeeList" item="listItem" open="(" separator=",">
-              #{listItem}
-            </foreach>
-  		 </if>
-  	) a ORDER BY a.counts,id 
-  	<if test="limitStart != null and limitStart&gt;=0">
-      limit #{limitStart} , #{limitSize}
-    </if>
-  
+ <select id="selectByMap"  parameterType="java.util.Map" resultMap="BaseResultMap">
+ 	SELECT DISTINCT m.payee_id FROM bu_member_payee m,bu_payee p
+ 	WHERE m.del_flag='0' AND p.del_flag='0' AND p.`status`='0'
+ 	AND m.payee_id=p.id AND p.pay_type=#{payType,jdbcType=VARCHAR}
+ 	
+	<if test="memberType==1">
+		<![CDATA[ AND m.member_id=#{memberId,jdbcType=INTEGER}]]>
+	</if>
+	<if test="memberType==2">
+		<![CDATA[ AND m.member_id<>#{memberId,jdbcType=INTEGER}
+		AND m.payee_id NOT IN(
+		SELECT m.payee_id FROM bu_member_payee m,bu_payee p 
+		WHERE m.member_id=#{memberId,jdbcType=INTEGER} AND m.del_flag='0' AND p.del_flag='0' AND p.`status`='0'
+		AND m.payee_id=p.id AND p.pay_type=#{payType,jdbcType=VARCHAR} 
+		) 
+		]]>
+	</if>
+
+ 	
   </select>
+ 
   
   
 </mapper>
