@@ -33,7 +33,7 @@ public class PayQrCodeTotalTigger {
 	public void qrCodeTotal(){
 		
 		try{
-			logger.info("个人收款支付更新定时。。。");
+			//logger.info("个人收款支付更新定时。。。");
 			Date time = new Date();
 			String date = DateUtil.getDate(time);
 			String dateStr = DateUtil.getDateStr(time);

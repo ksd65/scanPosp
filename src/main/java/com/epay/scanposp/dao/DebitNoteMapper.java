@@ -6,6 +6,7 @@ import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Param;
 @MyBatisRepository
@@ -31,4 +32,6 @@ public interface DebitNoteMapper extends BaseDao<DebitNote, DebitNoteExample>{
     int updateByPrimaryKeySelective(DebitNote record);
 
     int updateByPrimaryKey(DebitNote record);
+    
+    List<DebitNote> selectNoteOutTimes(Map<String, Object> paramMap);
 }

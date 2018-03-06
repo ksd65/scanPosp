@@ -484,4 +484,26 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
   
+  <select id="selectNoteOutTimes" parameterType="java.util.Map" resultMap="BaseResultMap">
+  	select
+    <include refid="Base_Column_List" />
+    from bu_debit_note
+   where 1=1
+   <if test="routeId != null">
+       AND route_id = #{routeId,jdbcType=VARCHAR}
+   </if>
+   <if test="qrorderDealStatus != null">
+       AND qrorder_deal_status = #{qrorderDealStatus,jdbcType=VARCHAR}
+   </if>
+   <if test="status != null">
+       AND status = #{status,jdbcType=VARCHAR}
+   </if>
+   <![CDATA[
+ 		AND create_date <= DATE_SUB(
+		SYSDATE(),
+		INTERVAL #{seconds,jdbcType=INTEGER}  SECOND
+		)
+ 	]]>
+  </select>
+  
 </mapper>

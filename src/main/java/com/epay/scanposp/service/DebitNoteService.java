@@ -1,5 +1,8 @@
 package com.epay.scanposp.service;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,5 +22,9 @@ public class DebitNoteService extends BaseService<DebitNote,DebitNoteExample> {
 	public void setDebitNoteMapper(DebitNoteMapper debitNoteMapper) {
 		super.setDao(debitNoteMapper);
 		this.debitNoteMapper = debitNoteMapper;
+	}
+	
+	public List<DebitNote> selectNoteOutTimes(Map<String, Object> paramMap){
+		return debitNoteMapper.selectNoteOutTimes(paramMap);
 	}
 }
