@@ -1,5 +1,7 @@
 package com.epay.scanposp.service;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,14 @@ public class TradeDetailService extends BaseService<TradeDetail,TradeDetailExamp
 	public void setTradeDetailMapper(TradeDetailMapper tradeDetailMapper) {
 		super.setDao(tradeDetailMapper);
 		this.tradeDetailMapper = tradeDetailMapper;
+	}
+	
+	public Double countTransactionMoneyByCondition(Map<String,Object> paramMap){
+		return tradeDetailMapper.countTransactionMoneyByCondition(paramMap);
+	}
+	
+	public Double countTransactionRateByCondition(Map<String,Object> paramMap){
+		return tradeDetailMapper.countTransactionRateByCondition(paramMap);
 	}
 
 }

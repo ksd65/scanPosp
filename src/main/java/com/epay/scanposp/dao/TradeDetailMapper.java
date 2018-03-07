@@ -1,6 +1,7 @@
 package com.epay.scanposp.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -31,4 +32,8 @@ public interface TradeDetailMapper extends BaseDao<TradeDetail, TradeDetailExamp
     int updateByPrimaryKeySelective(TradeDetail record);
 
     int updateByPrimaryKey(TradeDetail record);
+    
+    public Double countTransactionMoneyByCondition(Map<String,Object> paramMap);
+    
+    public Double countTransactionRateByCondition(Map<String,Object> paramMap);
 }

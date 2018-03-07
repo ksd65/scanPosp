@@ -91,6 +91,8 @@ public class TradeDetail {
     private String remarks;
 
     private String delFlag;
+    
+    private String preType;
 
     public Integer getId() {
         return id;
@@ -445,6 +447,14 @@ public class TradeDetail {
 
 	public void setTxnMethod(String txnMethod) {
 		this.txnMethod = txnMethod;
+	}
+
+	public String getPreType() {
+		return preType;
+	}
+
+	public void setPreType(String preType) {
+		this.preType = preType;
 	}
     
     

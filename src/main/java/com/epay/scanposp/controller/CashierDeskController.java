@@ -139,6 +139,10 @@ import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.PayTypeRule;
 import com.epay.scanposp.entity.PayTypeRuleExample;
 import com.epay.scanposp.entity.Payee;
+import com.epay.scanposp.entity.PrePayMember;
+import com.epay.scanposp.entity.PrePayMemberExample;
+import com.epay.scanposp.entity.PrePayStatistics;
+import com.epay.scanposp.entity.PrePayStatisticsExample;
 import com.epay.scanposp.entity.RegisterTmp;
 import com.epay.scanposp.entity.RouteWay;
 import com.epay.scanposp.entity.RouteWayExample;
@@ -184,6 +188,8 @@ import com.epay.scanposp.service.PayTypeDefaultService;
 import com.epay.scanposp.service.PayTypeRuleService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.PayeeService;
+import com.epay.scanposp.service.PrePayMemberService;
+import com.epay.scanposp.service.PrePayStatisticsService;
 import com.epay.scanposp.service.RegisterTmpService;
 import com.epay.scanposp.service.RouteWayService;
 import com.epay.scanposp.service.RoutewayDrawService;
@@ -6422,12 +6428,26 @@ public class CashierDeskController {
 			String payTypeStr = "";
 			String payMethod = PayTypeConstant.PAY_METHOD_SMZF;
 			String merCode = "";
+			BigDecimal tradeRate = null;
 			if("1".equals(payType)){
 				payTypeStr = "WX";
 				merCode = merchantCode.getWxMerchantCode();
 			}else if("2".equals(payType)){
 				payTypeStr = "ZFB";
 				merCode = merchantCode.getZfbMerchantCode();
+			}
+			if("0".equals(memberInfo.getSettleType())){
+				if("1".equals(payType)){
+					tradeRate = merchantCode.getT0TradeRate();
+				}else if("2".equals(payType)){
+					tradeRate = merchantCode.getZfbT0TradeRate();
+				}
+			}else{
+				if("1".equals(payType)){
+					tradeRate = merchantCode.getT1TradeRate();
+				}else if("2".equals(payType)){
+					tradeRate = merchantCode.getZfbT1TradeRate();
+				}
 			}
 			
 			// 插入一条收款记录
@@ -6451,19 +6471,7 @@ public class CashierDeskController {
 				debitNote.setMemberCode(memberInfo.getZfbMemberCode());
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
-			if("0".equals(memberInfo.getSettleType())){
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT0TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT0TradeRate());
-				}
-			}else{
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT1TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT1TradeRate());
-				}
-			}
+			debitNote.setTradeRate(tradeRate);
 			
 			
 			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_"+payMethod+"_"+payTypeStr;
@@ -6503,6 +6511,17 @@ public class CashierDeskController {
 				debitNoteService.insertSelective(debitNote);
 				return mResult;
 			}
+			
+			JSONObject preResult = commonUtilService.checkPrePayMoney(memberInfo.getId(),tradeRate, payMethod, payTypeStr, routeCode, new BigDecimal(payMoney));
+			debitNote.setPreType(preResult.getString("preType"));
+			if(!"0000".equals(preResult.getString("returnCode"))){
+				debitNote.setStatus("2");
+				debitNote.setRespMsg(preResult.getString("returnMsg"));
+				debitNoteService.insertSelective(debitNote);
+				return preResult;
+			}
+			
+			
 			//取超出限额的收款人
 			List<PayQrCodeTotal> exceedList = commonUtilService.getExceedPayeeList(new BigDecimal(payMoney));
 			List<PayQrCodeTotal> exceedCountsList = commonUtilService.getExceedCountsPayeeList();
@@ -6722,6 +6741,7 @@ public class CashierDeskController {
 					debitNote.setStatus("1");
 					tradeDetail.setRespType("S");
 					tradeDetail.setRespCode("000000");
+					tradeDetail.setPreType(debitNote.getPreType());
 					
 					debitNote.setUpdateDate(new Date());
 					debitNote.setQrorderDealStatus("1");

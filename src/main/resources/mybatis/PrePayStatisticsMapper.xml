@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.PrePayStatisticsMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.PrePayStatistics">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="member_id" jdbcType="INTEGER" property="memberId" />
+    <result column="trade_rate" jdbcType="DECIMAL" property="tradeRate" />
+    <result column="pre_money" jdbcType="DECIMAL" property="preMoney" />
+    <result column="his_trade_money" jdbcType="DECIMAL" property="hisTradeMoney" />
+    <result column="his_use_pre_money" jdbcType="DECIMAL" property="hisUsePreMoney" />
+    <result column="today_trade_money" jdbcType="DECIMAL" property="todayTradeMoney" />
+    <result column="undeal_money" jdbcType="DECIMAL" property="undealMoney" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, member_id,trade_rate, pre_money, his_trade_money,his_use_pre_money, today_trade_money, undeal_money,
+    create_by, create_date, update_by, update_date, del_flag
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.PrePayStatisticsExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_pre_pay_statistics
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from bu_pre_pay_statistics
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from bu_pre_pay_statistics
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.PrePayStatisticsExample">
+    delete from bu_pre_pay_statistics
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.PrePayStatistics">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_pre_pay_statistics ( member_id,trade_rate, pre_money, 
+      his_trade_money,his_use_pre_money, today_trade_money,undeal_money, 
+      create_by, create_date, update_by, update_date)
+    values (#{memberId,jdbcType=INTEGER}, #{tradeRate,jdbcType=DECIMAL},#{preMoney,jdbcType=DECIMAL}, 
+      #{hisTradeMoney,jdbcType=DECIMAL},#{hisUsePreMoney,jdbcType=DECIMAL}, #{todayTradeMoney,jdbcType=DECIMAL},#{undealMoney,jdbcType=DECIMAL},
+      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.PrePayStatistics">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_pre_pay_statistics
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="memberId != null">
+        member_id,
+      </if>
+      <if test="tradeRate != null">
+        trade_rate,
+      </if>
+      <if test="preMoney != null">
+        pre_money,
+      </if>
+      <if test="hisTradeMoney != null">
+        his_trade_money,
+      </if>
+      <if test="hisUsePreMoney != null">
+        his_use_pre_money,
+      </if>
+      <if test="todayTradeMoney != null">
+        today_trade_money,
+      </if>
+      <if test="undealMoney != null">
+        undeal_money,
+      </if>
+      
+      <if test="createBy != null">
+        create_by,
+      </if>
+      <if test="createDate != null">
+        create_date,
+      </if>
+      <if test="updateBy != null">
+        update_by,
+      </if>
+      <if test="updateDate != null">
+        update_date,
+      </if>
+      
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="memberId != null">
+        #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="tradeRate != null">
+        #{tradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="preMoney != null">
+        #{preMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="hisTradeMoney != null">
+        #{hisTradeMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="hisUsePreMoney != null">
+        #{hisUsePreMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="todayTradeMoney != null">
+        #{todayTradeMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="undealMoney != null">
+        #{undealMoney,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="createBy != null">
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.PrePayStatisticsExample" resultType="java.lang.Integer">
+    select count(*) from bu_pre_pay_statistics
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.epay.scanposp.entity.PrePayStatistics">
+    update bu_pre_pay_statistics
+    <set>
+      <if test="memberId != null">
+        member_id = #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="tradeRate != null">
+        trade_rate = #{tradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="preMoney != null">
+        pre_money = #{preMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="hisTradeMoney != null">
+        his_trade_money = #{hisTradeMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="hisUsePreMoney != null">
+        his_use_pre_money = #{hisUsePreMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="todayTradeMoney != null">
+        today_trade_money = #{todayTradeMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="undealMoney != null">
+        undeal_money = #{undealMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.PrePayStatistics">
+    update bu_pre_pay_statistics
+      set member_id = #{memberId,jdbcType=INTEGER},
+      pre_money = #{preMoney,jdbcType=DECIMAL},
+      his_trade_money = #{hisTradeMoney,jdbcType=DECIMAL},
+      today_trade_money = #{todayTradeMoney,jdbcType=DECIMAL},
+      undeal_money = #{undealMoney,jdbcType=DECIMAL},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+  
+  
+</mapper>

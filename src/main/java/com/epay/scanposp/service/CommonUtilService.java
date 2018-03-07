@@ -25,6 +25,10 @@ import com.epay.scanposp.entity.PayQrCodeTotal;
 import com.epay.scanposp.entity.PayQrCodeTotalExample;
 import com.epay.scanposp.entity.PayType;
 import com.epay.scanposp.entity.PayTypeExample;
+import com.epay.scanposp.entity.PrePayMember;
+import com.epay.scanposp.entity.PrePayMemberExample;
+import com.epay.scanposp.entity.PrePayStatistics;
+import com.epay.scanposp.entity.PrePayStatisticsExample;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 
@@ -53,6 +57,18 @@ public class CommonUtilService {
 	
 	@Resource
 	private PayQrCodeTotalService payQrCodeTotalService;
+	
+	@Resource
+	private PrePayMemberService prePayMemberService;
+	
+	@Resource
+	private PrePayStatisticsService prePayStatisticsService;
+	
+	@Resource
+	private TradeDetailService tradeDetailService;
+	
+	@Resource
+	private DebitNoteService debitNoteService;
 	
 	public JSONObject checkLimitMoney(String configName, BigDecimal tradeMoney){
 		
@@ -325,6 +341,63 @@ public class CommonUtilService {
 			return list;
 		}
 		return null;
+	}
+	
+	public JSONObject checkPrePayMoney(Integer memberId,BigDecimal tradeRate, String payMethod,String payTypeStr,String routeCode, BigDecimal tradeMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		PrePayMemberExample prePayMemberExample = new PrePayMemberExample();
+		prePayMemberExample.createCriteria().andMemberIdEqualTo(memberId).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payTypeStr).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+		List<PrePayMember> prePayMemberList = prePayMemberService.selectByExample(prePayMemberExample);
+		if(prePayMemberList==null || prePayMemberList.size()==0){
+			prePayMemberExample = new PrePayMemberExample();
+			prePayMemberExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payTypeStr).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+			prePayMemberList = prePayMemberService.selectByExample(prePayMemberExample);
+		}
+		if(prePayMemberList!=null && prePayMemberList.size()>0){//预收款模式
+			result.put("preType", "1");
+			PrePayStatisticsExample prePayStatisticsExample = new PrePayStatisticsExample();
+			prePayStatisticsExample.createCriteria().andMemberIdEqualTo(memberId).andDelFlagEqualTo("0");
+			List<PrePayStatistics> prePayStatisticsServiceList = prePayStatisticsService.selectByExample(prePayStatisticsExample);
+			if(prePayStatisticsServiceList==null||prePayStatisticsServiceList.size()==0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "预收款金额不足，无法支付");
+				return result;
+			}
+			PrePayStatistics prePayStatistics = prePayStatisticsServiceList.get(0);
+			BigDecimal preMoney = prePayStatistics.getPreMoney();
+			//BigDecimal totalMoney = preMoney.divide(tradeRate);
+			//BigDecimal hisTradeMoney = prePayStatistics.getHisTradeMoney();
+			BigDecimal hisUsePreMoney  = prePayStatistics.getHisUsePreMoney();
+			BigDecimal thisRate = tradeMoney.multiply(tradeRate);
+			
+			String day = DateUtil.getDateStr(new Date());
+			Map<String,Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("memberId", memberId);
+			paramMap.put("txnDate", day);
+			paramMap.put("preType", "1");
+			Double todayRateMoney = tradeDetailService.countTransactionRateByCondition(paramMap);
+			todayRateMoney = todayRateMoney == null ? 0 : todayRateMoney;//当天交易费率
+			
+			paramMap = new HashMap<String, Object>();
+			paramMap.put("memberId", memberId);
+			paramMap.put("preType", "1");
+			paramMap.put("status", "0");
+			paramMap.put("qrorderDealStatus", "0");
+			Double undealRate = debitNoteService.countTransactionRateByCondition(paramMap);
+			undealRate = undealRate == null ? 0 : undealRate;//未处理金额费率
+			
+			if(preMoney.compareTo(hisUsePreMoney.add(new BigDecimal(todayRateMoney)).add(new BigDecimal(undealRate)).add(thisRate))<0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "预收款金额不足，无法支付");
+				return result;
+			}
+		}else{
+			result.put("preType", "0");
+		}
+		result.put("returnCode", "0000");
+		return result;
 	}
 
 }

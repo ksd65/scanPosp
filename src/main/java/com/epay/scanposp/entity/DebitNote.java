@@ -61,6 +61,8 @@ public class DebitNote {
     private Integer payeeId;
     
     private String qrorderDealStatus;
+    
+    private String preType;
 
     public Integer getId() {
         return id;
@@ -292,6 +294,14 @@ public class DebitNote {
 
 	public void setQrorderDealStatus(String qrorderDealStatus) {
 		this.qrorderDealStatus = qrorderDealStatus;
+	}
+
+	public String getPreType() {
+		return preType;
+	}
+
+	public void setPreType(String preType) {
+		this.preType = preType;
 	}
     
     

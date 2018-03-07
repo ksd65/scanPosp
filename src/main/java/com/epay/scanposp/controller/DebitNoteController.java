@@ -8587,11 +8587,20 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			String payTypeStr = "";
 			String payMethod = PayTypeConstant.PAY_METHOD_H5;
 			String merCode = "";
+			BigDecimal tradeRate = null;
 			if("2".equals(payType)){
 				payTypeStr = "ZFB";
 				merCode = merchantCode.getZfbMerchantCode();
 			}
-			
+			if("0".equals(memberInfo.getSettleType())){
+				if("2".equals(payType)){
+					tradeRate = merchantCode.getZfbT0TradeRate();
+				}
+			}else{
+				if("2".equals(payType)){
+					tradeRate = merchantCode.getZfbT1TradeRate();
+				}
+			}
 			// 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
 			
@@ -8611,15 +8620,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNote.setMemberCode(memberInfo.getZfbMemberCode());
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
-			if("0".equals(memberInfo.getSettleType())){
-				if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT0TradeRate());
-				}
-			}else{
-				if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT1TradeRate());
-				}
-			}
+			debitNote.setTradeRate(tradeRate);
 			
 			
 			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_"+payMethod+"_"+payTypeStr;
@@ -8659,6 +8660,16 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNoteService.insertSelective(debitNote);
 				return mResult;
 			}
+			
+			JSONObject preResult = commonUtilService.checkPrePayMoney(memberInfo.getId(), tradeRate ,payMethod, payTypeStr, routeCode, new BigDecimal(payMoney));
+			debitNote.setPreType(preResult.getString("preType"));
+			if(!"0000".equals(preResult.getString("returnCode"))){
+				debitNote.setStatus("2");
+				debitNote.setRespMsg(preResult.getString("returnMsg"));
+				debitNoteService.insertSelective(debitNote);
+				return preResult;
+			}
+			
 			//取超出限额的收款人
 			List<PayQrCodeTotal> exceedList = commonUtilService.getExceedPayeeList(new BigDecimal(payMoney));
 			List<PayQrCodeTotal> exceedCountsList = commonUtilService.getExceedCountsPayeeList();

@@ -34,4 +34,8 @@ public interface DebitNoteMapper extends BaseDao<DebitNote, DebitNoteExample>{
     int updateByPrimaryKey(DebitNote record);
     
     List<DebitNote> selectNoteOutTimes(Map<String, Object> paramMap);
+    
+    Double countTransactionMoneyByCondition(Map<String,Object> paramMap);
+    
+    Double countTransactionRateByCondition(Map<String,Object> paramMap);
 }
