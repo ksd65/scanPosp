@@ -81,6 +81,12 @@ public class RoutewayDraw {
     private String subId;
     
     private String bankCode;
+    
+    private String province;
+    
+    private String city;
+    
+    private String batchNo;
 
     public Integer getId() {
         return id;
@@ -393,6 +399,30 @@ public class RoutewayDraw {
 
 	public void setChannelNo(String channelNo) {
 		this.channelNo = channelNo;
+	}
+
+	public String getProvince() {
+		return province;
+	}
+
+	public void setProvince(String province) {
+		this.province = province;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getBatchNo() {
+		return batchNo;
+	}
+
+	public void setBatchNo(String batchNo) {
+		this.batchNo = batchNo;
 	}
     
 	

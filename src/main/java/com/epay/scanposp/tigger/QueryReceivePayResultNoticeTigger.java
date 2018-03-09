@@ -22,11 +22,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.alibaba.fastjson.JSON;
+import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.HLBConfig;
 import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.StringUtil;
+import com.epay.scanposp.common.utils.cj.util.HttpURLConection;
+import com.epay.scanposp.common.utils.cj.util.MD5Util;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.hlb.Disguiser;
@@ -363,6 +366,72 @@ public class QueryReceivePayResultNoticeTigger {
 								
 								if(resObj.containsKey("rt8_reason")){
 									draw.setRespMsg(resObj.getString("rt8_reason"));
+								}
+								draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+								draw.setUpdateDate(new Date());
+								routewayDrawService.updateByPrimaryKey(draw);
+				        	}
+						}
+				    }else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
+						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+				        if(keyList == null || keyList.size()!=1){
+				        	continue;
+				        }
+				        MemberMerchantKey merchantKey = keyList.get(0);
+				        
+				        String serverUrl = CJConfig.msServerUrl+"/totalPayController/merchant/virement/mer_query.action";
+				        
+						Map<String,String> sPara = new HashMap<String,String>();
+						sPara.put("v_version","1.0.0.0");
+						sPara.put("v_identity",draw.getOrderCode());
+						sPara.put("v_mid",draw.getMerchantCode());
+						sPara.put("v_batch_no", draw.getBatchNo());
+						sPara.put("v_type","1");
+						
+						String src = StringUtil.orderedKey(sPara)+merchantKey.getPrivateKey();
+						//logger.info("Sign Before MD5: {}", src);
+						String sign = MD5Util.MD5Encode(src).toUpperCase();
+						//logger.info("Sign Result: {}", sign);
+						
+						sPara.put("v_sign", sign);
+						StringBuffer sb=new StringBuffer();
+						for (Map.Entry<String, String> entry : sPara.entrySet()) {
+							if (entry.getValue() != null && !StringUtil.isEmpty(String.valueOf(entry.getValue()))) {
+								sb.append(entry.getKey()+"="+entry.getValue()+"&");
+							}else{
+								sb.append(entry.getKey()+"=&");
+							}
+						}
+						String postStr = sb.substring(0, sb.toString().length()-1);
+						
+						logger.info("畅捷代付订单查询请求参数[{}]",postStr );
+						String respStr = HttpURLConection.httpURLConnectionPOST(serverUrl, postStr);
+						logger.info("畅捷代付订单查询返回报文[{}]", new Object[] { respStr });
+				        
+						JSONObject resObj = JSONObject.fromObject(respStr);
+						String code = resObj.getString("v_code");
+						if("00".equals(code)){
+				     		String v_sign = resObj.getString("v_sign");
+				     		resObj.remove("v_sign");
+				     		String s = StringUtil.orderedKey(resObj)+merchantKey.getPrivateKey();
+				     		sign = MD5Util.MD5Encode(s).toUpperCase();
+							boolean checkSign = sign.equals(v_sign);
+							if(checkSign){
+				        		String order_status = resObj.getString("v_status");
+								if("0000".equals(order_status)){
+									draw.setRespType("S");
+									draw.setRespCode("000");
+								}else if("200".equals(order_status)){
+									draw.setRespType("R");
+								}else{
+									draw.setRespType("E");
+									draw.setRespCode(order_status);
+								}
+								
+								if(resObj.containsKey("v_status_msg")){
+									draw.setRespMsg(resObj.getString("v_status_msg"));
 								}
 								draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 								draw.setUpdateDate(new Date());

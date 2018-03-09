@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 import javax.annotation.Resource;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alibaba.fastjson.JSON;
+import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.HLBConfig;
 import com.epay.scanposp.common.constant.HXConfig;
 import com.epay.scanposp.common.constant.RFConfig;
@@ -47,8 +49,12 @@ import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
+import com.epay.scanposp.common.utils.cj.util.HttpURLConection;
+import com.epay.scanposp.common.utils.cj.util.MD5Util;
+import com.epay.scanposp.common.utils.cj.util.SignatureUtil;
 import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
+import com.epay.scanposp.common.utils.constant.SequenseTypeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.hlb.Disguiser;
 import com.epay.scanposp.common.utils.hlb.RSA;
@@ -1188,6 +1194,8 @@ public class BankPayController {
 				obj = receivePayZhzf(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayHlb(memberId, String.valueOf(draw.getMoney()), draw);
+			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
+				obj = receivePayCJ(memberId, String.valueOf(draw.getMoney()), draw);
 			}
 			
 			if("0000".equals(obj.getString("returnCode"))){
@@ -1217,6 +1225,10 @@ public class BankPayController {
 			if(obj.containsKey("channel_no")){
 				draw.setChannelNo(obj.getString("channel_no"));
 			}
+			if(obj.containsKey("batchNo")){
+				draw.setBatchNo(obj.getString("batchNo"));
+			}
+			
 			draw.setUpdateDate(new Date());
 			routewayDrawService.updateByPrimaryKey(draw);
 		}catch(Exception e){
@@ -2069,11 +2081,11 @@ public class BankPayController {
 			}
 			
 			SysOffice sysOffice = sysOfficeList.get(0);
-			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
+	/*		if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 				return signReturn(result);
-			}
+			}*/
 			
 			
 			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
@@ -2340,6 +2352,77 @@ public class BankPayController {
 							
 							if(resObj.containsKey("rt8_reason")){
 								draw.setRespMsg(resObj.getString("rt8_reason"));
+							}
+							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+							draw.setUpdateDate(new Date());
+							routewayDrawService.updateByPrimaryKey(draw);
+			        	}
+					}
+				}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
+					
+					MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+			        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+			        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+			        if(keyList == null || keyList.size()!=1){
+			        	result.put("returnCode", "0008");
+						result.put("returnMsg", "商户私钥未配置");
+						return signReturn(result);
+			        }
+			        MemberMerchantKey merchantKey = keyList.get(0);
+			        
+			        String serverUrl = CJConfig.msServerUrl+"/totalPayController/merchant/virement/mer_query.action";
+			        
+					Map<String,String> sPara = new HashMap<String,String>();
+					sPara.put("v_version","1.0.0.0");
+					sPara.put("v_identity",draw.getOrderCode());
+					sPara.put("v_mid",draw.getMerchantCode());
+					sPara.put("v_batch_no", draw.getBatchNo());
+					sPara.put("v_type","1");
+					
+					String src = StringUtil.orderedKey(sPara)+merchantKey.getPrivateKey();
+					logger.info("Sign Before MD5: {}", src);
+					String sign = MD5Util.MD5Encode(src).toUpperCase();
+					logger.info("Sign Result: {}", sign);
+					
+					sPara.put("v_sign", sign);
+					StringBuffer sb=new StringBuffer();
+					for (Map.Entry<String, String> entry : sPara.entrySet()) {
+						if (entry.getValue() != null && !StringUtil.isEmpty(String.valueOf(entry.getValue()))) {
+							sb.append(entry.getKey()+"="+entry.getValue()+"&");
+						}else{
+							sb.append(entry.getKey()+"=&");
+						}
+					}
+					String postStr = sb.substring(0, sb.toString().length()-1);
+					
+					logger.info("畅捷代付订单查询请求参数[{}]",postStr );
+					String respStr = HttpURLConection.httpURLConnectionPOST(serverUrl, postStr);
+					logger.info("畅捷代付订单查询返回报文[{}]", new Object[] { respStr });
+					
+					
+					JSONObject resObj = JSONObject.fromObject(respStr);
+					String code = resObj.getString("v_code");
+					
+			     	if("00".equals(code)){
+			     		String v_sign = resObj.getString("v_sign");
+			     		resObj.remove("v_sign");
+			     		String s = StringUtil.orderedKey(resObj)+merchantKey.getPrivateKey();
+			     		sign = MD5Util.MD5Encode(s).toUpperCase();
+						boolean checkSign = sign.equals(v_sign);
+						if(checkSign){
+			        		String order_status = resObj.getString("v_status");
+							if("0000".equals(order_status)){
+								draw.setRespType("S");
+								draw.setRespCode("000");
+							}else if("200".equals(order_status)){
+								draw.setRespType("R");
+							}else{
+								draw.setRespType("E");
+								draw.setRespCode(order_status);
+							}
+							
+							if(resObj.containsKey("v_status_msg")){
+								draw.setRespMsg(resObj.getString("v_status_msg"));
 							}
 							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 							draw.setUpdateDate(new Date());
@@ -2766,74 +2849,160 @@ public class BankPayController {
 	}
 	
 	public static void main(String[] args) {
-		String respStr = "{\"rt2_retCode\":\"0000\",\"sign\":\"b75363b5780be627d40c7fa1f11675a0\",\"rt1_bizType\":\"Transfer\",\"rt5_orderId\":\"20180207135936529764\",\"rt4_customerNumber\":\"C1800172532\",\"rt3_retMsg\":\"接收成功\",\"rt6_serialNumber\":\"29187435\"}";
+		String respStr = "{\"v_amount\":\"3.5\",\"v_batch_no\":\"201803091456425\",\"v_code\":\"00\",\"v_identity\":\"20180309145642437951\",\"v_mid\":\"10034272896\",\"v_msg\":\"请求成功\",\"v_sign\":\"57AECFF6CB0690B48F6A1C66942A99CB\",\"v_status\":\"200\",\"v_status_msg\":\"代付中\",\"v_sum_amount\":\"3.5\",\"v_time\":\"2018-03-09 14:56:45\",\"v_type\":\"1\"}";
 		JSONObject resultObj = JSONObject.fromObject(respStr);
-		StringBuffer sb = new StringBuffer();
-		String split = "&";
-		sb.append(split).append(resultObj.getString("rt1_bizType"));
-		sb.append(split).append(resultObj.getString("rt2_retCode"));
-		sb.append(split).append(resultObj.getString("rt4_customerNumber"));
-		sb.append(split).append(resultObj.getString("rt5_orderId"));
-		sb.append(split).append(resultObj.getString("rt6_serialNumber"));
-		sb.append(split).append("Mf9xFPbFR7zPlMmfC2wTYamAD9AWYWkW");
-		System.out.println(sb.toString());
-		String sign = Disguiser.disguiseMD5(sb.toString());
-		System.out.println(sign);
 		
-	/*	String respStr = "{\"rt2_retCode\":\"0000\",\"rt8_reason\":\"成功[0000000]\",\"rt7_orderStatus\":\"SUCCESS\",\"sign\":\"cefbb4f8693353d8332adb0597c56012\",\"rt1_bizType\":\"TransferQuery\",\"rt5_orderId\":\"20180207135936529764\",\"rt4_customerNumber\":\"C1800172532\",\"rt3_retMsg\":\"接收成功\",\"rt6_serialNumber\":\"\"}";
-		JSONObject resultObj = JSONObject.fromObject(respStr);
-		String split = "&";
-		StringBuffer sb = new StringBuffer();
-		sb.append(split).append(resultObj.getString("rt1_bizType"));
-		sb.append(split).append(resultObj.getString("rt2_retCode"));
-		sb.append(split).append(resultObj.getString("rt4_customerNumber"));
-		sb.append(split).append(resultObj.getString("rt5_orderId"));
-		sb.append(split).append(resultObj.getString("rt6_serialNumber"));
-		sb.append(split).append(resultObj.getString("rt7_orderStatus"));
-		sb.append(split).append(resultObj.getString("rt8_reason"));
-		sb.append(split).append("Mf9xFPbFR7zPlMmfC2wTYamAD9AWYWkW");
-		System.out.println(sb.toString());
-		String sign = Disguiser.disguiseMD5(sb.toString());
-		System.out.println(sign);
+		String v_sign = resultObj.getString("v_sign");
+		resultObj.remove("v_sign");
+ 		String s = StringUtil.orderedKey(resultObj)+"6de860f47e464996ac60da20a2d26de2";
+ 		System.out.println(s);
+ 		String sign = MD5Util.MD5Encode(s).toUpperCase();
+ 		System.out.println(sign);
+		boolean signCheck = sign.equals(v_sign);
 		
-		sb = new StringBuffer();
-		sb.append(split).append(resultObj.getString("rt1_bizType"));
-		sb.append(split).append(resultObj.getString("rt2_retCode"));
-		sb.append(split).append(resultObj.getString("rt4_customerNumber"));
-		sb.append(split).append(resultObj.getString("rt5_orderId"));
-		sb.append(split).append(resultObj.getString("rt6_serialNumber"));
-		sb.append(split).append(resultObj.getString("rt7_orderStatus"));
-		//sb.append(split).append(resultObj.getString("rt8_reason"));
-		sb.append(split).append("Mf9xFPbFR7zPlMmfC2wTYamAD9AWYWkW");
-		System.out.println(sb.toString());
-		sign = Disguiser.disguiseMD5(sb.toString());
-		System.out.println(sign);
 		
-		sb = new StringBuffer();
-		sb.append(split).append(resultObj.getString("rt1_bizType"));
-		sb.append(split).append(resultObj.getString("rt2_retCode"));
-		sb.append(split).append(resultObj.getString("rt4_customerNumber"));
-		sb.append(split).append(resultObj.getString("rt5_orderId"));
-		sb.append(split).append(resultObj.getString("rt6_serialNumber"));
-		sb.append(split).append(resultObj.getString("rt7_orderStatus"));
-		sb.append(split).append(resultObj.getString("rt8_reason"));
-		sb.append(split).append("UgiRcbiiHOzFB60pODvHKcs45yq8Tt3z");
-		System.out.println(sb.toString());
-		sign = Disguiser.disguiseMD5(sb.toString());
-		System.out.println(sign);
 		
-		sb = new StringBuffer();
-		sb.append(split).append(resultObj.getString("rt1_bizType"));
-		sb.append(split).append(resultObj.getString("rt2_retCode"));
-		sb.append(split).append(resultObj.getString("rt4_customerNumber"));
-		sb.append(split).append(resultObj.getString("rt5_orderId"));
-		sb.append(split).append(resultObj.getString("rt6_serialNumber"));
-		sb.append(split).append(resultObj.getString("rt7_orderStatus"));
-		//sb.append(split).append(resultObj.getString("rt8_reason"));
-		sb.append(split).append("UgiRcbiiHOzFB60pODvHKcs45yq8Tt3z");
-		System.out.println(sb.toString());
-		sign = Disguiser.disguiseMD5(sb.toString());
-		System.out.println(sign);
-		*/
+		System.out.println(signCheck);
+		
+	
+	}
+	
+	
+	
+	//畅捷代付
+	public JSONObject receivePayCJ(String memberId,String payMoney,RoutewayDraw draw){
+		JSONObject result = new JSONObject();
+		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
+			result.put("returnCode", "0005");
+			result.put("returnMsg", "支付金额输入不正确");
+			return result;
+		}
+		
+		if(memberId == null || "".equals(memberId)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户Id缺失");
+			return result;
+		}
+		
+		try{
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(Integer.parseInt(memberId));
+			if(memberInfo == null){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户不存在");
+				return result;
+			}
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(draw.getRouteCode()).andDelFlagEqualTo("0");
+			
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merchantCode.getKjMerchantCode()).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0003");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        
+	        double amount = (new BigDecimal(payMoney)).doubleValue()-merchantCode.getKjT1DrawFee().doubleValue();
+				
+	        MemberMerchantKey merchantKey = keyList.get(0);
+	        
+	        String serverUrl = CJConfig.msServerUrl+"/totalPayController/merchant/virement/mer_payment.action";
+			String charset = "utf-8";
+			
+			String orderCode = CommonUtil.getOrderCode();
+			Random random = new Random();
+			String batchNo = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())+random.nextInt(10);
+			Map<String,String> sPara = new HashMap<String,String>();
+			sPara.put("v_version","1.0.0.0");
+			sPara.put("v_mid",merchantCode.getKjMerchantCode());
+			sPara.put("v_count","1");
+			sPara.put("v_sum_amount",String.valueOf(amount));
+			sPara.put("v_batch_no",batchNo);
+			sPara.put("v_cardNo",draw.getBankAccount());
+			sPara.put("v_realName",draw.getAccountName());
+			sPara.put("v_bankname",draw.getBankName());
+			sPara.put("v_province",draw.getProvince());
+			sPara.put("v_city",draw.getCity());
+			sPara.put("v_amount",String.valueOf(amount));
+			sPara.put("v_identity",orderCode);
+			sPara.put("v_pmsBankNo", draw.getSubId());
+			sPara.put("v_type", "1");//D0:0 T1:1
+			sPara.put("v_phone", draw.getTel());
+			sPara.put("v_cert_no", draw.getCertNo());
+			String srcStr = StringUtil.orderedKey(sPara)+merchantKey.getPrivateKey();
+			logger.info("Sign Before MD5: {}", srcStr);
+			String sign = MD5Util.MD5Encode(srcStr).toUpperCase();
+			logger.info("Sign Result: {}", sign);
+			
+			//String sign = SignatureUtil.getSign(sPara, merchantKey.getPrivateKey(), logger);
+			sPara.put("v_sign", sign);
+			StringBuffer sb=new StringBuffer();
+			for (Map.Entry<String, String> entry : sPara.entrySet()) {
+				if (entry.getValue() != null && !StringUtil.isEmpty(String.valueOf(entry.getValue()))) {
+					sb.append(entry.getKey()+"="+entry.getValue()+"&");
+				}else{
+					sb.append(entry.getKey()+"=&");
+				}
+			}
+			String postStr = sb.substring(0, sb.toString().length()-1);
+			
+			logger.info("畅捷代付请求参数[{}]",postStr );
+			String respStr = HttpURLConection.httpURLConnectionPOST(serverUrl, postStr);
+			logger.info("畅捷代付返回报文[{}]", new Object[] { respStr });
+			
+			
+			
+			JSONObject resultObj = JSONObject.fromObject(respStr);
+	        String v_code = resultObj.getString("v_code");
+	        String v_status = "";
+	        if(resultObj.containsKey("v_status")){
+	        	v_status = resultObj.getString("v_status");
+	        }
+	        String result_msg = resultObj.getString("v_msg");
+	        if(resultObj.containsKey("v_status_msg")){
+	        	result_msg = resultObj.getString("v_status_msg");
+	        }
+			String reqDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			
+			boolean signCheck = true;
+			if ("00".equals(v_code)) {
+				String v_sign = resultObj.getString("v_sign");
+				resultObj.remove("v_sign");
+	     		String s = StringUtil.orderedKey(resultObj)+merchantKey.getPrivateKey();
+	     		sign = MD5Util.MD5Encode(s).toUpperCase();
+			//	signCheck = sign.equals(v_sign);
+			}
+			
+			if(signCheck && "00".equals(v_code)&&("0000".equals(v_status)||"200".equals(v_status))){
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "请求成功");
+			}else{
+				if(!signCheck){
+	        		result_msg = "出参验签失败";
+	        	}
+				result.put("returnCode", "0001");
+				result.put("returnMsg", result_msg);
+				result.put("respCode", v_status);
+				result.put("respMsg", result_msg);
+			}
+			result.put("batchNo", batchNo);
+			result.put("orderCode", orderCode);
+			result.put("merchantCode", merchantCode.getKjMerchantCode());
+			result.put("reqDate", reqDate);
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
 	}
 }

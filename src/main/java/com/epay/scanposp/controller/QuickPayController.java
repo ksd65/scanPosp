@@ -72,6 +72,8 @@ import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.QuickPaySms;
 import com.epay.scanposp.entity.QuickPaySmsExample;
+import com.epay.scanposp.entity.SysCommonConfig;
+import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.entity.TradeDetail;
@@ -443,7 +445,12 @@ public class QuickPayController {
 			String payTypeStr = PayTypeConstant.PAY_TYPE_KJ;
 			String payMethod = PayTypeConstant.PAY_METHOD_YL;
 			String merCode = merchantCode.getKjMerchantCode();
-			
+			BigDecimal tradeRate = null;
+			if("0".equals(memberInfo.getSettleType())){
+				tradeRate = merchantCode.getKjT0TradeRate();
+			}else{
+				tradeRate = merchantCode.getKjT1TradeRate();
+			}
 			
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
@@ -470,11 +477,8 @@ public class QuickPayController {
 			quickPaySms.setMerchantCode(merCode);
 			quickPaySms.setMemberCode(memberInfo.getWxMemberCode());
 			quickPaySms.setSettleType(memberInfo.getSettleType());
-			if("0".equals(memberInfo.getSettleType())){
-				quickPaySms.setTradeRate(merchantCode.getKjT0TradeRate());
-			}else{
-				quickPaySms.setTradeRate(merchantCode.getKjT1TradeRate());
-			}
+			quickPaySms.setTradeRate(tradeRate);
+			
 			quickPaySms.setAccountType(accountType);
 			quickPaySms.setBankAccount(bankAccount);
 			quickPaySms.setAccountName(accountName);
@@ -505,6 +509,42 @@ public class QuickPayController {
 				return limitResult;
 			}
 			
+			configName = "PLAT_TRADE_RATE_"+routeCode;
+			String platTradeRate = "";
+			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+			List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+				platTradeRate = sysCommonConfig.get(0).getValue();
+			}
+			if("".equals(platTradeRate)){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "平台交易费率未配置");
+				return result;
+	        }
+			
+			configName = "MIN_PLAT_TRADE_FEE_"+routeCode;
+			String minTradeFee = "";
+			sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+			sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+				minTradeFee = sysCommonConfig.get(0).getValue();
+			}
+			if("".equals(minTradeFee)){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "平台最低手续费未配置");
+				return result;
+	        }
+			
+			if(new BigDecimal(minTradeFee).compareTo(new BigDecimal(payMoney).multiply(tradeRate))>0){
+				quickPaySms.setStatus("5");
+				quickPaySmsService.insertSelective(quickPaySms);
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "小于平台最低交易金额");
+				return result;
+			}
+			
 			quickPaySmsService.insertSelective(quickPaySms);
 			
 			String callBack = SysConfig.serverUrl + "/quickPay/cjPayNotify";
@@ -531,7 +571,7 @@ public class QuickPayController {
 			reqEntity.setV_cvn2(bankCvv);
 			reqEntity.setV_expired(bankYxq);
 			reqEntity.setV_attach(goodsName);
-			reqEntity.setV_userFee("0.3");//先写死
+			reqEntity.setV_userFee(platTradeRate);
 			String sign = SignatureUtil.getSign(CommonUtil.beanToMap(reqEntity), merchantKey.getPrivateKey(), logger);
 			reqEntity.setV_sign(sign);
 			Bean2QueryStrUtil bean = new Bean2QueryStrUtil();
@@ -869,6 +909,7 @@ public class QuickPayController {
 			rtMap.put("v_sign", v_sign);*/
 			
 			String responseStr = HttpUtil.getPostString(request);
+		//	String responseStr = "v_mid=10034272896&v_oid=20180308141922977802&v_txnAmt=2&v_code=00&v_msg=支付成功&v_time=1421&v_attach=苹果&v_status=0000&v_sign=BE4D7688F61C50DB7DFDA6E2D17BA908";
 		//	String responseStr = "v_mid=10034272896&v_oid=20180212145220045041&v_txnAmt=2&v_code=00&v_msg=支付成功&v_time=&v_attach=苹果&v_status=0000&sign=";
 			logger.info("cjPayNotify回调返回报文[{}]",  responseStr );
 			/*JSONObject resJo = JSONObject.fromObject(responseStr);
@@ -896,6 +937,8 @@ public class QuickPayController {
 			String v_mid = resJo.get("v_mid");
 			String v_oid = resJo.get("v_oid");
 			String v_attach =  resJo.get("v_attach");
+			String v_time =  resJo.get("v_time");
+			String v_sign =  resJo.get("v_sign");
 			
 			String reqMsgId = v_oid;
         	
@@ -928,7 +971,7 @@ public class QuickPayController {
                 response.getWriter().write(rtObj.toString());
         		return;
             }
-        /*    ConsumeResponseEntity respEntity = new ConsumeResponseEntity();
+            ConsumeResponseEntity respEntity = new ConsumeResponseEntity();
             respEntity.setV_code(v_code);
             respEntity.setV_status(v_status);
             respEntity.setV_msg(v_msg);
@@ -937,15 +980,16 @@ public class QuickPayController {
             respEntity.setV_oid(v_oid);
             respEntity.setV_attach(v_attach);
             respEntity.setV_sign(v_sign);
+            respEntity.setV_time(v_time);
             
             Map map = BeanToMapUtil.convertBean(respEntity);
-			if(SignatureUtil.checkSign(map, keyList.get(0).getPrivateKey(), logger)) {
+			if(!SignatureUtil.checkSign(map, keyList.get(0).getPrivateKey(), logger)) {
 				rtObj.put("success", "false");
 				logger.info(rtObj.toString()+" 验证签名不通过");
                 response.getWriter().write(rtObj.toString());
         		return;
 			}
-            */
+            
             
         	
         	String result_message = v_msg;
