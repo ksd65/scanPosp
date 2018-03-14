@@ -50,4 +50,7 @@ public class RouteCodeConstant {
 	
 	public static String GRSM_ROUTE_CODE = "1024";//个人扫码
 	
+	public static String XINFU_ROUTE_CODE = "1025";//芯富
+	
+	public static String CJWG_ROUTE_CODE = "1026";//畅捷网关
 }

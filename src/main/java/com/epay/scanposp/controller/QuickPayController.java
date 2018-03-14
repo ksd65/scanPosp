@@ -909,6 +909,7 @@ public class QuickPayController {
 			rtMap.put("v_sign", v_sign);*/
 			
 			String responseStr = HttpUtil.getPostString(request);
+		//	String responseStr = "v_status_msg=支付成功&v_code=00&v_msg=请求成功&v_status=0000&v_mid=10034275500&v_oid=20180314105813466351&v_time=20180314105813&v_sign=8FAE574505D6369869F632B406A6C155&v_txnAmt=2";
 		//	String responseStr = "v_mid=10034272896&v_oid=20180308141922977802&v_txnAmt=2&v_code=00&v_msg=支付成功&v_time=1421&v_attach=苹果&v_status=0000&v_sign=BE4D7688F61C50DB7DFDA6E2D17BA908";
 		//	String responseStr = "v_mid=10034272896&v_oid=20180212145220045041&v_txnAmt=2&v_code=00&v_msg=支付成功&v_time=&v_attach=苹果&v_status=0000&sign=";
 			logger.info("cjPayNotify回调返回报文[{}]",  responseStr );
@@ -939,6 +940,7 @@ public class QuickPayController {
 			String v_attach =  resJo.get("v_attach");
 			String v_time =  resJo.get("v_time");
 			String v_sign =  resJo.get("v_sign");
+			String v_status_msg = resJo.get("v_status_msg");
 			
 			String reqMsgId = v_oid;
         	
@@ -963,7 +965,7 @@ public class QuickPayController {
 			}
 			DebitNote debitNote = debitNotes_tmp.get(0);
         	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
-            memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.CJ_ROUTE_CODE).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+            memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(debitNote.getRouteId()).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
             List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
             if(keyList == null || keyList.size()!=1){
             	rtObj.put("success", "false");
@@ -981,6 +983,7 @@ public class QuickPayController {
             respEntity.setV_attach(v_attach);
             respEntity.setV_sign(v_sign);
             respEntity.setV_time(v_time);
+            respEntity.setV_status_msg(v_status_msg);
             
             Map map = BeanToMapUtil.convertBean(respEntity);
 			if(!SignatureUtil.checkSign(map, keyList.get(0).getPrivateKey(), logger)) {

@@ -49,6 +49,8 @@ import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
+import com.epay.scanposp.common.utils.cj.entity.ConsumeResponseEntity;
+import com.epay.scanposp.common.utils.cj.util.BeanToMapUtil;
 import com.epay.scanposp.common.utils.cj.util.HttpURLConection;
 import com.epay.scanposp.common.utils.cj.util.MD5Util;
 import com.epay.scanposp.common.utils.cj.util.SignatureUtil;
@@ -419,6 +421,10 @@ public class BankPayController {
 		}else if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("0");//D0
 			result = bankPayRf(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName);
+			result.put("routeCode", routeCode);
+		}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");//D0
+			result = bankPayCj(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName);
 			result.put("routeCode", routeCode);
 		}
 		
@@ -1194,7 +1200,7 @@ public class BankPayController {
 				obj = receivePayZhzf(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayHlb(memberId, String.valueOf(draw.getMoney()), draw);
-			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
+			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayCJ(memberId, String.valueOf(draw.getMoney()), draw);
 			}
 			
@@ -2358,7 +2364,7 @@ public class BankPayController {
 							routewayDrawService.updateByPrimaryKey(draw);
 			        	}
 					}
-				}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
+				}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 					
 					MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 			        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
@@ -2901,9 +2907,21 @@ public class BankPayController {
 				return result;
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			String merCode = "";
+			BigDecimal drawFee = null;
+			String v_type = "";
+			if(draw.getRouteCode().equals(RouteCodeConstant.CJ_ROUTE_CODE)){
+				merCode = merchantCode.getKjMerchantCode();
+				drawFee = merchantCode.getKjT1DrawFee();
+				v_type = "1";
+			}else if(draw.getRouteCode().equals(RouteCodeConstant.CJWG_ROUTE_CODE)){
+				merCode = merchantCode.getWyMerchantCode();
+				drawFee = merchantCode.getWyT0DrawFee();
+				v_type = "0";
+			}
 			
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
-	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merchantCode.getKjMerchantCode()).andDelFlagEqualTo("0");
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
 	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
 	        if(keyList == null || keyList.size()!=1){
 	            result.put("returnCode", "0003");
@@ -2911,7 +2929,7 @@ public class BankPayController {
 				return result;
 	        }
 	        
-	        double amount = (new BigDecimal(payMoney)).doubleValue()-merchantCode.getKjT1DrawFee().doubleValue();
+	        double amount = (new BigDecimal(payMoney)).doubleValue()-drawFee.doubleValue();
 				
 	        MemberMerchantKey merchantKey = keyList.get(0);
 	        
@@ -2923,7 +2941,7 @@ public class BankPayController {
 			String batchNo = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())+random.nextInt(10);
 			Map<String,String> sPara = new HashMap<String,String>();
 			sPara.put("v_version","1.0.0.0");
-			sPara.put("v_mid",merchantCode.getKjMerchantCode());
+			sPara.put("v_mid",merCode);
 			sPara.put("v_count","1");
 			sPara.put("v_sum_amount",String.valueOf(amount));
 			sPara.put("v_batch_no",batchNo);
@@ -2935,7 +2953,7 @@ public class BankPayController {
 			sPara.put("v_amount",String.valueOf(amount));
 			sPara.put("v_identity",orderCode);
 			sPara.put("v_pmsBankNo", draw.getSubId());
-			sPara.put("v_type", "1");//D0:0 T1:1
+			sPara.put("v_type", v_type);//D0:0 T1:1
 			sPara.put("v_phone", draw.getTel());
 			sPara.put("v_cert_no", draw.getCertNo());
 			String srcStr = StringUtil.orderedKey(sPara)+merchantKey.getPrivateKey();
@@ -2996,7 +3014,7 @@ public class BankPayController {
 			}
 			result.put("batchNo", batchNo);
 			result.put("orderCode", orderCode);
-			result.put("merchantCode", merchantCode.getKjMerchantCode());
+			result.put("merchantCode", merCode);
 			result.put("reqDate", reqDate);
 		}catch(Exception e){
 			logger.error(e.getMessage());
@@ -3005,4 +3023,163 @@ public class BankPayController {
 		}
 		return result;
 	}
+	
+	//畅捷网银支付
+	public JSONObject bankPayCj(String platformType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String bankCode,String goodsName) {
+		JSONObject result = new JSONObject();
+		try {
+			String merCode = merchantCode.getWyMerchantCode();
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+	        
+	        if(!StringUtil.isEmpty(bankCode)){
+				BankRouteExample bankRouteExample = new BankRouteExample();
+				bankRouteExample.createCriteria().andCodeEqualTo(bankCode).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+				List<BankRoute> list = bankRouteService.selectByExample(bankRouteExample);
+				if(list!=null && list.size()>0){
+					bankCode = list.get(0).getRouteBankCode();
+				}else{
+					bankCode = "";
+				}
+			}
+			if(StringUtil.isEmpty(bankCode)){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "银行编码不支持");
+				return result;
+			}
+			
+	        // 插入一条收款记录
+	     	String orderCode = CommonUtil.getOrderCode();
+	     			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(payMoney));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setOrderNumOuter(orderNumOuter);
+			debitNote.setRouteId(routeCode);
+			debitNote.setStatus("0");
+			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_YL);
+			debitNote.setTxnType("8");
+			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setMerchantCode(merCode);
+			
+			debitNote.setSettleType(memberInfo.getSettleType());
+			if("0".equals(memberInfo.getSettleType())){
+				debitNote.setTradeRate(merchantCode.getWyT0TradeRate());
+			}else{
+				debitNote.setTradeRate(merchantCode.getWyT1TradeRate());
+			}
+			
+			String configName = "SINGLE_MIN_"+routeCode+"_005_YL";
+			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_005_YL";
+			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+		/*	JSONObject tResult = checkLimitCounts(routeCode);
+			if(null != tResult){
+				debitNote.setStatus("8");
+				debitNoteService.insertSelective(debitNote);
+				return tResult;
+			}*/
+			
+			debitNoteService.insertSelective(debitNote);
+			
+			PayResultNotice payResultNotice = new PayResultNotice();
+			payResultNotice.setOrderCode(debitNote.getOrderCode());
+			payResultNotice.setOrderNumOuter(orderNumOuter);
+			payResultNotice.setPayMoney(debitNote.getMoney());
+			payResultNotice.setMemberCode(memberInfo.getCode());
+			payResultNotice.setPayType("8");
+			
+			payResultNotice.setReturnUrl(callbackUrl);
+			payResultNotice.setStatus("1");
+			payResultNotice.setCreateDate(new Date());
+			payResultNotice.setPlatformType(platformType);
+			if("3".equals(platformType)){
+				payResultNotice.setInterfaceType("2");
+			}else{
+				payResultNotice.setInterfaceType("1");
+			}
+			payResultNoticeService.insertSelective(payResultNotice);
+			
+			//String callBack = SysConfig.serverUrl + "/bankPay/cjPayNotify";
+			String callBack = SysConfig.serverUrl + "/quickPay/cjPayNotify";
+			String frontUrl = CJConfig.frontUrl+"?orderCode="+orderCode;
+			if(StringUtil.isEmpty(goodsName)){
+				goodsName = memberInfo.getName()+" 收款";
+			}
+			String cardType = "2";
+			String reqTime = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			Map<String,String> sPara = new HashMap<String,String>();
+			sPara.put("v_version","1.0.0.0");
+			sPara.put("v_mid",merCode);
+			sPara.put("v_oid",orderCode);
+			sPara.put("v_time",reqTime);
+			sPara.put("v_txnAmt",payMoney);
+			sPara.put("v_bankAddr",bankCode);
+			sPara.put("v_productName",goodsName);
+			sPara.put("v_productNum","1");
+			sPara.put("v_productDesc",goodsName);
+			sPara.put("v_type","0");//D0:0    T1：1
+			sPara.put("v_cardType",cardType);//1:借记卡	 2:贷记卡
+			sPara.put("v_currency","1");//默认设置为 1（代表人民币）
+			sPara.put("v_expire_time", "0");
+			sPara.put("v_notify_url", callBack);
+			sPara.put("v_url", frontUrl);
+			sPara.put("v_channel", "1");
+			sPara.put("v_attach", "1");
+			
+			String srcStr = StringUtil.orderedKey(sPara)+merchantKey.getPrivateKey();
+			logger.info("Sign Before MD5: {}", srcStr);
+			String sign = MD5Util.MD5Encode(srcStr).toUpperCase();
+			sPara.put("v_sign", sign);
+			logger.info("Sign Result: {}", sign);
+			
+			logger.info("畅捷网银支付请求报文[{}]", new Object[] { JSON.toJSONString(sPara) });
+
+			result.put("payUrl", CJConfig.gateServerUrl+"/gateWay/way.action");
+			result.put("merchantCode", merCode);
+			result.put("frontUrl", frontUrl);
+			result.put("orderCode", orderCode);
+			result.put("v_time", reqTime);
+			result.put("bankCode", bankCode);
+			result.put("goodsName", goodsName);
+			result.put("cardType", cardType);
+			result.put("callBack", callBack);
+			result.put("signStr", sign);
+			
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "成功");
+			
+        } catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
+	
+	
+	
 }

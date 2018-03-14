@@ -11,11 +11,13 @@ import com.epay.scanposp.common.utils.EnvironmentUtil;
  */
 public class CJConfig {
 	public static String msServerUrl;
+	public static String gateServerUrl;
 	public static String frontUrl;
 	static {
 		
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "cj_config");
 		msServerUrl = bundle.getString("msServerUrl");
+		gateServerUrl = bundle.getString("gateServerUrl");
 		frontUrl = bundle.getString("frontUrl");
 		
 	}

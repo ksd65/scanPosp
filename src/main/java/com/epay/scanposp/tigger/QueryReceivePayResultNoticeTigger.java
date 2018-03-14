@@ -372,7 +372,7 @@ public class QueryReceivePayResultNoticeTigger {
 								routewayDrawService.updateByPrimaryKey(draw);
 				        	}
 						}
-				    }else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
+				    }else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
 				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);

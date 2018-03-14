@@ -26,6 +26,8 @@ public class ConsumeResponseEntity {
 	private String v_status; //交易码
 	
 	private String v_sign; //签名
+	
+	private String v_status_msg;
 
 	public String getV_mid() {
 		return v_mid;
@@ -99,6 +101,14 @@ public class ConsumeResponseEntity {
 
 	public void setV_status(String v_status) {
 		this.v_status = v_status;
+	}
+
+	public String getV_status_msg() {
+		return v_status_msg;
+	}
+
+	public void setV_status_msg(String v_status_msg) {
+		this.v_status_msg = v_status_msg;
 	}
 	
 	

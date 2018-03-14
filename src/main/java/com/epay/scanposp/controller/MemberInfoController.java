@@ -532,6 +532,43 @@ public class MemberInfoController {
 				resData.put("drawFee", new DecimalFormat("0.00").format(drawFee));
 				result.put("resData", resData);
 				
+			}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){//畅捷，网关支付 80%走D0
+				drawFee = merchantCode.getWyT0DrawFee().doubleValue();
+				
+				paramMap = new HashMap<String, Object>();
+				paramMap.put("memberId", reqDataJson.getInt("memberId"));
+				paramMap.put("routeId", routeCode);
+				paramMap.put("startDate", df.format(begin));
+				paramMap.put("endDate", df.format(end));
+				paramMap.put("settleType", "0");//D0
+				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
+				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
+				
+				Double drawPercent = 0.8;//D0 80%
+				Double canDrawToday = balanceToday * drawPercent;//当天可提现的金额
+				
+				Double balanceHis = 0d;
+				Double balanceT1 = 0d;
+				RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
+				routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+				List<RoutewayAccount> accountList = routewayAccountService.selectByExample(routewayAccountExample);
+				if(accountList != null && accountList.size()>0){
+					RoutewayAccount account = accountList.get(0);
+					balanceHis = account.getBalance().doubleValue() ;
+					balanceT1 = account.getT1Balance().doubleValue();
+				}
+				
+				Double balance = balanceHis + balanceT1 + balanceToday - drawMoneyCountToday;//总账户余额
+				
+				//可提现总额
+				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
+				
+				resData.put("balance", new DecimalFormat("0.00").format(balance));
+				resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
+				resData.put("canDrawMoneyCount", new DecimalFormat("0.00").format(canDrawMoneyCount));
+				resData.put("drawFee", new DecimalFormat("0.00").format(drawFee));
+				result.put("resData", resData);
+				
 			}else{
 				if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){//瑞付  网银，微信h5
 					if(merchantCode.getWyT0DrawFee()!=null){
@@ -802,6 +839,8 @@ public class MemberInfoController {
 				}
 			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){//畅捷快捷，走T1
 				drawFee = merchantCode.getKjT1DrawFee().doubleValue();
+			}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){//畅捷网关，走D0
+				drawFee = merchantCode.getWyT0DrawFee().doubleValue();
 			}else{
 				if("0".equals(memberInfo.getSettleType())){
 					drawFee = merchantCode.getT0DrawFee().doubleValue();
@@ -903,6 +942,8 @@ public class MemberInfoController {
 				Double canDrawToday = balanceToday;//当天可提现的金额
 				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
 					canDrawToday = 0d;
+				}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
+					canDrawToday = balanceToday * 0.8;
 				}
 				
 				Double balanceHis = 0d;
