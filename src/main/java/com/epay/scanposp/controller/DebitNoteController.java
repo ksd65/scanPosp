@@ -3106,6 +3106,60 @@ public class DebitNoteController {
 						result.put("returnMsg", "出参验签失败");
 					}
 				}
+		    }else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
+		    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return result;
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        String serverUrl = CJConfig.gateServerUrl+"/gateWay/gateWay_query.action";
+		        
+		        QueryRequestEntity reqEntity = new QueryRequestEntity();
+		        reqEntity.setV_version("1.0.0.0");
+		        reqEntity.setV_mid(debitNote.getMerchantCode());
+		        reqEntity.setV_oid(debitNote.getOrderCode());
+		        reqEntity.setV_type("0");
+		        String sign = SignatureUtil.getSign(CommonUtil.beanToMap(reqEntity), merchantKey.getPrivateKey(), logger);
+		        reqEntity.setV_sign(sign);
+		        Bean2QueryStrUtil bean = new Bean2QueryStrUtil();
+				String postStr = bean.bean2QueryStr(reqEntity);
+				logger.info("畅捷快捷支付订单查询请求参数[{}]",postStr );
+				String respStr = HttpURLConection.httpURLConnectionPOST(serverUrl, postStr);
+				logger.info("畅捷快捷支付订单查询返回报文[{}]", new Object[] { respStr });
+		        
+				if(StringUtils.isNotEmpty(respStr)){
+					Gson gson = new Gson();
+					QueryResponseEntity respEntity = gson.fromJson(respStr, QueryResponseEntity.class);
+					String v_code = respEntity.getV_code();
+					Map map = BeanToMapUtil.convertBean(respEntity);
+				//	if(SignatureUtil.checkSign(map, merchantKey.getPrivateKey(), logger)) {
+						String v_status = JSONObject.fromObject(respStr).getString("v_status_code");
+						JSONObject resEntity = new JSONObject();
+						if("00".equals(v_code)&&"0000".equals(v_status)){
+							resEntity.put("oriRespType", "S");
+							resEntity.put("oriRespCode", "000000");
+							resEntity.put("oriRespMsg", "支付成功");
+							resEntity.put("totalAmount", respEntity.getV_txnAmt());
+		        		}else if("1002".equals(v_status)){
+		        			resEntity.put("oriRespType", "R");
+		        			resEntity.put("oriRespCode", "000001");
+		        			resEntity.put("oriRespMsg", "支付中");
+		        		}else{
+		        			resEntity.put("oriRespType", "E");
+		        			resEntity.put("oriRespCode", "000002");
+		        			resEntity.put("oriRespMsg", "支付失败");
+						}
+						result.put("resData", resEntity);
+				//	}else{
+				//		result.put("returnCode", "0012");
+				//		result.put("returnMsg", "出参验签失败");
+				//	}
+				}
 		    }else{
 
 				String serverUrl = MSConfig.msServerUrl;
@@ -8819,6 +8873,5 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}
 		return result;
 	}
-	
 	
 }

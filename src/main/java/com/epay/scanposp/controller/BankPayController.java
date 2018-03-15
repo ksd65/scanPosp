@@ -49,14 +49,10 @@ import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.ValidateUtil;
-import com.epay.scanposp.common.utils.cj.entity.ConsumeResponseEntity;
-import com.epay.scanposp.common.utils.cj.util.BeanToMapUtil;
 import com.epay.scanposp.common.utils.cj.util.HttpURLConection;
 import com.epay.scanposp.common.utils.cj.util.MD5Util;
-import com.epay.scanposp.common.utils.cj.util.SignatureUtil;
 import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
-import com.epay.scanposp.common.utils.constant.SequenseTypeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.hlb.Disguiser;
 import com.epay.scanposp.common.utils.hlb.RSA;
@@ -3000,7 +2996,7 @@ public class BankPayController {
 			//	signCheck = sign.equals(v_sign);
 			}
 			
-			if(signCheck && "00".equals(v_code)&&("0000".equals(v_status)||"200".equals(v_status))){
+			if(signCheck && "00".equals(v_code)){
 				result.put("returnCode", "0000");
 				result.put("returnMsg", "请求成功");
 			}else{

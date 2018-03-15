@@ -127,7 +127,6 @@ import com.epay.scanposp.entity.MemberPayee;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayQrCode;
-import com.epay.scanposp.entity.PayQrCodeExample;
 import com.epay.scanposp.entity.PayQrCodeTemp;
 import com.epay.scanposp.entity.PayQrCodeTotal;
 import com.epay.scanposp.entity.PayResultNotice;
@@ -139,10 +138,6 @@ import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.PayTypeRule;
 import com.epay.scanposp.entity.PayTypeRuleExample;
 import com.epay.scanposp.entity.Payee;
-import com.epay.scanposp.entity.PrePayMember;
-import com.epay.scanposp.entity.PrePayMemberExample;
-import com.epay.scanposp.entity.PrePayStatistics;
-import com.epay.scanposp.entity.PrePayStatisticsExample;
 import com.epay.scanposp.entity.RegisterTmp;
 import com.epay.scanposp.entity.RouteWay;
 import com.epay.scanposp.entity.RouteWayExample;
@@ -188,8 +183,6 @@ import com.epay.scanposp.service.PayTypeDefaultService;
 import com.epay.scanposp.service.PayTypeRuleService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.PayeeService;
-import com.epay.scanposp.service.PrePayMemberService;
-import com.epay.scanposp.service.PrePayStatisticsService;
 import com.epay.scanposp.service.RegisterTmpService;
 import com.epay.scanposp.service.RouteWayService;
 import com.epay.scanposp.service.RoutewayDrawService;
@@ -5228,6 +5221,60 @@ public class CashierDeskController {
 						result.put("returnCode", "0012");
 						result.put("returnMsg", "出参验签失败");
 					}
+				}
+			}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
+		    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return signReturn(result);
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        String serverUrl = CJConfig.gateServerUrl+"/gateWay/gateWay_query.action";
+		        
+		        QueryRequestEntity reqEntity = new QueryRequestEntity();
+		        reqEntity.setV_version("1.0.0.0");
+		        reqEntity.setV_mid(debitNote.getMerchantCode());
+		        reqEntity.setV_oid(debitNote.getOrderCode());
+		        reqEntity.setV_type("0");
+		        String sign = SignatureUtil.getSign(CommonUtil.beanToMap(reqEntity), merchantKey.getPrivateKey(), logger);
+		        reqEntity.setV_sign(sign);
+		        Bean2QueryStrUtil bean = new Bean2QueryStrUtil();
+				String postStr = bean.bean2QueryStr(reqEntity);
+				logger.info("畅捷快捷支付订单查询请求参数[{}]",postStr );
+				String respStr = HttpURLConection.httpURLConnectionPOST(serverUrl, postStr);
+				logger.info("畅捷快捷支付订单查询返回报文[{}]", new Object[] { respStr });
+		        
+				
+				
+				if(StringUtils.isNotEmpty(respStr)){
+					Gson gson = new Gson();
+					QueryResponseEntity respEntity = gson.fromJson(respStr, QueryResponseEntity.class);
+					String v_code = respEntity.getV_code();
+					Map map = BeanToMapUtil.convertBean(respEntity);
+				//	if(SignatureUtil.checkSign(map, merchantKey.getPrivateKey(), logger)) {
+						String v_status = JSONObject.fromObject(respStr).getString("v_status_code");
+						if("00".equals(v_code)&&"0000".equals(v_status)){
+		        			result.put("oriRespType", "S");
+							result.put("oriRespCode", "000000");
+							result.put("oriRespMsg", "支付成功");
+							result.put("totalAmount", respEntity.getV_txnAmt());
+		        		}else if("1002".equals(v_status)){
+		        			result.put("oriRespType", "R");
+							result.put("oriRespCode", "000001");
+							result.put("oriRespMsg", "支付中");
+		        		}else{
+							result.put("oriRespType", "E");
+							result.put("oriRespCode", "000002");
+							result.put("oriRespMsg", "支付失败");
+						}
+				//	}else{
+				//		result.put("returnCode", "0012");
+				//		result.put("returnMsg", "出参验签失败");
+				//	}
 				}
 			}else{
 				String serverUrl = MSConfig.msServerUrl;
