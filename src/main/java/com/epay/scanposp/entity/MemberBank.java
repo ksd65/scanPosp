@@ -22,6 +22,8 @@ public class MemberBank {
     private String accountName;
 
     private String accountNumber;
+    
+    private String mobilePhone;
 
     private String createBy;
 
@@ -162,4 +164,14 @@ public class MemberBank {
     public void setDelFlag(String delFlag) {
         this.delFlag = delFlag;
     }
+
+	public String getMobilePhone() {
+		return mobilePhone;
+	}
+
+	public void setMobilePhone(String mobilePhone) {
+		this.mobilePhone = mobilePhone;
+	}
+    
+    
 }

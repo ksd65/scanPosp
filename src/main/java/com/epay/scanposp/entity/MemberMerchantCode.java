@@ -64,18 +64,26 @@ public class MemberMerchantCode {
     private BigDecimal jdT1TradeRate;
     
     private BigDecimal wyT0DrawFee;
+    
+    private BigDecimal wyT0DrawRate;
 
     private BigDecimal wyT0TradeRate;
 
     private BigDecimal wyT1DrawFee;
+    
+    private BigDecimal wyT1DrawRate;
 
     private BigDecimal wyT1TradeRate;
     
     private BigDecimal kjT0DrawFee;
+    
+    private BigDecimal kjT0DrawRate;
 
     private BigDecimal kjT0TradeRate;
 
     private BigDecimal kjT1DrawFee;
+    
+    private BigDecimal kjT1DrawRate;
 
     private BigDecimal kjT1TradeRate;
 	
@@ -426,7 +434,40 @@ public class MemberMerchantCode {
 	public void setKjT1TradeRate(BigDecimal kjT1TradeRate) {
 		this.kjT1TradeRate = kjT1TradeRate;
 	}
+
+	public BigDecimal getKjT0DrawRate() {
+		return kjT0DrawRate;
+	}
+
+	public void setKjT0DrawRate(BigDecimal kjT0DrawRate) {
+		this.kjT0DrawRate = kjT0DrawRate;
+	}
+
+	public BigDecimal getKjT1DrawRate() {
+		return kjT1DrawRate;
+	}
+
+	public void setKjT1DrawRate(BigDecimal kjT1DrawRate) {
+		this.kjT1DrawRate = kjT1DrawRate;
+	}
+
+	public BigDecimal getWyT0DrawRate() {
+		return wyT0DrawRate;
+	}
+
+	public void setWyT0DrawRate(BigDecimal wyT0DrawRate) {
+		this.wyT0DrawRate = wyT0DrawRate;
+	}
+
+	public BigDecimal getWyT1DrawRate() {
+		return wyT1DrawRate;
+	}
+
+	public void setWyT1DrawRate(BigDecimal wyT1DrawRate) {
+		this.wyT1DrawRate = wyT1DrawRate;
+	}
     
+	
     
 
 }

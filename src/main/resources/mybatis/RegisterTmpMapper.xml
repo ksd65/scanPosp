@@ -47,6 +47,9 @@
     <result column="remarks" jdbcType="VARCHAR" property="remarks" />
     <result column="del_flag" jdbcType="CHAR" property="delFlag" />
     <result column="bankArea" jdbcType="VARCHAR" property="bank_area" />
+    <result column="resp_code" jdbcType="VARCHAR" property="respCode" />
+    <result column="resp_msg" jdbcType="VARCHAR" property="respMsg" />
+    <result column="order_num_outer" jdbcType="VARCHAR" property="orderNumOuter" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -112,7 +115,7 @@
     card_pic1, card_pic2, bus_licence_nbr, addr, category, settle_type, province, city, 
     county, bank_id, sub_id, bank_open, account_name, account_number, pay_code, wx_member_code, 
     zfb_member_code, qq_member_code, bd_member_code, jd_member_code, create_by, create_date, 
-    update_by, update_date, remarks, del_flag,bank_area
+    update_by, update_date, remarks, del_flag,bank_area,resp_code,resp_msg,order_num_outer
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.RegisterTmpExample" resultMap="BaseResultMap">
     select
@@ -320,6 +323,15 @@
       <if test="bankArea != null">
         bank_area,
       </if>
+      <if test="respCode != null">
+        resp_code,
+      </if>
+      <if test="respMsg != null">
+        resp_msg,
+      </if>
+      <if test="orderNumOuter != null">
+        order_num_outer,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="code != null">
@@ -453,6 +465,15 @@
       </if>
       <if test="bankArea != null">
         #{bankArea,jdbcType=VARCHAR},
+      </if>
+      <if test="respCode != null">
+        #{respCode,jdbcType=VARCHAR},
+      </if>
+      <if test="respMsg != null">
+        #{respMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNumOuter != null">
+        #{orderNumOuter,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>
@@ -784,6 +805,12 @@
       <if test="delFlag != null">
         del_flag = #{delFlag,jdbcType=CHAR},
       </if>
+      <if test="respCode != null">
+        resp_code = #{respCode,jdbcType=CHAR},
+      </if>
+      <if test="respMsg != null">
+        resp_msg = #{respMsg,jdbcType=CHAR},
+      </if>
     </set>
     where id = #{id,jdbcType=INTEGER}
   </update>
@@ -831,6 +858,8 @@
       update_by = #{updateBy,jdbcType=VARCHAR},
       update_date = #{updateDate,jdbcType=TIMESTAMP},
       remarks = #{remarks,jdbcType=VARCHAR},
+      resp_code = #{respCode,jdbcType=VARCHAR},
+      resp_msg = #{respMsg,jdbcType=VARCHAR},
       del_flag = #{delFlag,jdbcType=CHAR}
     where id = #{id,jdbcType=INTEGER}
   </update>

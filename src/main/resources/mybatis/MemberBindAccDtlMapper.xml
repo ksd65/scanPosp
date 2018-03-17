@@ -18,6 +18,15 @@
     <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
     <result column="remarks" property="remarks" jdbcType="VARCHAR" />
     <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+    <result column="account_type" property="accountType" jdbcType="VARCHAR" />
+    <result column="bank_code" property="bankCode" jdbcType="VARCHAR" />
+    <result column="cvv" property="cvv" jdbcType="VARCHAR" />
+    <result column="expire_time" property="expireTime" jdbcType="VARCHAR" />
+    <result column="order_code" property="orderCode" jdbcType="VARCHAR" />
+    <result column="route_code" property="routeCode" jdbcType="VARCHAR" />
+    <result column="bank_card_token" property="bankCardToken" jdbcType="VARCHAR" />
+    
+    
   </resultMap>
   <sql id="Example_Where_Clause" >
     <where >
@@ -79,7 +88,8 @@
   </sql>
   <sql id="Base_Column_List" >
     member_id, acc, bank_id, bank_name, name, order_num, mobile_phone, bind_type, resp_code, 
-    resp_msg, create_by, create_date, update_by, update_date, remarks, del_flag
+    resp_msg, create_by, create_date, update_by, update_date, remarks, del_flag,
+    account_type,bank_code,cvv,expire_time,order_code,route_code,bank_card_token
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.MemberBindAccDtlExample" >
     select
@@ -166,6 +176,28 @@
       <if test="delFlag != null" >
         del_flag,
       </if>
+      
+      <if test="accountType != null" >
+        account_type,
+      </if>
+      <if test="bankCode != null" >
+        bank_code,
+      </if>
+      <if test="cvv != null" >
+        cvv,
+      </if>
+      <if test="expireTime != null" >
+        expire_time,
+      </if>
+      <if test="orderCode != null" >
+        order_code,
+      </if>
+      <if test="routeCode != null" >
+        route_code,
+      </if>
+      <if test="bankCardToken != null" >
+        bank_card_token,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="memberId != null" >
@@ -215,6 +247,28 @@
       </if>
       <if test="delFlag != null" >
         #{delFlag,jdbcType=CHAR},
+      </if>
+      
+      <if test="accountType != null" >
+        #{accountType,jdbcType=VARCHAR},
+      </if>
+      <if test="bankCode != null" >
+        #{bankCode,jdbcType=VARCHAR},
+      </if>
+      <if test="cvv != null" >
+        #{cvv,jdbcType=VARCHAR},
+      </if>
+      <if test="expireTime != null" >
+        #{expireTime,jdbcType=VARCHAR},
+      </if>
+      <if test="orderCode != null" >
+        #{orderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="routeCode != null" >
+        #{routeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bankCardToken != null" >
+        #{bankCardToken,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>

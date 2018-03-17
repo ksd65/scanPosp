@@ -563,10 +563,12 @@ public class MemberInfoController {
 				//可提现总额
 				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
 				
+				Double drawRate = merchantCode.getWyT0DrawRate().doubleValue()*100;
 				resData.put("balance", new DecimalFormat("0.00").format(balance));
 				resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
 				resData.put("canDrawMoneyCount", new DecimalFormat("0.00").format(canDrawMoneyCount));
 				resData.put("drawFee", new DecimalFormat("0.00").format(drawFee));
+				resData.put("drawRate", new DecimalFormat("0.00").format(drawRate));
 				result.put("resData", resData);
 				
 			}else{

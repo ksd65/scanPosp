@@ -12,6 +12,7 @@
     <result column="bank_open" jdbcType="VARCHAR" property="bankOpen" />
     <result column="account_name" jdbcType="VARCHAR" property="accountName" />
     <result column="account_number" jdbcType="VARCHAR" property="accountNumber" />
+    <result column="mobile_phone" jdbcType="VARCHAR" property="mobilePhone" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
@@ -79,7 +80,7 @@
   </sql>
   <sql id="Base_Column_List">
     id, member_id, settle_type, bank_id, province, city, sub_id, bank_open, account_name, 
-    account_number, create_by, create_date, update_by, update_date, remarks, del_flag
+    account_number,mobile_phone, create_by, create_date, update_by, update_date, remarks, del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberBankExample" resultMap="BaseResultMap">
     select
@@ -164,6 +165,9 @@
       <if test="accountNumber != null">
         account_number,
       </if>
+      <if test="mobilePhone != null">
+        mobile_phone,
+      </if>
       <if test="createBy != null">
         create_by,
       </if>
@@ -210,6 +214,9 @@
       </if>
       <if test="accountNumber != null">
         #{accountNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="mobilePhone != null">
+        #{mobilePhone,jdbcType=VARCHAR},
       </if>
       <if test="createBy != null">
         #{createBy,jdbcType=VARCHAR},

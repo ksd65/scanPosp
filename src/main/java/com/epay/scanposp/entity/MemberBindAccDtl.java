@@ -6,18 +6,32 @@ public class MemberBindAccDtl {
     private Integer memberId;
 
     private String acc;
+    
+    private String accountType;
 
     private String bankId;
+    
+    private String bankCode;
 
     private String bankName;
 
     private String name;
+    
+    private String cvv;
+    
+    private String expireTime;
 
     private String orderNum;
+    
+    private String orderCode;
 
     private String mobilePhone;
 
     private String bindType;
+    
+    private String routeCode;
+    
+    private String bankCardToken;
 
     private String respCode;
 
@@ -162,4 +176,62 @@ public class MemberBindAccDtl {
     public void setDelFlag(String delFlag) {
         this.delFlag = delFlag;
     }
+
+	public String getAccountType() {
+		return accountType;
+	}
+
+	public void setAccountType(String accountType) {
+		this.accountType = accountType;
+	}
+
+	public String getBankCode() {
+		return bankCode;
+	}
+
+	public void setBankCode(String bankCode) {
+		this.bankCode = bankCode;
+	}
+
+	public String getCvv() {
+		return cvv;
+	}
+
+	public void setCvv(String cvv) {
+		this.cvv = cvv;
+	}
+
+	public String getExpireTime() {
+		return expireTime;
+	}
+
+	public void setExpireTime(String expireTime) {
+		this.expireTime = expireTime;
+	}
+
+	public String getOrderCode() {
+		return orderCode;
+	}
+
+	public void setOrderCode(String orderCode) {
+		this.orderCode = orderCode;
+	}
+
+	public String getRouteCode() {
+		return routeCode;
+	}
+
+	public void setRouteCode(String routeCode) {
+		this.routeCode = routeCode;
+	}
+
+	public String getBankCardToken() {
+		return bankCardToken;
+	}
+
+	public void setBankCardToken(String bankCardToken) {
+		this.bankCardToken = bankCardToken;
+	}
+    
+    
 }

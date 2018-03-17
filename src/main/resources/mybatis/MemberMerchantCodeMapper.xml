@@ -36,13 +36,17 @@
     <result column="jd_t1_trade_rate" jdbcType="DECIMAL" property="jdT1TradeRate" />
     
     <result column="wy_t0_draw_fee" jdbcType="DECIMAL" property="wyT0DrawFee" />
+    <result column="wy_t0_draw_rate" jdbcType="DECIMAL" property="wyT0DrawRate" />
     <result column="wy_t0_trade_rate" jdbcType="DECIMAL" property="wyT0TradeRate" />
     <result column="wy_t1_draw_fee" jdbcType="DECIMAL" property="wyT1DrawFee" />
+    <result column="wy_t1_draw_rate" jdbcType="DECIMAL" property="wyT1DrawRate" />
     <result column="wy_t1_trade_rate" jdbcType="DECIMAL" property="wyT1TradeRate" />
     
     <result column="kj_t0_draw_fee" jdbcType="DECIMAL" property="kjT0DrawFee" />
+    <result column="kj_t0_draw_rate" jdbcType="DECIMAL" property="kjT0DrawRate" />
     <result column="kj_t0_trade_rate" jdbcType="DECIMAL" property="kjT0TradeRate" />
     <result column="kj_t1_draw_fee" jdbcType="DECIMAL" property="kjT1DrawFee" />
+    <result column="kj_t1_draw_rate" jdbcType="DECIMAL" property="kjT1DrawRate" />
     <result column="kj_t1_trade_rate" jdbcType="DECIMAL" property="kjT1TradeRate" />
     
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
@@ -112,8 +116,8 @@
   <sql id="Base_Column_List">
     id, member_id, route_code,aisle_type,wx_merchant_code, zfb_merchant_code, qq_merchant_code,bd_merchant_code,jd_merchant_code,wy_merchant_code,kj_merchant_code,
     t0_draw_fee, t0_trade_rate,t0_draw_rate, t1_draw_fee, t1_trade_rate,t1_draw_rate,zfb_t0_draw_fee,zfb_t0_trade_rate,zfb_t1_draw_fee,zfb_t1_trade_rate,qq_t0_draw_fee,qq_t0_trade_rate,
-    qq_t1_draw_fee,qq_t1_trade_rate,jd_t0_draw_fee,jd_t0_trade_rate,jd_t1_draw_fee,jd_t1_trade_rate,wy_t0_draw_fee,wy_t0_trade_rate,wy_t1_draw_fee,wy_t1_trade_rate,
-    kj_t0_draw_fee,kj_t0_trade_rate,kj_t1_draw_fee,kj_t1_trade_rate,create_by, create_date, update_by, update_date,del_flag
+    qq_t1_draw_fee,qq_t1_trade_rate,jd_t0_draw_fee,jd_t0_trade_rate,jd_t1_draw_fee,jd_t1_trade_rate,wy_t0_draw_fee,wy_t0_draw_rate,wy_t0_trade_rate,wy_t1_draw_fee,wy_t1_draw_rate,wy_t1_trade_rate,
+    kj_t0_draw_fee,kj_t0_draw_rate,kj_t0_trade_rate,kj_t1_draw_fee,kj_t1_draw_rate,kj_t1_trade_rate,create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberMerchantCodeExample" resultMap="BaseResultMap">
     select
@@ -157,7 +161,275 @@
     </if>
   </select>
   
-  
+   <insert id="insertSelective" parameterType="com.epay.scanposp.entity.MemberMerchantCode">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_member_merchant_code
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="memberId != null">
+        member_id,
+      </if>
+      <if test="routeCode != null">
+        route_code,
+      </if>
+      <if test="aisleType != null">
+        aisle_type,
+      </if>
+      <if test="wxMerchantCode != null">
+        wx_merchant_code,
+      </if>
+      <if test="zfbMerchantCode != null">
+        zfb_merchant_code,
+      </if>
+      <if test="qqMerchantCode != null">
+        qq_merchant_code,
+      </if>
+      <if test="bdMerchantCode != null">
+        bd_merchant_code,
+      </if>
+      <if test="jdMerchantCode != null">
+        jd_merchant_code,
+      </if>
+      <if test="wyMerchantCode != null">
+        wy_merchant_code,
+      </if>
+      <if test="kjMerchantCode != null">
+        kj_merchant_code,
+      </if>
+      <if test="t0DrawFee != null">
+        t0_draw_fee,
+      </if>
+      <if test="t0TradeRate != null">
+        t0_trade_rate,
+      </if>
+      <if test="t1DrawFee != null">
+        t1_draw_fee,
+      </if>
+      <if test="t1TradeRate != null">
+        t1_trade_rate,
+      </if>
+      <if test="t1DrawRate != null">
+        t1_draw_rate,
+      </if>
+      <if test="t0DrawRate != null">
+        t0_draw_rate,
+      </if>
+      
+      <if test="zfbT0DrawFee != null">
+        zfb_t0_draw_fee,
+      </if>
+      <if test="zfbT0TradeRate != null">
+        zfb_t0_trade_rate,
+      </if>
+      <if test="zfbT1DrawFee != null">
+        zfb_t1_draw_fee,
+      </if>
+      <if test="zfbT1TradeRate != null">
+        zfb_t1_trade_rate,
+      </if>
+      
+      <if test="qqT0DrawFee != null">
+        qq_t0_draw_fee,
+      </if>
+      <if test="qqT0TradeRate != null">
+        qq_t0_trade_rate,
+      </if>
+      <if test="qqT1DrawFee != null">
+        qq_t1_draw_fee,
+      </if>
+      <if test="qqT1TradeRate != null">
+        qq_t1_trade_rate,
+      </if>
+      
+      <if test="jdT0DrawFee != null">
+        jd_t0_draw_fee,
+      </if>
+      <if test="jdT0TradeRate != null">
+        jd_t0_trade_rate,
+      </if>
+      <if test="jdT1DrawFee != null">
+        jd_t1_draw_fee,
+      </if>
+      <if test="jdT1TradeRate != null">
+        jd_t1_trade_rate,
+      </if>
+      
+      <if test="wyT0DrawFee != null">
+        wy_t0_draw_fee,
+      </if>
+      <if test="wyT0TradeRate != null">
+        wy_t0_trade_rate,
+      </if>
+      <if test="wyT1DrawFee != null">
+        wy_t1_draw_fee,
+      </if>
+      <if test="wyT1TradeRate != null">
+        wy_t1_trade_rate,
+      </if>
+      
+      <if test="kjT0DrawFee != null">
+        kj_t0_draw_fee,
+      </if>
+      <if test="kjT0TradeRate != null">
+        kj_t0_trade_rate,
+      </if>
+      <if test="kjT1DrawFee != null">
+        kj_t1_draw_fee,
+      </if>
+      <if test="kjT1TradeRate != null">
+        kj_t1_trade_rate,
+      </if>
+      
+      <if test="createBy != null">
+        create_by,
+      </if>
+      <if test="createDate != null">
+        create_date,
+      </if>
+      <if test="updateBy != null">
+        update_by,
+      </if>
+      <if test="updateDate != null">
+        update_date,
+      </if>
+      <if test="delFlag != null">
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="memberId != null">
+        #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="routeCode != null">
+        #{routeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="aisleType != null">
+        #{aisleType,jdbcType=VARCHAR},
+      </if>
+      <if test="wxMerchantCode != null">
+        #{wxMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="zfbMerchantCode != null">
+        #{zfbMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="qqMerchantCode != null">
+        #{qqMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bdMerchantCode != null">
+        #{bdMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="jdMerchantCode != null">
+        #{jdMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="wyMerchantCode != null">
+        #{wyMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="kjMerchantCode != null">
+        #{kjMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="t0DrawFee != null">
+        #{t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t0TradeRate != null">
+        #{t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawFee != null">
+        #{t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1TradeRate != null">
+        #{t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawRate != null">
+        #{t1DrawRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t0DrawRate != null">
+        #{t0DrawRate,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="zfbT0DrawFee != null">
+        #{zfbT0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="zfbT0TradeRate != null">
+        #{zfbT0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="zfbT1DrawFee != null">
+        #{zfbT1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="zfbT1TradeRate != null">
+        #{zfbT1TradeRate,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="qqT0DrawFee != null">
+        #{qqT0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="qqT0TradeRate != null">
+        #{qqT0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="qqT1DrawFee != null">
+        #{qqT1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="qqT1TradeRate != null">
+        #{qqT1TradeRate,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="jdT0DrawFee != null">
+        #{jdT0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="jdT0TradeRate != null">
+        #{jdT0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="jdT1DrawFee != null">
+        #{jdT1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="jdT1TradeRate != null">
+        #{jdT1TradeRate,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="wyT0DrawFee != null">
+        #{wyT0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="wyT0TradeRate != null">
+        #{wyT0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="wyT1DrawFee != null">
+        #{wyT1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="wyT1TradeRate != null">
+        #{wyT1TradeRate,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="kjT0DrawFee != null">
+        #{kjT0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="kjT0TradeRate != null">
+        #{kjT0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="kjT1DrawFee != null">
+        #{kjT1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="kjT1TradeRate != null">
+        #{kjT1TradeRate,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="createBy != null">
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null">
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null">
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null">
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    
+    </trim>
+  </insert>
   
   
 </mapper>

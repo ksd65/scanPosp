@@ -7,6 +7,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,6 +27,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -54,6 +56,7 @@ import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.TBConfig;
 import com.epay.scanposp.common.constant.WxConfig;
 import com.epay.scanposp.common.constant.YLConfig;
+import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.ZHZFConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
@@ -92,6 +95,7 @@ import com.epay.scanposp.common.utils.slf.vo.QueryResponse;
 import com.epay.scanposp.common.utils.swift.MD5;
 import com.epay.scanposp.common.utils.swift.SignUtils;
 import com.epay.scanposp.common.utils.tb.SignUtil;
+import com.epay.scanposp.common.utils.ys.SwpHashUtil;
 import com.epay.scanposp.common.utils.zhzf.HttpUtils;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
@@ -5276,6 +5280,60 @@ public class CashierDeskController {
 				//		result.put("returnMsg", "出参验签失败");
 				//	}
 				}
+			}else if(RouteCodeConstant.YS_ROUTE_CODE.equals(routeCode)){
+		        String serverUrl = YSConfig.msServerUrl+"/swp/dh/zf_bill_query.do";
+		        String privateKey = YSConfig.privateKey;
+		        
+		        Map<String,String> param = new HashMap<String, String>();
+				param.put("sp_id", YSConfig.orgNo);
+				param.put("mch_id", YSConfig.defaultMerNoQpay);
+				param.put("out_trade_no", debitNote.getOrderCode());
+				
+				Date t = new Date();
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(t);
+				long sys_timestamp = cal.getTimeInMillis();
+				param.put("timestamp", String.valueOf(sys_timestamp));
+				
+				String srcStr1 = StringUtil.orderedKey(param)+"&key="+privateKey;
+				String sign = SwpHashUtil.getSign(srcStr1, privateKey, "SHA256");
+				String paramStr = StringUtil.orderedKey(param) + "&sign="+sign;
+				logger.info("易生支付订单查询参数[{}]",paramStr );
+
+				HttpResponse httpResponse =com.epay.scanposp.common.utils.ys.HttpUtils.doPost(serverUrl, "", paramStr, "application/x-www-form-urlencoded; charset=UTF-8");
+				String respStr = EntityUtils.toString(httpResponse.getEntity());
+				logger.info("易生支付订单查询返回报文[{}]", new Object[] { respStr });
+				
+				JSONObject resObj = JSONObject.fromObject(respStr);
+				String code = resObj.getString("status");
+				if("SUCCESS".equals(code)){
+					String resSign = resObj.getString("sign");
+					resObj.remove("sign");
+					srcStr1 = StringUtil.orderedKey(resObj)+"&key="+privateKey;
+					if(resSign.equals(SwpHashUtil.getSign(srcStr1, privateKey, "SHA256"))){
+						String trade_state = resObj.getString("trade_state");
+						if("SUCCESS".equals(trade_state)){
+							result.put("oriRespType", "S");
+							result.put("oriRespCode", "000000");
+							result.put("oriRespMsg", "支付成功");
+							result.put("totalAmount", String.valueOf((float)(((new BigDecimal(resObj.getString("total_amt"))).floatValue())/100)));
+						}else if("USERPAYING".equals(trade_state)){
+		        			result.put("oriRespType", "R");
+							result.put("oriRespCode", "000001");
+							result.put("oriRespMsg", "支付中");
+		        		}else{
+							result.put("oriRespType", "E");
+							result.put("oriRespCode", "000002");
+							result.put("oriRespMsg", "支付失败:"+resObj.getString("trade_state_desc"));
+						}
+					}else{
+						result.put("returnCode", "0012");
+						result.put("returnMsg", "查询接口出参验签失败");
+					}
+				}else{
+					result.put("returnCode", "0012");
+					result.put("returnMsg", resObj.getString("message"));
+				}
 			}else{
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
@@ -5352,8 +5410,10 @@ public class CashierDeskController {
 			result.put("returnMsg", "请求失败");
 			return signReturn(result);
 		}
-		result.put("returnCode", "0000");
-		result.put("returnMsg", "成功");
+		if(!result.containsKey("returnCode")){
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "成功");
+		}
 		return signReturn(result);
 	}
 	

@@ -514,7 +514,152 @@ public class MemberBindAccDtlExample {
             addCriterion("order_num not between", value1, value2, "orderNum");
             return (Criteria) this;
         }
+        
+        
+        
+        
+        public Criteria andRouteCodeIsNull() {
+            addCriterion("route_code is null");
+            return (Criteria) this;
+        }
 
+        public Criteria andRouteCodeIsNotNull() {
+            addCriterion("route_code is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeEqualTo(String value) {
+            addCriterion("route_code =", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotEqualTo(String value) {
+            addCriterion("route_code <>", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeGreaterThan(String value) {
+            addCriterion("route_code >", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeGreaterThanOrEqualTo(String value) {
+            addCriterion("route_code >=", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLessThan(String value) {
+            addCriterion("route_code <", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLessThanOrEqualTo(String value) {
+            addCriterion("route_code <=", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLike(String value) {
+            addCriterion("route_code like", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotLike(String value) {
+            addCriterion("route_code not like", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeIn(List<String> values) {
+            addCriterion("route_code in", values, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotIn(List<String> values) {
+            addCriterion("route_code not in", values, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeBetween(String value1, String value2) {
+            addCriterion("route_code between", value1, value2, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotBetween(String value1, String value2) {
+            addCriterion("route_code not between", value1, value2, "routeCode");
+            return (Criteria) this;
+        }
+
+        
+        public Criteria andBankCardTokenIsNull() {
+            addCriterion("bank_card_token is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenIsNotNull() {
+            addCriterion("bank_card_token is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenEqualTo(String value) {
+            addCriterion("bank_card_token =", value, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenNotEqualTo(String value) {
+            addCriterion("bank_card_token <>", value, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenGreaterThan(String value) {
+            addCriterion("bank_card_token >", value, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenGreaterThanOrEqualTo(String value) {
+            addCriterion("bank_card_token >=", value, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenLessThan(String value) {
+            addCriterion("bank_card_token <", value, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenLessThanOrEqualTo(String value) {
+            addCriterion("bank_card_token <=", value, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenLike(String value) {
+            addCriterion("bank_card_token like", value, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenNotLike(String value) {
+            addCriterion("bank_card_token not like", value, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenIn(List<String> values) {
+            addCriterion("bank_card_token in", values, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenNotIn(List<String> values) {
+            addCriterion("bank_card_token not in", values, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenBetween(String value1, String value2) {
+            addCriterion("bank_card_token between", value1, value2, "bankCardToken");
+            return (Criteria) this;
+        }
+
+        public Criteria andBankCardTokenNotBetween(String value1, String value2) {
+            addCriterion("bank_card_token not between", value1, value2, "bankCardToken");
+            return (Criteria) this;
+        }
+        
+        
         public Criteria andMobilePhoneIsNull() {
             addCriterion("mobile_phone is null");
             return (Criteria) this;

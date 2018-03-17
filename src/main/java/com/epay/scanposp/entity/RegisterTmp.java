@@ -94,6 +94,12 @@ public class RegisterTmp {
     private String delFlag;
     
     private String bankArea;
+    
+    private String respCode;
+
+    private String respMsg;
+    
+    private String orderNumOuter;
 
     public Integer getId() {
         return id;
@@ -461,6 +467,30 @@ public class RegisterTmp {
 
 	public void setBankArea(String bankArea) {
 		this.bankArea = bankArea;
+	}
+
+	public String getRespCode() {
+		return respCode;
+	}
+
+	public void setRespCode(String respCode) {
+		this.respCode = respCode;
+	}
+
+	public String getRespMsg() {
+		return respMsg;
+	}
+
+	public void setRespMsg(String respMsg) {
+		this.respMsg = respMsg;
+	}
+
+	public String getOrderNumOuter() {
+		return orderNumOuter;
+	}
+
+	public void setOrderNumOuter(String orderNumOuter) {
+		this.orderNumOuter = orderNumOuter;
 	}
 	
 	
