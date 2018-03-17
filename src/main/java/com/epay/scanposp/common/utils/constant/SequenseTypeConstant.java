@@ -33,4 +33,8 @@ public class SequenseTypeConstant {
 	 * 京东金融钱包编号序列
 	 */
 	public static final String JDMEMBERCODE = "jdMemberCode";
+	/**
+	 * E码序列
+	 */
+	public static final String EPAYCODE = "epayCode";
 }
