@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -71,7 +72,6 @@ import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
-import com.epay.scanposp.entity.MemberBank;
 import com.epay.scanposp.entity.MemberBindAccDtl;
 import com.epay.scanposp.entity.MemberBindAccDtlExample;
 import com.epay.scanposp.entity.MemberInfo;
@@ -86,7 +86,6 @@ import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
 import com.epay.scanposp.entity.QuickPaySms;
 import com.epay.scanposp.entity.QuickPaySmsExample;
-import com.epay.scanposp.entity.RegisterTmp;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
@@ -2364,26 +2363,19 @@ public class QuickPayController {
 	@RequestMapping("/quickPay/ysPayNotify")
 	public void ysPayNotify(HttpServletRequest request,HttpServletResponse response) {
 		try {
-			String sp_id = request.getParameter("sp_id");
-			String mch_id = request.getParameter("mch_id");
-			String out_trade_no = request.getParameter("out_trade_no");
-			String sys_trade_no = request.getParameter("sys_trade_no");
-			String trade_state = request.getParameter("trade_state");
-			String total_amt = request.getParameter("total_amt");
-			String sign = request.getParameter("sign");
-			
 			Map<String,String> param = new HashMap<String, String>();
-			param.put("sp_id", sp_id);
-			param.put("mch_id", mch_id);
-			param.put("out_trade_no", out_trade_no);
-			param.put("sys_trade_no",sys_trade_no);
-			param.put("trade_state", trade_state);
-			param.put("total_amt", total_amt);
-			param.put("sign", sign);
-			
-		//	String responseStr = HttpUtil.getPostString(request);
+			Enumeration pNames=request.getParameterNames();
+			while(pNames.hasMoreElements()){
+			    String name=(String)pNames.nextElement();
+			    String value=request.getParameter(name);
+			    param.put(name, value);
+			}
 			logger.info("ysPayNotify回调返回报文[{}]",  JSONObject.fromObject(param).toString() );
-			
+			String out_trade_no = param.get("out_trade_no");
+			String sys_trade_no = param.get("sys_trade_no");
+			String trade_state = param.get("trade_state");
+			String total_fee = param.get("total_fee");
+			String sign = param.get("sign");
 			param.remove("sign");
 			String privateKey = YSConfig.privateKey;
 			String srcStr = StringUtil.orderedKey(param)+"&key="+privateKey;
@@ -2436,6 +2428,7 @@ public class QuickPayController {
 					tradeDetail.setPayTime(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
 					tradeDetail.setPtSerialNo(debitNote.getOrderCode());
 					tradeDetail.setOrderCode(debitNote.getOrderCode());
+					tradeDetail.setChannelNo(sys_trade_no);
 					tradeDetail.setReqDate(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
 					//tradeDetail.setRespCode(respJSONObject.get("respCode").toString());
 					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
@@ -2459,8 +2452,9 @@ public class QuickPayController {
 					debitNoteService.updateByPrimaryKey(debitNote);
 					
 					MsResultNotice msResultNotice = new MsResultNotice();
-					msResultNotice.setMoney(new BigDecimal(total_amt).divide(new BigDecimal(100)));
+					msResultNotice.setMoney(new BigDecimal(total_fee).divide(new BigDecimal(100)));
 					msResultNotice.setOrderCode(reqMsgId);
+					msResultNotice.setPtSerialNo(sys_trade_no);
 					
 					//SimpleDateFormat dateSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					msResultNotice.setRespDate(DateUtil.getDateTimeStr(new Date()));
@@ -2520,8 +2514,6 @@ public class QuickPayController {
 						tradeDetailDailyService.insertSelective(tradeDetailDaily);
 					}
 					
-					
-					
 					if(payResultNoticeList.size() > 0){
 						payResultNotifyService.notify(payResultNotice);
 						
@@ -2558,7 +2550,6 @@ public class QuickPayController {
 			param.put("sp_id", YSConfig.orgNo);
 			param.put("mch_id", "CBJ000000014");
 			param.put("sub_mch_id", "c88c83bd743a4269a5934cf1a52dbff7");
-			
 			
 			Date t = new Date();
 			Calendar cal = Calendar.getInstance();
@@ -2610,5 +2601,7 @@ public class QuickPayController {
 		}
 		return result;
 	}
+	
+	
 	
 }

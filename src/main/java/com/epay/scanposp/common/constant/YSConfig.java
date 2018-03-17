@@ -15,7 +15,7 @@ public class YSConfig {
 	public static String privateKey;
 	public static String defaultMerNo;
 	public static String defaultMerNoQpay;
-	
+	public static String defaultMerNoApay;
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "ys_config");
@@ -24,5 +24,6 @@ public class YSConfig {
 		privateKey = bundle.getString("privateKey");
 		defaultMerNo = bundle.getString("defaultMerNo");
 		defaultMerNoQpay = bundle.getString("defaultMerNoQpay");
+		defaultMerNoApay = bundle.getString("defaultMerNoApay");
 	}
 }

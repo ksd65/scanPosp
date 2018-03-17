@@ -8,9 +8,13 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -18,8 +22,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.sf.json.JSONObject;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.epay.scanposp.common.constant.SysConfig;
+import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.StringUtil;
@@ -37,13 +44,13 @@ import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
+import com.epay.scanposp.common.utils.ys.HttpUtils;
+import com.epay.scanposp.common.utils.ys.SwpHashUtil;
 import com.epay.scanposp.common.utils.yzf.AESTool;
 import com.epay.scanposp.common.utils.yzf.Base64Utils;
 import com.epay.scanposp.common.utils.yzf.EncryptUtil;
 import com.epay.scanposp.common.utils.yzf.Md5Utils;
 import com.epay.scanposp.common.utils.yzf.RSATool;
-import com.epay.scanposp.entity.Account;
-import com.epay.scanposp.entity.AccountExample;
 import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
 import com.epay.scanposp.entity.MemberInfo;
@@ -255,14 +262,6 @@ public class AgentPayController {
 				return result;
 			}
 			
-			AccountExample accountExample = new AccountExample();
-			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
-			List<Account> accounts = accountService.selectByExample(accountExample);
-			if (accounts == null || accounts.size() != 1) {
-				result.put("returnCode", "0008");
-				result.put("returnMsg", "会员账户不存在");
-				return result;
-			}
 			
 			EpayCodeExample epayCodeExample = new EpayCodeExample();
 			List<String> values = new ArrayList<String>();
@@ -293,7 +292,7 @@ public class AgentPayController {
 			List<SysOffice> sysOfficeList = sysOfficeService.selectByExample(sysOfficeExample);
 			if(null == sysOfficeList || sysOfficeList.size() == 0){
 				result.put("returnCode", "0008");
-				result.put("returnMsg", "该商户暂未支持收银台功能，请确认后重试");
+				result.put("returnMsg", "该商户机构信息不完整，请确认后重试");
 				return result;
 			}
 			
@@ -691,4 +690,437 @@ public class AgentPayController {
 		result.put("signStr", EpaySignUtil.sign(SysConfig.platPrivateKey, rtSrc));
 		return result;
 	}
+	
+	
+	
+	@ResponseBody
+	@RequestMapping("/agentPay/toSameNamePay")
+	public JSONObject toSameNamePay(HttpServletRequest request,HttpServletResponse response){
+		String bankAccount = request.getParameter("bankAccount");
+		String memberCode = request.getParameter("memberCode");
+		String orderNum = request.getParameter("orderNum");
+		String payMoney = request.getParameter("payMoney");
+		String signStr = request.getParameter("signStr");
+		
+		StringBuilder srcStr = new StringBuilder();
+		JSONObject result = new JSONObject();
+		
+		if(bankAccount == null || "".equals(bankAccount)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "银行卡号缺失");
+			return signReturn(result);
+		}
+		srcStr.append("bankAccount="+bankAccount);
+		
+		if(memberCode == null || "".equals(memberCode)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户号缺失");
+			return signReturn(result);
+		}
+		srcStr.append("&memberCode="+memberCode);
+		
+		if(orderNum == null || "".equals(orderNum)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户订单号缺失");
+			return signReturn(result);
+		}
+		if(orderNum.length() > 32){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "订单号长度不能超过32位");
+			return signReturn(result);
+		}
+		srcStr.append("&orderNum="+orderNum);
+		
+		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "支付金额输入不正确");
+			return signReturn(result);
+		}
+		srcStr.append("&payMoney="+payMoney);
+		
+		if(signStr == null || "".equals(signStr)){ 
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "缺少签名信息");
+			return signReturn(result);
+		}
+		result = validMemberInfoForSameAgentPay(memberCode, orderNum, payMoney,bankAccount,srcStr.toString(), signStr);
+		
+		return signReturn(result);
+	}
+	
+	
+	public JSONObject validMemberInfoForSameAgentPay(String memberCode,String orderNum,String payMoney,String bankAccount,String signOrginalStr,String signedStr){
+		JSONObject result = new JSONObject();
+		try{
+			MemberInfoExample memberInfoExample = new MemberInfoExample();
+			memberInfoExample.or().andCodeEqualTo(memberCode).andDelFlagEqualTo("0");
+			List<MemberInfo> memberInfoList = memberInfoService.selectByExample(memberInfoExample);
+			if(null == memberInfoList || memberInfoList.size() == 0){
+				result.put("returnCode", "0001");
+				result.put("returnMsg", "商户信息不存在");
+				return result;
+			}
+			MemberInfo memberInfo = memberInfoList.get(0);
+			if(!"0".equals(memberInfo.getStatus())){
+				if("4".equals(memberInfo.getStatus())){
+					result.put("returnCode", "0008");
+					result.put("returnMsg", "该商户未进行认证，暂时无法交易");
+					return result;
+				}
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，该商户暂不可用");
+				return result;
+			}
+			
+			
+			EpayCodeExample epayCodeExample = new EpayCodeExample();
+			List<String> values = new ArrayList<String>();
+			values.add("5");
+			values.add("7");
+			epayCodeExample.or().andMemberIdEqualTo(memberInfo.getId()).andStatusIn(values);
+			List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
+			if(null == epayCodeList || epayCodeList.size() == 0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，该商户暂不可用");
+				return result;
+			}
+			
+			String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+			
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			String merCode = merchantCode.getKjMerchantCode();
+			
+			SysOfficeExample sysOfficeExample = new SysOfficeExample();
+			sysOfficeExample.or().andIdEqualTo(epayCodeList.get(0).getOfficeId()).andAgtTypeEqualTo("3");
+			List<SysOffice> sysOfficeList = sysOfficeService.selectByExample(sysOfficeExample);
+			if(null == sysOfficeList || sysOfficeList.size() == 0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "该商户机构信息不完整，请确认后重试");
+				return result;
+			}
+			
+			
+			RoutewayDrawExample routeWayDrawExample = new RoutewayDrawExample();
+			routeWayDrawExample.createCriteria().andOrderNumOuterEqualTo(orderNum).andDelFlagEqualTo("0");
+			List<RoutewayDraw> routeWayDrawList = routewayDrawService.selectByExample(routeWayDrawExample);
+			if(null != routeWayDrawList && routeWayDrawList.size() > 0){
+				result.put("returnCode", "0002");
+				result.put("returnMsg", "该订单号已存在，请勿重复支付");
+				return result;
+			}
+			
+			SysOffice sysOffice = sysOfficeList.get(0);
+			
+			/*if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
+				result.put("returnCode", "0004");
+				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
+				return result;
+			}*/
+		
+			
+			double  drawFee = 0 ;
+			if("0".equals(memberInfo.getSettleType())){
+				drawFee = merchantCode.getKjT0DrawFee().doubleValue();
+			}else{
+				drawFee = merchantCode.getKjT1DrawFee().doubleValue();
+			}
+			
+			String orderCode = CommonUtil.getOrderCode();
+			String reqDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			
+			//实际代付金额
+			Double drawAmount = (new BigDecimal(payMoney)).floatValue() - drawFee;
+			
+			RoutewayDraw routewayDraw=new RoutewayDraw();
+			routewayDraw.setCreateDate(new Date());
+			routewayDraw.setDelFlag("0");
+			routewayDraw.setRouteCode(routeCode);
+			routewayDraw.setMemberCode(memberInfo.getCode());
+			routewayDraw.setMemberId(memberInfo.getId());
+			routewayDraw.setMerchantCode(merCode);
+			routewayDraw.setDrawType("2");
+			//routewayDraw.setDrawRate(new BigDecimal(drawRate));
+			routewayDraw.setMoney(new BigDecimal(payMoney));
+			routewayDraw.setOrderCode(orderCode);
+			routewayDraw.setPtSerialNo(orderCode);
+			routewayDraw.setOrderNumOuter(orderNum);
+			routewayDraw.setDrawamount(new BigDecimal(drawAmount));
+			routewayDraw.setDrawfee(new BigDecimal(drawFee));
+			routewayDraw.setTradefee(new BigDecimal(0));
+			routewayDraw.setReqDate(reqDate);
+			routewayDraw.setAuditStatus("2");
+			routewayDraw.setAuditDate(new Date());
+			routewayDraw.setBankName("");
+			routewayDraw.setBankAccount(bankAccount);
+			routewayDraw.setAccountName("");
+			routewayDraw.setCertNo("");
+			routewayDraw.setTel("");
+			routewayDrawService.insertSelective(routewayDraw);
+			
+			routeWayDrawExample = new RoutewayDrawExample();
+			routeWayDrawExample.createCriteria().andOrderCodeEqualTo(orderCode);
+			List<RoutewayDraw> drawList = routewayDrawService.selectByExample(routeWayDrawExample);
+			if(drawList==null || drawList.size()==0){
+				result.put("returnCode", "0096");
+				result.put("returnMsg", "订单录入异常");
+			}
+			RoutewayDraw draw = drawList.get(0);
+			
+			if(Double.parseDouble(payMoney)<=drawFee){
+				result.put("returnCode", "0005");
+				result.put("returnMsg", "代付金额必须大于代付手续费");
+				draw.setRespType("E");
+				draw.setRespMsg("代付金额必须大于代付手续费");
+				draw.setUpdateDate(new Date());
+				routewayDrawService.updateByPrimaryKey(draw);
+				return result;
+			}
+			
+			JSONObject resObjb = ysBalance(merCode);
+			Double balance = 0d;
+			if("0000".equals(resObjb.getString("returnCode"))){
+				balance = Double.valueOf(resObjb.getString("balance"))/100;
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "账户余额查询失败:"+resObjb.getString("msg"));
+				draw.setRespType("E");
+				draw.setRespCode(resObjb.getString("code"));
+				draw.setRespMsg(resObjb.getString("msg"));
+				draw.setUpdateDate(new Date());
+				routewayDrawService.updateByPrimaryKey(draw);
+				return result;
+			}
+			if(Double.valueOf(payMoney)>balance){
+				result.put("returnCode", "0005");
+				result.put("returnMsg", "代付金额大于账户余额");
+				draw.setRespType("E");
+				draw.setRespMsg("代付金额大于账户余额");
+				draw.setUpdateDate(new Date());
+				routewayDrawService.updateByPrimaryKey(draw);
+				return result;
+			}
+			
+			String callBack = SysConfig.serverUrl + "/agentPay/ysReceivePayNotify";
+			String serverUrl = YSConfig.msServerUrl + "/swp/dh/jiesuan.do";
+			String privateKey = YSConfig.privateKey;
+			
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("sp_id", YSConfig.orgNo);
+			param.put("mch_id", YSConfig.defaultMerNoApay);
+			param.put("out_js_trade_no", orderCode);
+			param.put("sub_mch_id", merCode);
+			param.put("in_acc_no", bankAccount);
+			param.put("daifu_amt", String.valueOf((int)(((new BigDecimal(payMoney)).floatValue())*100)));
+			param.put("notifyurl", callBack);
+			
+			Date t = new Date();
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(t);
+			long sys_timestamp = cal.getTimeInMillis();
+			param.put("timestamp", String.valueOf(sys_timestamp));
+			
+			String srcStr = StringUtil.orderedKey(param)+"&key="+privateKey;
+			String sign = SwpHashUtil.getSign(srcStr, privateKey, "SHA256");
+			String paramStr = StringUtil.orderedKey(param) + "&sign="+sign;
+			logger.info("易生代付参数[{}]",paramStr );
+
+			HttpResponse httpResponse =HttpUtils.doPost(serverUrl, "", paramStr, "application/x-www-form-urlencoded; charset=UTF-8");
+			String respStr = EntityUtils.toString(httpResponse.getEntity());
+			logger.info("易生代付返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			String code = resObj.getString("status");
+			String resultMsg = "";
+			boolean flag = false;
+			String channelNo = "";
+			if(resObj.containsKey("daifu_sys_trade_no")){
+				channelNo = resObj.getString("daifu_sys_trade_no");
+			}
+			if("SUCCESS".equals(code)){
+				String resSign = resObj.getString("sign");
+				resObj.remove("sign");
+				srcStr = StringUtil.orderedKey(resObj)+"&key="+privateKey;
+				if(resSign.equals(SwpHashUtil.getSign(srcStr, privateKey, "SHA256"))){
+					String trade_state = resObj.getString("trade_state");
+					if("SUCCESS".equals(trade_state)||"PROCESSING".equals(trade_state)){
+						draw.setRespType("R");
+						draw.setUpdateDate(new Date());
+						draw.setChannelNo(channelNo);
+						result.put("returnCode", "0000");
+						result.put("returnMsg", "提交成功");
+						flag = true;
+					}else{
+						resultMsg = resObj.getString("trade_state_desc");
+					}
+				}else{
+					resultMsg = "代付出参验签失败";
+				}
+			}else{
+				resultMsg = resObj.getString("message");
+			}
+			if(!flag){
+				result.put("returnCode", "0003");
+				result.put("returnMsg", resultMsg);
+				draw.setRespType("E");
+				draw.setRespCode(code);
+				draw.setChannelNo(channelNo);
+				draw.setRespMsg(resultMsg);
+				draw.setUpdateDate(new Date());
+			}
+			
+			routewayDrawService.updateByPrimaryKey(draw);
+		}catch(Exception e){
+			logger.info(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	/**
+	 * 易生商户余额查询
+	 * @param merCode
+	 * @return
+	 */
+	public JSONObject ysBalance(String merCode){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = YSConfig.msServerUrl+"/swp/dh/mer_accinfo.do";
+			String privateKey = YSConfig.privateKey;
+			
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("sp_id", YSConfig.orgNo);
+			param.put("mch_id", YSConfig.defaultMerNoApay);
+			param.put("sub_mch_id", merCode);
+			
+			Date t = new Date();
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(t);
+			long sys_timestamp = cal.getTimeInMillis();
+			param.put("timestamp", String.valueOf(sys_timestamp));
+			
+			String srcStr = StringUtil.orderedKey(param)+"&key="+privateKey;
+			String sign = SwpHashUtil.getSign(srcStr, privateKey, "SHA256");
+			String paramStr = StringUtil.orderedKey(param) + "&sign="+sign;
+			logger.info("易生商户余额查询参数[{}]",paramStr );
+
+			HttpResponse httpResponse =HttpUtils.doPost(serverUrl, "", paramStr, "application/x-www-form-urlencoded; charset=UTF-8");
+			String respStr = EntityUtils.toString(httpResponse.getEntity());
+			logger.info("易生商户余额查询返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			String code = resObj.getString("status");
+			String resultMsg = "";
+			boolean flag = false;
+			if("SUCCESS".equals(code)){
+				String resSign = resObj.getString("sign");
+				resObj.remove("sign");
+				srcStr = StringUtil.orderedKey(resObj)+"&key="+privateKey;
+				if(resSign.equals(SwpHashUtil.getSign(srcStr, privateKey, "SHA256"))){
+					String trade_state = resObj.getString("trade_state");
+					if("SUCCESS".equals(trade_state)){
+						result.put("returnCode", "0000");
+						result.put("returnMsg", "成功");
+						result.put("balance", resObj.getString("amt"));
+						flag = true;
+					}else{
+						resultMsg = resObj.getString("trade_state_desc");
+					}
+				}else{
+					resultMsg = "商户余额查询出参验签失败";
+				}
+			}else{
+				resultMsg = resObj.getString("message");
+			}
+			if(!flag){
+				result.put("returnCode", "0003");
+				result.put("returnMsg", resultMsg);
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
+	/**
+	 * 易生代付回调通知
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping("/agentPay/ysReceivePayNotify")
+	public void ysReceivePayNotify(HttpServletRequest request,HttpServletResponse response) {
+		String respString = "SUCCESS";
+		String res = "";
+		try {
+			Map<String,String> param = new HashMap<String, String>();
+			Enumeration pNames=request.getParameterNames();
+			while(pNames.hasMoreElements()){
+			    String name=(String)pNames.nextElement();
+			    String value=request.getParameter(name);
+			    param.put(name, value);
+			}
+			logger.info("ysReceivePayNotify回调返回报文[{}]",  JSONObject.fromObject(param).toString() );
+			String out_trade_no = param.get("out_js_trade_no");
+			String sys_trade_no = param.get("daifu_sys_trade_no");
+			String daifu_state = param.get("daifu_state");
+			String daifu_amt = param.get("daifu_amt");
+			String daifu_fee = param.get("daifu_fee");
+			String sign = param.get("sign");
+			param.remove("sign");
+			String privateKey = YSConfig.privateKey;
+			String srcStr = StringUtil.orderedKey(param)+"&key="+privateKey;
+			if(!sign.equals(SwpHashUtil.getSign(srcStr, privateKey, "SHA256"))){
+				logger.info("验证签名不通过");
+                response.getWriter().write("FAIL");
+        		return;
+			}
+			String reqMsgId = out_trade_no;
+			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
+			routewayDrawExample.createCriteria().andOrderCodeEqualTo(reqMsgId).andDelFlagEqualTo("0");
+			List<RoutewayDraw> routeWayDrawList = routewayDrawService.selectByExample(routewayDrawExample);
+			if(routeWayDrawList==null || routeWayDrawList.size()==0){
+				res = "订单不存在";
+                respString = "FAIL";
+                logger.info(res);
+                response.getWriter().write(respString);
+        		return;
+			}
+			RoutewayDraw draw = routeWayDrawList.get(0);
+			if("R".equals(draw.getRespType())){
+				if("SUCCESS".equals(daifu_state)){
+					draw.setRespType("S");
+					draw.setRespCode("000");
+				}else if("PROCESSING".equals(daifu_state)){
+					draw.setRespType("R");
+				}else{
+					draw.setRespType("E");
+					draw.setRespCode(daifu_state);
+				}
+	            draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+				draw.setUpdateDate(new Date());
+				draw.setChannelNo(sys_trade_no);
+				routewayDrawService.updateByPrimaryKey(draw);
+	        }
+        } catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+		try {
+			response.getWriter().write(respString);
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+	}
+	
 }
