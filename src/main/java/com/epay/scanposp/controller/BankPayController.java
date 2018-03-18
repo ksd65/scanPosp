@@ -9,6 +9,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -25,8 +26,10 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +45,7 @@ import com.epay.scanposp.common.constant.HXConfig;
 import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.SLFConfig;
 import com.epay.scanposp.common.constant.SysConfig;
+import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
@@ -69,6 +73,7 @@ import com.epay.scanposp.common.utils.slf.vo.ReceivePayQueryRequest;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayQueryResponse;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayRequest;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayResponse;
+import com.epay.scanposp.common.utils.ys.SwpHashUtil;
 import com.epay.scanposp.common.utils.yzf.AESTool;
 import com.epay.scanposp.common.utils.yzf.Base64Utils;
 import com.epay.scanposp.common.utils.yzf.EncryptUtil;
@@ -2431,8 +2436,63 @@ public class BankPayController {
 							routewayDrawService.updateByPrimaryKey(draw);
 			        	}
 					}
+				}else if(RouteCodeConstant.YS_ROUTE_CODE.equals(routeCode)){
+					String serverUrl = YSConfig.msServerUrl+"/swp/dh/js_bill_query.do";
+					String privateKey = YSConfig.privateKey;
+			        
+			        Map<String,String> param = new HashMap<String, String>();
+					param.put("sp_id", YSConfig.orgNo);
+					param.put("mch_id", YSConfig.defaultMerNoApay);
+					param.put("out_js_trade_no", draw.getOrderCode());
+					
+					Date t = new Date();
+					Calendar cal = Calendar.getInstance();
+					cal.setTime(t);
+					long sys_timestamp = cal.getTimeInMillis();
+					param.put("timestamp", String.valueOf(sys_timestamp));
+					
+					String srcStr1 = StringUtil.orderedKey(param)+"&key="+privateKey;
+					String sign = SwpHashUtil.getSign(srcStr1, privateKey, "SHA256");
+					String paramStr = StringUtil.orderedKey(param) + "&sign="+sign;
+					logger.info("易生代付订单查询参数[{}]",paramStr );
+
+					HttpResponse httpResponse =com.epay.scanposp.common.utils.ys.HttpUtils.doPost(serverUrl, "", paramStr, "application/x-www-form-urlencoded; charset=UTF-8");
+					String respStr = EntityUtils.toString(httpResponse.getEntity());
+					logger.info("易生代付订单查询返回报文[{}]", new Object[] { respStr });
+					
+					JSONObject resObj = JSONObject.fromObject(respStr);
+					String code = resObj.getString("status");
+					if("SUCCESS".equals(code)){
+						String resSign = resObj.getString("sign");
+						resObj.remove("sign");
+						srcStr1 = StringUtil.orderedKey(resObj)+"&key="+privateKey;
+						if(resSign.equals(SwpHashUtil.getSign(srcStr1, privateKey, "SHA256"))){
+							String daifu_state = resObj.getString("daifu_state");
+							if("SUCCESS".equals(daifu_state)){
+								draw.setRespType("S");
+								draw.setRespCode("000");
+							}else if("PROCESSING".equals(daifu_state)){
+								draw.setRespType("R");
+							}else{
+								draw.setRespType("E");
+								draw.setRespCode(daifu_state);
+							}
+							if(resObj.containsKey("daifu_state_desc")){
+								draw.setRespMsg(resObj.getString("daifu_state_desc"));
+							}
+							if(resObj.containsKey("daifu_sys_trade_no")){
+								draw.setChannelNo(resObj.getString("daifu_sys_trade_no"));
+							}
+							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+							draw.setUpdateDate(new Date());
+							routewayDrawService.updateByPrimaryKey(draw);
+						}else{
+							logger.info("查询接口出参验签失败");
+						}
+					}else{
+						logger.info(resObj.getString("message"));
+					}
 				}
-				
 			}
 			result.put("orderCode", draw.getOrderCode());
 			result.put("oriRespType", draw.getRespType());

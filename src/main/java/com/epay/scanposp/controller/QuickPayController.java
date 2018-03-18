@@ -1715,10 +1715,23 @@ public class QuickPayController {
 	}
 	
 	
-	
+	/**
+	 * 快捷绑卡
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	@ResponseBody
 	@RequestMapping("/quickPay/bindCard")
 	public JSONObject bindCard(HttpServletRequest request,HttpServletResponse response){
+		Map<String,String> inparam = new HashMap<String, String>();
+		Enumeration<String> pNames=request.getParameterNames();
+		while(pNames.hasMoreElements()){
+		    String name=(String)pNames.nextElement();
+		    String value=request.getParameter(name);
+		    inparam.put(name, value);
+		}
+		logger.info("快捷绑卡下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
 		String accountName = request.getParameter("accountName");
 		String accountType = request.getParameter("accountType");
 		String bankAccount = request.getParameter("bankAccount");
@@ -1729,18 +1742,6 @@ public class QuickPayController {
 		String orderNum = request.getParameter("orderNum");
 		String tel = request.getParameter("tel");
 		String signStr = request.getParameter("signStr");
-		Map<String,String> obj = new HashMap<String, String>();
-		obj.put("accountName", accountName);
-		obj.put("accountType", accountType);
-		obj.put("bankAccount", bankAccount);
-		obj.put("bankCode", bankCode);
-		obj.put("bankCvv", bankCvv);
-		obj.put("bankYxq", bankYxq);
-		obj.put("memberCode", memberCode);
-		obj.put("orderNum", orderNum);
-		obj.put("tel", tel);
-		obj.put("signStr", signStr);
-		logger.info("快捷支付绑卡接口接收参数[{}]",JSONObject.fromObject(obj).toString() );
 		
 		StringBuilder srcStr = new StringBuilder();
 		JSONObject result = new JSONObject();
@@ -1777,7 +1778,7 @@ public class QuickPayController {
 			result.put("returnMsg", "银行编码缺失");
 			return CommonUtil.signReturn(result);
 		}
-		srcStr.append("bankCode="+bankCode);
+		srcStr.append("&bankCode="+bankCode);
 		
 		if("2".equals(accountType)){//信用卡
 			if(bankCvv == null || "".equals(bankCvv)){
@@ -1894,11 +1895,11 @@ public class QuickPayController {
 			
 			SysOffice sysOffice = sysOfficeList.get(0);
 			
-		/*	if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
+			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 				return result;
-			}*/
+			}
 		
 			String bankName = "";
 			Integer bankId = 0 ;
@@ -1911,37 +1912,42 @@ public class QuickPayController {
 			}
 			
 			String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
-			JSONObject cardObj = bindCardYs(memberInfo,routeCode,bankAccount,tel,bankCvv,bankYxq,bankCode);
 			
+			MemberBindAccDtl accDtl = new MemberBindAccDtl();
+			accDtl.setMemberId(memberInfo.getId());
+			accDtl.setAcc(bankAccount);
+			accDtl.setAccountType(accountType);
+			accDtl.setBankId(String.valueOf(bankId ));
+			accDtl.setBankCode(bankCode);
+			accDtl.setBankName(bankName);
+			accDtl.setName(accountName);
+			accDtl.setCvv(bankCvv);
+			accDtl.setExpireTime(bankYxq);
+			accDtl.setOrderNum(orderNum);
+			accDtl.setMobilePhone(tel);
+			accDtl.setRouteCode(routeCode);
+			accDtl.setCreateDate(new Date());
+			
+			JSONObject cardObj = bindCardYs(memberInfo,routeCode,bankAccount,tel,bankCvv,bankYxq,bankCode);
+			if(cardObj.containsKey("orderCode")){
+				String orderCode = cardObj.getString("orderCode");
+				accDtl.setOrderCode(orderCode);
+			}
 			if("0000".equals(cardObj.getString("returnCode"))){
 				String bankCardToken = cardObj.getString("bankCardToken");
-				String orderCode = cardObj.getString("orderCode");
-				MemberBindAccDtl accDtl = new MemberBindAccDtl();
-				accDtl.setMemberId(memberInfo.getId());
-				accDtl.setAcc(bankAccount);
-				accDtl.setAccountType(accountType);
-				accDtl.setBankId(String.valueOf(bankId ));
-				accDtl.setBankCode(bankCode);
-				accDtl.setBankName(bankName);
-				accDtl.setName(accountName);
-				accDtl.setCvv(bankCvv);
-				accDtl.setExpireTime(bankYxq);
-				accDtl.setOrderNum(orderNum);
-				accDtl.setOrderCode(orderCode);
-				accDtl.setMobilePhone(tel);
-				accDtl.setRouteCode(routeCode);
 				accDtl.setBankCardToken(bankCardToken);
-				accDtl.setCreateDate(new Date());
-				memberBindAccDtlService.insertSelective(accDtl);
+				accDtl.setRespCode("0");
 				result.put("returnCode", "0000");
 				result.put("returnMsg", "绑卡成功");
 				result.put("bankCardToken", bankCardToken);
 			}else{
 				String resultMsg = cardObj.getString("returnMsg");
+				accDtl.setRespCode("1");
+				accDtl.setRespMsg(resultMsg);
 				result.put("returnCode", "0003");
 				result.put("returnMsg", "快捷支付绑卡失败："+resultMsg);
 			}
-			
+			memberBindAccDtlService.insertSelective(accDtl);
 		}catch(Exception e){
 			logger.info(e.getMessage());
 			result.put("returnCode", "0096");
@@ -2042,25 +2048,30 @@ public class QuickPayController {
 		}
 		return result;
 	}
-	
+	/**
+	 * 绑卡快捷支付
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	@ResponseBody
 	@RequestMapping("/quickPay/toCardPay")
 	public JSONObject toCardPay(HttpServletRequest request,HttpServletResponse response){
+		Map<String,String> inparam = new HashMap<String, String>();
+		Enumeration<String> pNames=request.getParameterNames();
+		while(pNames.hasMoreElements()){
+		    String name=(String)pNames.nextElement();
+		    String value=request.getParameter(name);
+		    inparam.put(name, value);
+		}
+		logger.info("绑卡快捷支付下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
+		
 		String orderNum = request.getParameter("orderNum");
 		String memberCode = request.getParameter("memberCode");
 		String payMoney = request.getParameter("payMoney");
 		String bankCardToken = request.getParameter("bankCardToken");
 		String callbackUrl = request.getParameter("callbackUrl");
 		String signStr = request.getParameter("signStr");
-		
-		Map<String,String> obj = new HashMap<String, String>();
-		obj.put("orderNum", orderNum);
-		obj.put("memberCode", memberCode);
-		obj.put("payMoney", payMoney);
-		obj.put("bankCardToken", bankCardToken);
-		obj.put("callbackUrl", callbackUrl);
-		obj.put("signStr", signStr);
-		logger.info("快捷支付接口接收参数[{}]",JSONObject.fromObject(obj).toString() );
 		
 		StringBuilder srcStr = new StringBuilder();
 		JSONObject result = new JSONObject();
@@ -2162,7 +2173,7 @@ public class QuickPayController {
 			}
 			
 			MemberBindAccDtlExample memberBindAccDtlExample = new MemberBindAccDtlExample();
-			memberBindAccDtlExample.or().andMemberIdEqualTo(memberInfo.getId()).andBankCardTokenEqualTo(bankCardToken).andDelFlagEqualTo("0");
+			memberBindAccDtlExample.or().andMemberIdEqualTo(memberInfo.getId()).andBankCardTokenEqualTo(bankCardToken).andRespCodeEqualTo("0").andDelFlagEqualTo("0");
 			List<MemberBindAccDtl> memberBindAccDtlList = memberBindAccDtlService.selectByExample(memberBindAccDtlExample);
 			if(null == memberBindAccDtlList || memberBindAccDtlList.size() == 0){
 				result.put("returnCode", "0008");
@@ -2206,7 +2217,7 @@ public class QuickPayController {
 		
 			
 			if(RouteCodeConstant.YS_ROUTE_CODE.equals(routeCode)){
-				memberInfo.setSettleType("1");
+				memberInfo.setSettleType("0");
 				result = ysQuickPay("3",memberInfo,merchantCode,orderNum,payMoney,callbackUrl,bankCardToken,routeCode);
 			}
 		}catch(Exception e){

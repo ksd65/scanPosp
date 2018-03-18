@@ -6,6 +6,7 @@ import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,12 +40,10 @@ import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.SequenseTypeConstant;
-import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.epaySecurityUtil.RSAUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
-import com.epay.scanposp.common.utils.slf.MD5;
 import com.epay.scanposp.common.utils.xinfu.HttpPostRequest;
 import com.epay.scanposp.common.utils.xinfu.Md5SignUtil;
 import com.epay.scanposp.common.utils.ys.HttpUtils;
@@ -1129,7 +1128,7 @@ public class RegistController {
 	
 	
 	/**
-	 * 代还商户进件
+	 * 易生商户进件
 	 * @param request
 	 * @param response
 	 * @return
@@ -1137,6 +1136,16 @@ public class RegistController {
 	@ResponseBody
 	@RequestMapping("/memberInfo/toRegistNew")
 	public JSONObject toRegistNew(HttpServletRequest request,HttpServletResponse response){
+		Map<String,String> inparam = new HashMap<String, String>();
+		Enumeration<String> pNames=request.getParameterNames();
+		while(pNames.hasMoreElements()){
+		    String name=(String)pNames.nextElement();
+		    String value=request.getParameter(name);
+		    inparam.put(name, value);
+		}
+		logger.info("易生商户进件下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
+		
+		
 		JSONObject result = new JSONObject();
 		String officeId = request.getParameter("officeId");
 		String orderNum = request.getParameter("orderNum");
@@ -1242,11 +1251,11 @@ public class RegistController {
 		}
 		
 		SysOffice sysOffice = sysOfficeList.get(0);
-	/*	if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr, signStr)){
+		if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr, signStr)){
 			result.put("returnCode", "0004");
 			result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 			return CommonUtil.signReturn(result);
-		}*/
+		}
 		
 		
 		MemberInfoExample memberInfoExample = new MemberInfoExample();
