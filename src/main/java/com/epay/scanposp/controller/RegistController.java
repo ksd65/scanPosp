@@ -1277,7 +1277,7 @@ public class RegistController {
 		*/
 		
 		
-		String platTradeRate = "", platDrawFee = "";
+	/*	String platTradeRate = "", platDrawFee = "";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
 		sysCommonConfigExample.or().andNameEqualTo("PLAT_TRADE_RATE_"+routeCode).andDelFlagEqualTo("0");
 		List<SysCommonConfig>  sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
@@ -1308,7 +1308,7 @@ public class RegistController {
 			result.put("returnCode", "4004");
 			result.put("returnMsg", "提现手续费小于最小金额");
 			return CommonUtil.signReturn(result);
-		}
+		}*/
 		String subId = "";
 		String subName = "";
 		String bankId = "";
@@ -1424,7 +1424,7 @@ public class RegistController {
 		memberBank.setMobilePhone("");
 		memberBank.setSettleType(memberInfo.getSettleType());
 		
-		JSONObject merchantObj =  registYsAccount(memberInfo, memberBank,platTradeRate,platDrawFee);
+		JSONObject merchantObj =  registYsAccount(memberInfo, memberBank,tradeRate,settleFee);
 		
 		String merchantCode = "",orderCode = "";
 		if("0000".equals(merchantObj.getString("returnCode"))){
