@@ -817,7 +817,7 @@ public class MemberInfoController {
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
 			
-			double tradeRate = 0 , drawFee = 0;
+			double tradeRate = 0 , drawFee = 0 ,drawRate = 0;
 			
 			if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){//瑞付  网银，微信h5
 				if(merchantCode.getWyT0DrawFee()!=null){
@@ -842,7 +842,9 @@ public class MemberInfoController {
 			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){//畅捷快捷，走T1
 				drawFee = merchantCode.getKjT1DrawFee().doubleValue();
 			}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){//畅捷网关，走D0
+				drawRate = merchantCode.getWyT0DrawRate().doubleValue();
 				drawFee = merchantCode.getWyT0DrawFee().doubleValue();
+				drawFee = Double.parseDouble(drawMoney)*drawRate + drawFee;
 			}else{
 				if("0".equals(memberInfo.getSettleType())){
 					drawFee = merchantCode.getT0DrawFee().doubleValue();
@@ -978,6 +980,7 @@ public class MemberInfoController {
 			routewayDraw.setMoney(new BigDecimal(drawMoney));
 			routewayDraw.setDrawamount(new BigDecimal(Double.parseDouble(drawMoney)-drawFee));
 			routewayDraw.setDrawfee(new BigDecimal(drawFee));
+			routewayDraw.setDrawRate(new BigDecimal(drawRate));
 			routewayDraw.setTradefee(new BigDecimal(0));
 			routewayDraw.setAuditStatus("1");
 			if(reqDataJson.containsKey("bankName")){
