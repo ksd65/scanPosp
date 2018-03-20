@@ -15,5 +15,6 @@ public interface MemberMerchantCodeMapper extends BaseDao<MemberMerchantCode, Me
     
     MemberMerchantCode selectByPrimaryKey(Integer id);
 
+    int updateByPrimaryKey(MemberMerchantCode record);
     
 }

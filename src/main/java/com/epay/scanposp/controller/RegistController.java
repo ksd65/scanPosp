@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -53,14 +55,22 @@ import com.epay.scanposp.common.utils.yzf.Base64Utils;
 import com.epay.scanposp.common.utils.yzf.EncryptUtil;
 import com.epay.scanposp.common.utils.yzf.RSATool;
 import com.epay.scanposp.entity.Account;
+import com.epay.scanposp.entity.BankRoute;
+import com.epay.scanposp.entity.BankRouteExample;
 import com.epay.scanposp.entity.BankSub;
 import com.epay.scanposp.entity.BankSubExample;
 import com.epay.scanposp.entity.EpayCode;
+import com.epay.scanposp.entity.EpayCodeExample;
 import com.epay.scanposp.entity.MemberBank;
+import com.epay.scanposp.entity.MemberBindAccDtl;
+import com.epay.scanposp.entity.MemberBindAccDtlExample;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberMerchantCode;
+import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberMerchantKey;
+import com.epay.scanposp.entity.PayTypeMerchantDefault;
+import com.epay.scanposp.entity.PayTypeMerchantDefaultExample;
 import com.epay.scanposp.entity.RegisterTmp;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
@@ -74,6 +84,7 @@ import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
+import com.epay.scanposp.service.PayTypeMerchantDefaultService;
 import com.epay.scanposp.service.RegisterTmpService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeService;
@@ -115,6 +126,9 @@ public class RegistController {
 	
 	@Autowired
 	private BankSubService bankSubService;
+	
+	@Autowired
+	private PayTypeMerchantDefaultService payTypeMerchantDefaultService;
 
 	@ResponseBody
 	@RequestMapping("/memberInfo/toRegist")
@@ -1097,6 +1111,100 @@ public class RegistController {
 			memberInfo.setZfbRouteId("1004");
 			memberInfo.setRemarks(registerTmp.getRemarks());
 			
+			memberInfoService.insertSelective(memberInfo);
+			
+			
+			
+			
+			for(String trade:tardeObj){
+				String[] arr = trade.split("#");
+				String payMethod = arr[0];
+				String txnType = arr[1];
+				String t0_radeRate = arr[2];
+				String t1_radeRate = arr[3];
+				String payType = transPayType(txnType);
+				PayTypeMerchantDefaultExample payTypeMerchantDefaultExample = new PayTypeMerchantDefaultExample();
+				payTypeMerchantDefaultExample.or().andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
+				List<PayTypeMerchantDefault> plist =  payTypeMerchantDefaultService.selectByExample(payTypeMerchantDefaultExample);
+				if(plist != null && plist.size()>0){
+					PayTypeMerchantDefault merchantDefault = plist.get(0);
+					MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+					if(StringUtils.isBlank(merchantDefault.getAisleType())){
+						memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(merchantDefault.getRouteCode()).andDelFlagEqualTo("0");
+					}else{
+						memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(merchantDefault.getRouteCode()).andAisleTypeEqualTo(merchantDefault.getAisleType()).andDelFlagEqualTo("0");
+					}
+					List<MemberMerchantCode> mlist = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+					if(mlist==null || mlist.size()==0){
+						MemberMerchantCode memberMerchantCode = new MemberMerchantCode();
+						memberMerchantCode.setMemberId(memberInfo.getId());
+						memberMerchantCode.setRouteCode(merchantDefault.getRouteCode());
+						memberMerchantCode.setAisleType(merchantDefault.getAisleType());
+						if("WX".equals(payType)){
+							memberMerchantCode.setWxMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("QQ".equals(payType)){
+							memberMerchantCode.setQqMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setQqT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setQqT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("ZFB".equals(payType)){
+							memberMerchantCode.setZfbMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setZfbT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setZfbT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("JD".equals(payType)){
+							memberMerchantCode.setJdMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setJdT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setJdT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("YL".equals(payType)){
+							memberMerchantCode.setWyMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setWyT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setWyT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("KJ".equals(payType)){
+							memberMerchantCode.setKjMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setKjT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setKjT1TradeRate(new BigDecimal(t1_radeRate));
+						}
+						memberMerchantCode.setCreateDate(new Date());
+						memberMerchantCodeService.insertSelective(memberMerchantCode);
+					}else{
+						MemberMerchantCode memberMerchantCode = mlist.get(0);
+						if("WX".equals(payType)){
+							memberMerchantCode.setWxMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("QQ".equals(payType)){
+							memberMerchantCode.setQqMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setQqT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setQqT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("ZFB".equals(payType)){
+							memberMerchantCode.setZfbMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setZfbT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setZfbT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("JD".equals(payType)){
+							memberMerchantCode.setJdMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setJdT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setJdT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("YL".equals(payType)){
+							memberMerchantCode.setWyMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setWyT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setWyT1TradeRate(new BigDecimal(t1_radeRate));
+						}else if("KJ".equals(payType)){
+							memberMerchantCode.setKjMerchantCode(merchantDefault.getMerchantCode());
+							memberMerchantCode.setKjT0TradeRate(new BigDecimal(t0_radeRate));
+							memberMerchantCode.setKjT1TradeRate(new BigDecimal(t1_radeRate));
+						}
+						memberMerchantCode.setUpdateDate(new Date());
+						memberMerchantCodeService.updateByPrimaryKey(memberMerchantCode);
+					}
+				}
+			}
+			
+			
+			
+			epayCode.setMemberId(memberInfo.getId());
+			epayCodeService.insertSelective(epayCode);
+			
 			MemberBank memberBank = new MemberBank();
 			memberBank.setBankId(registerTmp.getBankId());
 			memberBank.setSubId(registerTmp.getSubId());
@@ -1107,6 +1215,8 @@ public class RegistController {
 			memberBank.setAccountNumber(memberInfo.getCardNbr());
 			memberBank.setMobilePhone("");
 			memberBank.setSettleType(memberInfo.getSettleType());
+			
+			
 			
 			SysOfficeExample sysOfficeExample = new SysOfficeExample();
 			sysOfficeExample.createCriteria().andIdEqualTo(officeId);
@@ -1126,6 +1236,16 @@ public class RegistController {
 		return result;
 	}
 	
+	private String transPayType(String txnType){
+		Map<String,String> obj = new HashMap<String, String>();
+		obj.put("1", "WX");
+		obj.put("2", "ZFB");
+		obj.put("3", "QQ");
+		obj.put("5", "JD");
+		obj.put("8", "YL");
+		obj.put("9", "KJ");
+		return obj.get(txnType);
+	}
 	
 	/**
 	 * 易生商户进件
@@ -1277,7 +1397,7 @@ public class RegistController {
 		*/
 		
 		
-	/*	String platTradeRate = "", platDrawFee = "";
+		String platTradeRate = "", platDrawFee = "";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
 		sysCommonConfigExample.or().andNameEqualTo("PLAT_TRADE_RATE_"+routeCode).andDelFlagEqualTo("0");
 		List<SysCommonConfig>  sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
@@ -1300,15 +1420,15 @@ public class RegistController {
 		
 		if(Double.valueOf(tradeRate)<Double.valueOf(platTradeRate)){
 			result.put("returnCode", "4004");
-			result.put("returnMsg", "交易费率小于最小金额");
+			result.put("returnMsg", "交易费率小于平台最低费率"+platTradeRate);
 			return CommonUtil.signReturn(result);
 		}
 		
 		if(Double.valueOf(settleFee)<Double.valueOf(platDrawFee)){
 			result.put("returnCode", "4004");
-			result.put("returnMsg", "提现手续费小于最小金额");
+			result.put("returnMsg", "提现手续费小于平台最低手续费"+platDrawFee+"元");
 			return CommonUtil.signReturn(result);
-		}*/
+		}
 		String subId = "";
 		String subName = "";
 		String bankId = "";
@@ -1581,5 +1701,262 @@ public class RegistController {
 		return result;
 	}
 	
+	
+	/**
+	 * 商户费率修改
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/memberInfo/modifyTradeRate")
+	public JSONObject modifyTradeRate(HttpServletRequest request,HttpServletResponse response){
+		JSONObject result = new JSONObject();
+		try{
+			Map<String,String> inparam = new HashMap<String, String>();
+			Enumeration<String> pNames=request.getParameterNames();
+			while(pNames.hasMoreElements()){
+			    String name=(String)pNames.nextElement();
+			    String value=request.getParameter(name);
+			    inparam.put(name, value);
+			}
+			logger.info("商户费率修改下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
+			
+			String memberCode = request.getParameter("memberCode");
+			String orderNum = request.getParameter("orderNum");
+			String tradeRate = request.getParameter("tradeRate");
+			String settleFee = request.getParameter("settleFee");
+			String signStr = request.getParameter("signStr");
+			
+			String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
+			
+			//待签名字符串
+			Map<String,String> params = new HashMap<String,String>();
+			if(memberCode == null || "".equals(memberCode)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "商户编号[memberCode]缺失");
+				return CommonUtil.signReturn(result);
+			}
+			params.put("memberCode", memberCode);
+			
+			if(orderNum == null || "".equals(orderNum)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "商户订单号[orderNum]缺失");
+				return CommonUtil.signReturn(result);
+			}
+			params.put("orderNum", orderNum);
+			
+			if(tradeRate == null || "".equals(tradeRate)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "交易费率[tradeRate]缺失");
+				return CommonUtil.signReturn(result);
+			}
+			params.put("tradeRate", tradeRate);
+			
+			if(settleFee == null || "".equals(settleFee)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "提现费用[settleFee]缺失");
+				return CommonUtil.signReturn(result);
+			}
+			params.put("settleFee", settleFee);
+			
+			if(signStr == null || "".equals(signStr)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "签名[signStr]缺失");
+				return CommonUtil.signReturn(result);
+			}
+			
+			String srcStr = StringUtil.orderedKey(params);
+			
+			MemberInfoExample memberInfoExample = new MemberInfoExample();
+			memberInfoExample.or().andCodeEqualTo(memberCode).andDelFlagEqualTo("0");
+			List<MemberInfo> memberInfoList = memberInfoService.selectByExample(memberInfoExample);
+			if(null == memberInfoList || memberInfoList.size() == 0){
+				result.put("returnCode", "0001");
+				result.put("returnMsg", "商户信息不存在");
+				return CommonUtil.signReturn(result);
+			}
+			MemberInfo memberInfo = memberInfoList.get(0);
+			if(!"0".equals(memberInfo.getStatus())){
+				if("4".equals(memberInfo.getStatus())){
+					result.put("returnCode", "0008");
+					result.put("returnMsg", "该商户未进行认证，暂时无法交易");
+					return CommonUtil.signReturn(result);
+				}
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，该商户暂不可用");
+				return CommonUtil.signReturn(result);
+			}
+			
+			EpayCodeExample epayCodeExample = new EpayCodeExample();
+			List<String> values = new ArrayList<String>();
+			values.add("5");
+			values.add("7");
+			epayCodeExample.or().andMemberIdEqualTo(memberInfo.getId()).andStatusIn(values);
+			List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
+			if(null == epayCodeList || epayCodeList.size() == 0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，该商户暂不可用");
+				return CommonUtil.signReturn(result);
+			}
+			
+			SysOfficeExample sysOfficeExample = new SysOfficeExample();
+			sysOfficeExample.or().andIdEqualTo(epayCodeList.get(0).getOfficeId()).andAgtTypeEqualTo("3");
+			List<SysOffice> sysOfficeList = sysOfficeService.selectByExample(sysOfficeExample);
+			if(null == sysOfficeList || sysOfficeList.size() == 0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "该商户机构信息不完整，请确认后重试");
+				return CommonUtil.signReturn(result);
+			}
+			
+			SysOffice sysOffice = sysOfficeList.get(0);
+			
+			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr, signStr)){//by linxf 测试屏蔽
+				result.put("returnCode", "0004");
+				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
+				return CommonUtil.signReturn(result);
+			}
+			
+			String platTradeRate = "", platDrawFee = "";
+			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo("PLAT_TRADE_RATE_"+routeCode).andDelFlagEqualTo("0");
+			List<SysCommonConfig>  sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig.size() == 0) {
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "系统默认交易费率配置缺失，请与管理员联系");
+				return CommonUtil.signReturn(result);
+			}
+			platTradeRate = sysCommonConfig.get(0).getValue();
+			
+			sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo("PLAT_DRAW_FEE_"+routeCode).andDelFlagEqualTo("0");
+			sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig.size() == 0) {
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "系统默认提现费用配置缺失，请与管理员联系");
+				return CommonUtil.signReturn(result);
+			}
+			platDrawFee = sysCommonConfig.get(0).getValue();
+			
+			if(Double.valueOf(tradeRate)<Double.valueOf(platTradeRate)){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "交易费率小于平台最低费率"+platTradeRate);
+				return CommonUtil.signReturn(result);
+			}
+			
+			if(Double.valueOf(settleFee)<Double.valueOf(platDrawFee)){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "提现手续费小于平台最低手续费"+platDrawFee+"元");
+				return CommonUtil.signReturn(result);
+			}
+			
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+			
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return CommonUtil.signReturn(result);
+			}
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			
+			JSONObject cardObj = modifyRateYs(memberInfo,merchantCode,routeCode,tradeRate,settleFee);
+			if(!"0000".equals(cardObj.getString("returnCode"))){
+				String resultMsg = cardObj.getString("returnMsg");
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "修改商户费率失败："+resultMsg);
+				return CommonUtil.signReturn(result);
+			}
+			merchantCode.setWyT0TradeRate(new BigDecimal(tradeRate));
+			merchantCode.setWyT1TradeRate(new BigDecimal(tradeRate));
+			merchantCode.setWyT0DrawFee(new BigDecimal(settleFee));
+			merchantCode.setWyT1DrawFee(new BigDecimal(settleFee));
+			merchantCode.setKjT0TradeRate(new BigDecimal(tradeRate));
+			merchantCode.setKjT1TradeRate(new BigDecimal(tradeRate));
+			merchantCode.setKjT0DrawFee(new BigDecimal(settleFee));
+			merchantCode.setKjT1DrawFee(new BigDecimal(settleFee));
+			merchantCode.setUpdateDate(new Date());
+			memberMerchantCodeService.updateByPrimaryKey(merchantCode);
+			
+			memberInfo.setT0DrawFee(new BigDecimal(settleFee));
+			memberInfo.setT1DrawFee(new BigDecimal(settleFee));
+			memberInfo.setT0TradeRate(new BigDecimal(tradeRate));
+			memberInfo.setT1TradeRate(new BigDecimal(tradeRate));
+			memberInfoService.updateByPrimaryKey(memberInfo);
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "修改商户费率成功");
+		}catch(Exception e){
+			logger.info(e.getMessage(), e);
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return CommonUtil.signReturn(result);
+	}
+	
+	public JSONObject modifyRateYs(MemberInfo memberInfo,MemberMerchantCode merchantCode,String routeCode,String tradeRate,String drawFee){
+		JSONObject result = new JSONObject();
+		try{
+			String orderCode = CommonUtil.getOrderCode();
+			String serverUrl = YSConfig.msServerUrl+"/swp/dh/modify_mer.do";
+			String orgNo = YSConfig.orgNo;//机构
+			String privateKey = YSConfig.privateKey;
+			
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("sp_id", orgNo);
+			param.put("mch_id", YSConfig.defaultMerNo);
+			param.put("out_trade_no", orderCode);
+			param.put("sub_mch_id",merchantCode.getKjMerchantCode() );
+			param.put("settle_rate", tradeRate);//借记卡费率/贷记卡费率
+			param.put("extra_rate", String.valueOf((int)(((new BigDecimal(drawFee)).floatValue())*100)));
+			
+			Date t = new Date();
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(t);
+			long sys_timestamp = cal.getTimeInMillis();
+			param.put("timestamp", String.valueOf(sys_timestamp));
+			
+			String srcStr = StringUtil.orderedKey(param)+"&key="+privateKey;
+			String sign = SwpHashUtil.getSign(srcStr, privateKey, "SHA256");
+			param.put("sign", sign);
+			String paramStr = StringUtil.orderedKey(param) + "&sign="+sign;
+			logger.info("易生快捷费率修改参数[{}]",JSONObject.fromObject(param).toString() );
+			
+			HttpResponse httpResponse =HttpUtils.doPost(serverUrl, "", paramStr, "application/x-www-form-urlencoded; charset=UTF-8");
+			String respStr = EntityUtils.toString(httpResponse.getEntity());
+			logger.info("易生快捷费率修改返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			
+			String code = resObj.getString("status");
+			if("SUCCESS".equals(code)){
+				String resSign = resObj.getString("sign");
+				resObj.remove("sign");
+				srcStr = StringUtil.orderedKey(resObj)+"&key="+privateKey;
+				if(resSign.equals(SwpHashUtil.getSign(srcStr, privateKey, "SHA256"))){
+					String trade_state = resObj.getString("trade_state");
+					if("SUCCESS".equals(trade_state)){
+						result.put("returnCode", "0000");
+						result.put("returnMsg", "成功");
+					}else{
+						result.put("returnCode", "0003");
+						result.put("returnMsg", resObj.getString("trade_state_desc"));
+					}
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", "易生快捷费率修改出参验签失败");
+				}
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", resObj.getString("message"));
+			}
+			result.put("orderCode", orderCode);
+		}catch(Exception e){
+			logger.info(e.getMessage(), e);
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
 	
 }

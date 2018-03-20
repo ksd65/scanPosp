@@ -431,5 +431,49 @@
     </trim>
   </insert>
   
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.MemberMerchantCode">
+    update bu_member_merchant_code SET
+    	member_id = #{memberId,jdbcType=INTEGER},
+        route_code = #{routeCode,jdbcType=VARCHAR},
+        aisle_type = #{aisleType,jdbcType=VARCHAR},
+        wx_merchant_code = #{wxMerchantCode,jdbcType=VARCHAR},
+        zfb_merchant_code = #{zfbMerchantCode,jdbcType=VARCHAR},
+        qq_merchant_code = #{qqMerchantCode,jdbcType=VARCHAR},
+        bd_merchant_code = #{bdMerchantCode,jdbcType=VARCHAR},
+        jd_merchant_code = #{jdMerchantCode,jdbcType=VARCHAR},
+        wy_merchant_code = #{wyMerchantCode,jdbcType=VARCHAR},
+        kj_merchant_code = #{kjMerchantCode,jdbcType=VARCHAR},
+        t0_draw_fee = #{t0DrawFee,jdbcType=DECIMAL},
+        t0_trade_rate = #{t0TradeRate,jdbcType=DECIMAL},
+        t1_draw_fee = #{t1DrawFee,jdbcType=DECIMAL},
+        t1_trade_rate = #{t1TradeRate,jdbcType=DECIMAL},
+        t1_draw_rate = #{t1DrawRate,jdbcType=DECIMAL},
+        t0_draw_rate = #{t0DrawRate,jdbcType=DECIMAL},
+        zfb_t0_draw_fee = #{zfbT0DrawFee,jdbcType=DECIMAL},
+        zfb_t0_trade_rate = #{zfbT0TradeRate,jdbcType=DECIMAL},
+        zfb_t1_draw_fee = #{zfbT1DrawFee,jdbcType=DECIMAL},
+        zfb_t1_trade_rate = #{zfbT1TradeRate,jdbcType=DECIMAL},
+        qq_t0_draw_fee = #{qqT0DrawFee,jdbcType=DECIMAL},
+        qq_t0_trade_rate = #{qqT0TradeRate,jdbcType=DECIMAL},
+        qq_t1_draw_fee = #{qqT1DrawFee,jdbcType=DECIMAL},
+        qq_t1_trade_rate = #{qqT1TradeRate,jdbcType=DECIMAL},
+        jd_t0_draw_fee = #{jdT0DrawFee,jdbcType=DECIMAL},
+        jd_t0_trade_rate = #{jdT0TradeRate,jdbcType=DECIMAL},
+        jd_t1_draw_fee = #{jdT1DrawFee,jdbcType=DECIMAL},
+        jd_t1_trade_rate = #{jdT1TradeRate,jdbcType=DECIMAL},
+        wy_t0_draw_fee = #{wyT0DrawFee,jdbcType=DECIMAL},
+        wy_t0_trade_rate = #{wyT0TradeRate,jdbcType=DECIMAL},
+        wy_t1_draw_fee = #{wyT1DrawFee,jdbcType=DECIMAL},
+        wy_t1_trade_rate = #{wyT1TradeRate,jdbcType=DECIMAL},
+        kj_t0_draw_fee = #{kjT0DrawFee,jdbcType=DECIMAL},
+        kj_t0_trade_rate = #{kjT0TradeRate,jdbcType=DECIMAL},
+        kj_t1_draw_fee = #{kjT1DrawFee,jdbcType=DECIMAL},
+        kj_t1_trade_rate = #{kjT1TradeRate,jdbcType=DECIMAL},
+	    create_by = #{createBy,jdbcType=VARCHAR},
+	    create_date = #{createDate,jdbcType=TIMESTAMP},
+	    update_by = #{updateBy,jdbcType=VARCHAR},
+	    update_date = #{updateDate,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
   
 </mapper>
