@@ -2547,71 +2547,7 @@ public class QuickPayController {
 	}
 	
 	
-	@ResponseBody
-	@RequestMapping("/quickPay/balance")
-	public JSONObject balance(HttpServletRequest request,HttpServletResponse response){
-		JSONObject result = new JSONObject();
-		try {
-			
-			
-			String serverUrl = YSConfig.msServerUrl+"/swp/dh/mer_accinfo.do";
-			String privateKey = YSConfig.privateKey;
-			
-			Map<String,String> param = new HashMap<String, String>();
-			param.put("sp_id", YSConfig.orgNo);
-			param.put("mch_id", "CBJ000000014");
-			param.put("sub_mch_id", "c88c83bd743a4269a5934cf1a52dbff7");
-			
-			Date t = new Date();
-			Calendar cal = Calendar.getInstance();
-			cal.setTime(t);
-			long sys_timestamp = cal.getTimeInMillis();
-			param.put("timestamp", String.valueOf(sys_timestamp));
-			
-			String srcStr = StringUtil.orderedKey(param)+"&key="+privateKey;
-			String sign = SwpHashUtil.getSign(srcStr, privateKey, "SHA256");
-			String paramStr = StringUtil.orderedKey(param) + "&sign="+sign;
-			logger.info("易生快捷支付参数[{}]",paramStr );
-
-			HttpResponse httpResponse =HttpUtils.doPost(serverUrl, "", paramStr, "application/x-www-form-urlencoded; charset=UTF-8");
-			String respStr = EntityUtils.toString(httpResponse.getEntity());
-			logger.info("易生快捷支付返回报文[{}]", new Object[] { respStr });
-			
-			JSONObject resObj = JSONObject.fromObject(respStr);
-			String code = resObj.getString("status");
-			String resultMsg = "";
-			boolean flag = false;
-			if("SUCCESS".equals(code)){
-				String resSign = resObj.getString("sign");
-				resObj.remove("sign");
-				srcStr = StringUtil.orderedKey(resObj)+"&key="+privateKey;
-				if(resSign.equals(SwpHashUtil.getSign(srcStr, privateKey, "SHA256"))){
-					String trade_state = resObj.getString("trade_state");
-					if("SUCCESS".equals(trade_state)){
-						result.put("returnCode", "0000");
-						result.put("returnMsg", "成功");
-						flag = true;
-					}else{
-						resultMsg = resObj.getString("trade_state_desc");
-					}
-				}else{
-					resultMsg = "快捷支付出参验签失败";
-				}
-			}else{
-				resultMsg = resObj.getString("message");
-			}
-			if(!flag){
-				result.put("returnCode", "0003");
-				result.put("returnMsg", resultMsg);
-			}
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			result.put("returnCode", "0096");
-			result.put("returnMsg", e.getMessage());
-			return result;
-		}
-		return result;
-	}
+	
 	
 	
 	

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -1109,9 +1110,6 @@ public class RegistController {
 			
 			memberInfoService.insertSelective(memberInfo);
 			
-			
-			
-			
 			for(String trade:tardeObj){
 				String[] arr = trade.split("#");
 				String payMethod = arr[0];
@@ -1196,8 +1194,6 @@ public class RegistController {
 				}
 			}
 			
-			
-			
 			epayCode.setMemberId(memberInfo.getId());
 			epayCodeService.insertSelective(epayCode);
 			
@@ -1211,8 +1207,6 @@ public class RegistController {
 			memberBank.setAccountNumber(memberInfo.getCardNbr());
 			memberBank.setMobilePhone("");
 			memberBank.setSettleType(memberInfo.getSettleType());
-			
-			
 			
 			SysOfficeExample sysOfficeExample = new SysOfficeExample();
 			sysOfficeExample.createCriteria().andIdEqualTo(officeId);
@@ -1951,6 +1945,198 @@ public class RegistController {
 			logger.info(e.getMessage(), e);
 			result.put("returnCode", "0096");
 			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	@ResponseBody
+	@RequestMapping("/memberInfo/balance")
+	public JSONObject balance(HttpServletRequest request,HttpServletResponse response){
+		JSONObject result = new JSONObject();
+		try {
+			
+			Map<String,String> inparam = new HashMap<String, String>();
+			Enumeration<String> pNames=request.getParameterNames();
+			while(pNames.hasMoreElements()){
+			    String name=(String)pNames.nextElement();
+			    String value=request.getParameter(name);
+			    inparam.put(name, value);
+			}
+			logger.info("商户余额查询下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
+			
+			String memberCode = request.getParameter("memberCode");
+			String signStr = request.getParameter("signStr");
+			
+			String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
+			
+			//待签名字符串
+			Map<String,String> params = new HashMap<String,String>();
+			if(memberCode == null || "".equals(memberCode)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "商户编号[memberCode]缺失");
+				return CommonUtil.signReturn(result);
+			}
+			params.put("memberCode", memberCode);
+			
+			if(signStr == null || "".equals(signStr)){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "签名[signStr]缺失");
+				return CommonUtil.signReturn(result);
+			}
+			
+			String srcStr = StringUtil.orderedKey(params);
+			
+			MemberInfoExample memberInfoExample = new MemberInfoExample();
+			memberInfoExample.or().andCodeEqualTo(memberCode).andDelFlagEqualTo("0");
+			List<MemberInfo> memberInfoList = memberInfoService.selectByExample(memberInfoExample);
+			if(null == memberInfoList || memberInfoList.size() == 0){
+				result.put("returnCode", "0001");
+				result.put("returnMsg", "商户信息不存在");
+				return CommonUtil.signReturn(result);
+			}
+			MemberInfo memberInfo = memberInfoList.get(0);
+			if(!"0".equals(memberInfo.getStatus())){
+				if("4".equals(memberInfo.getStatus())){
+					result.put("returnCode", "0008");
+					result.put("returnMsg", "该商户未进行认证，暂时无法交易");
+					return CommonUtil.signReturn(result);
+				}
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，该商户暂不可用");
+				return CommonUtil.signReturn(result);
+			}
+			
+			EpayCodeExample epayCodeExample = new EpayCodeExample();
+			List<String> values = new ArrayList<String>();
+			values.add("5");
+			values.add("7");
+			epayCodeExample.or().andMemberIdEqualTo(memberInfo.getId()).andStatusIn(values);
+			List<EpayCode> epayCodeList = epayCodeService.selectByExample(epayCodeExample);
+			if(null == epayCodeList || epayCodeList.size() == 0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，该商户暂不可用");
+				return CommonUtil.signReturn(result);
+			}
+			
+			SysOfficeExample sysOfficeExample = new SysOfficeExample();
+			sysOfficeExample.or().andIdEqualTo(epayCodeList.get(0).getOfficeId()).andAgtTypeEqualTo("3");
+			List<SysOffice> sysOfficeList = sysOfficeService.selectByExample(sysOfficeExample);
+			if(null == sysOfficeList || sysOfficeList.size() == 0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "该商户机构信息不完整，请确认后重试");
+				return CommonUtil.signReturn(result);
+			}
+			
+			SysOffice sysOffice = sysOfficeList.get(0);
+			
+			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr, signStr)){//by linxf 测试屏蔽
+				result.put("returnCode", "0004");
+				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
+				return CommonUtil.signReturn(result);
+			}
+			
+			
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+			
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return CommonUtil.signReturn(result);
+			}
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			
+			if(routeCode.equals(RouteCodeConstant.YS_ROUTE_CODE)){
+				JSONObject resObjb = ysBalance(merchantCode.getKjMerchantCode());
+				Double balance = 0d;
+				if("0000".equals(resObjb.getString("returnCode"))){
+					balance = Double.valueOf(resObjb.getString("balance"))/100;
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "余额查询成功");
+					result.put("balance", new DecimalFormat("0.00").format(balance));
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", "账户余额查询失败:"+resObjb.getString("msg"));
+				}
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "通道不支持");
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return CommonUtil.signReturn(result);
+		}
+		return CommonUtil.signReturn(result);
+	}
+	
+	
+	/**
+	 * 易生商户余额查询
+	 * @param merCode
+	 * @return
+	 */
+	public JSONObject ysBalance(String merCode){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = YSConfig.msServerUrl+"/swp/dh/mer_accinfo.do";
+			String privateKey = YSConfig.privateKey;
+			
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("sp_id", YSConfig.orgNo);
+			param.put("mch_id", YSConfig.defaultMerNoApay);
+			param.put("sub_mch_id", merCode);
+			
+			Date t = new Date();
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(t);
+			long sys_timestamp = cal.getTimeInMillis();
+			param.put("timestamp", String.valueOf(sys_timestamp));
+			
+			String srcStr = StringUtil.orderedKey(param)+"&key="+privateKey;
+			String sign = SwpHashUtil.getSign(srcStr, privateKey, "SHA256");
+			String paramStr = StringUtil.orderedKey(param) + "&sign="+sign;
+			logger.info("易生商户余额查询参数[{}]",paramStr );
+
+			HttpResponse httpResponse =HttpUtils.doPost(serverUrl, "", paramStr, "application/x-www-form-urlencoded; charset=UTF-8");
+			String respStr = EntityUtils.toString(httpResponse.getEntity());
+			logger.info("易生商户余额查询返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			String code = resObj.getString("status");
+			String resultMsg = "";
+			boolean flag = false;
+			if("SUCCESS".equals(code)){
+				String resSign = resObj.getString("sign");
+				resObj.remove("sign");
+				srcStr = StringUtil.orderedKey(resObj)+"&key="+privateKey;
+				if(resSign.equals(SwpHashUtil.getSign(srcStr, privateKey, "SHA256"))){
+					String trade_state = resObj.getString("trade_state");
+					if("SUCCESS".equals(trade_state)){
+						result.put("returnCode", "0000");
+						result.put("returnMsg", "成功");
+						result.put("balance", resObj.getString("amt"));
+						flag = true;
+					}else{
+						resultMsg = resObj.getString("trade_state_desc");
+					}
+				}else{
+					resultMsg = "商户余额查询出参验签失败";
+				}
+			}else{
+				resultMsg = resObj.getString("message");
+			}
+			if(!flag){
+				result.put("returnCode", "0003");
+				result.put("returnMsg", resultMsg);
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
 		}
 		return result;
 	}
