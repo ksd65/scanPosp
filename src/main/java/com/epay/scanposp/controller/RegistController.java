@@ -974,9 +974,14 @@ public class RegistController {
 		return result;
 	}
 	
-	
+	/**
+	 * 管理平台商户进件调用
+	 * @param model
+	 * @param request
+	 * @return
+	 */
 	@ResponseBody
-	@RequestMapping("/toRegister")
+	@RequestMapping("/api/memberInfo/toRegister")
 	public JSONObject toRegister(Model model, HttpServletRequest request) {
 		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
 		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
@@ -1044,6 +1049,7 @@ public class RegistController {
 			registerTmp.setAccountName("");
 			registerTmp.setAccountNumber("");
 			registerTmp.setPayCode(epayCode.getPayCode());
+			registerTmp.setBusLicenceNbr(busLicenceNbr);
 			registerTmp.setRemarks(remarks);
 			registerTmp.setCreateBy("1");
 			registerTmp.setUpdateBy("1");
@@ -1107,7 +1113,10 @@ public class RegistController {
 			memberInfo.setWxRouteId("1004");
 			memberInfo.setZfbRouteId("1004");
 			memberInfo.setRemarks(registerTmp.getRemarks());
-			
+			memberInfo.setStatus("0");
+			memberInfo.setWxStatus("1");
+			memberInfo.setZfbStatus("1");
+		//	memberInfo.setOrderNo(orderCode);
 			memberInfoService.insertSelective(memberInfo);
 			
 			for(String trade:tardeObj){
@@ -1198,6 +1207,7 @@ public class RegistController {
 			epayCodeService.insertSelective(epayCode);
 			
 			MemberBank memberBank = new MemberBank();
+			memberBank.setMemberId(memberInfo.getId());
 			memberBank.setBankId(registerTmp.getBankId());
 			memberBank.setSubId(registerTmp.getSubId());
 			memberBank.setProvince(registerTmp.getProvince());
@@ -1207,21 +1217,44 @@ public class RegistController {
 			memberBank.setAccountNumber(memberInfo.getCardNbr());
 			memberBank.setMobilePhone("");
 			memberBank.setSettleType(memberInfo.getSettleType());
+			memberBank.setCreateBy("1");
+			memberBank.setCreateDate(new Date());
+			memberBank.setUpdateBy("1");
+			memberBank.setUpdateDate(new Date());
+			memberBank.setDelFlag("0");
+			memberBankService.insertSelective(memberBank);
+			
+			Account accountInfo = new Account();
+			accountInfo.setMemberId(memberInfo.getId());
+			accountInfo.setBalance(new BigDecimal("0.0"));
+			accountInfo.setFreezeMoney(new BigDecimal("0.0"));
+			accountInfo.setCreateBy("1");
+			accountInfo.setCreateDate(new Date());
+			accountInfo.setUpdateBy("1");
+			accountInfo.setUpdateDate(new Date());
+			accountService.insertSelective(accountInfo);
+			
 			
 			SysOfficeExample sysOfficeExample = new SysOfficeExample();
-			sysOfficeExample.createCriteria().andIdEqualTo(officeId);
+			sysOfficeExample.createCriteria().andIdEqualTo(officeId).andDelFlagEqualTo("0");
 			
-			sysOfficeService.selectByExample(sysOfficeExample);
-			
-			
-			SysOffice sysOffice = new SysOffice();
-			sysOffice.setId(officeId);
-			sysOffice.setPublicKeyRsa(Base64.encodeBase64String(publicKey));
-			sysOffice.setPrivateKeyRsa(Base64.encodeBase64String(privateKey));
-			sysOfficeService.updateByPrimaryKeySelective(sysOffice);
-
+			List<SysOffice> officeList = sysOfficeService.selectByExample(sysOfficeExample);
+			if(officeList !=null && officeList.size()>0){
+				SysOffice sysOffice = officeList.get(0);
+				if(StringUtils.isBlank(sysOffice.getPublicKeyRsa())&&StringUtils.isBlank(sysOffice.getPrivateKeyRsa())){
+					System.out.println("私钥："+Base64.encodeBase64String(privateKey));
+					System.out.println("公："+Base64.encodeBase64String(publicKey));
+					sysOffice.setPublicKeyRsa(Base64.encodeBase64String(publicKey));
+					sysOffice.setPrivateKeyRsa(Base64.encodeBase64String(privateKey));
+					sysOffice.setUpdateDate(new Date());
+					sysOfficeService.updateByPrimaryKeySelective(sysOffice);
+				}
+			}
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "进件成功");
 		}catch(Exception e){
-			
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
 		}
 		return result;
 	}
@@ -1636,7 +1669,7 @@ public class RegistController {
 			param.put("acc_name", memberInfo.getContact());
 			param.put("id_no", memberInfo.getCertNbr());
 			param.put("settle_rate", platTradeRate);//借记卡费率/贷记卡费率
-			param.put("extra_rate", String.valueOf((int)(((new BigDecimal(platDrawFee)).floatValue())*100)));
+			param.put("extra_rate", String.valueOf((new BigDecimal(platDrawFee)).multiply(new BigDecimal(100)).intValue()));
 			
 			Date t = new Date();
 			Calendar cal = Calendar.getInstance();
@@ -1898,7 +1931,7 @@ public class RegistController {
 			param.put("out_trade_no", orderCode);
 			param.put("sub_mch_id",merchantCode.getKjMerchantCode() );
 			param.put("settle_rate", tradeRate);//借记卡费率/贷记卡费率
-			param.put("extra_rate", String.valueOf((int)(((new BigDecimal(drawFee)).floatValue())*100)));
+			param.put("extra_rate", String.valueOf((new BigDecimal(drawFee)).multiply(new BigDecimal(100)).intValue()));
 			
 			Date t = new Date();
 			Calendar cal = Calendar.getInstance();

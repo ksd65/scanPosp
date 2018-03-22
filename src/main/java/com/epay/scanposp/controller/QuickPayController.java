@@ -1449,7 +1449,7 @@ public class QuickPayController {
 	     	
 			contextjson.put("linkId",orderCode);//订单流水号
 	     	contextjson.put("orderType","10");//订单类型
-	     	contextjson.put("amount",String.valueOf((int)(((new BigDecimal(payMoney)).floatValue())*100)));//消费金额
+	     	contextjson.put("amount",String.valueOf((new BigDecimal(payMoney)).multiply(new BigDecimal(100)).intValue()));//消费金额
 	     	contextjson.put("bankNo",bankAccount);//银行卡号
 	     	contextjson.put("bankAccount",accountName);//银行账户
 	     	contextjson.put("bankPhone",tel);//绑定手机号码
@@ -2290,7 +2290,7 @@ public class QuickPayController {
 			payResultNoticeService.insertSelective(payResultNotice);
 			
 			String serverUrl = YSConfig.msServerUrl+"/swp/dh/token_consume.do";
-			String amount = String.valueOf((int)(((new BigDecimal(payMoney)).floatValue())*100));
+			String amount = String.valueOf((new BigDecimal(payMoney)).multiply(new BigDecimal(100)).intValue());
 			String callBack = SysConfig.serverUrl + "/quickPay/ysPayNotify";
 			String privateKey = YSConfig.privateKey;
 			

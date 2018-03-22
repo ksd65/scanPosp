@@ -471,7 +471,7 @@ public class AgentPayController {
 			JSONObject contextjson = new JSONObject();
 	     	
 	     	contextjson.put("linkId",orderCode);//三方订单流水号
-	     	contextjson.put("amount",String.valueOf((int)(((new BigDecimal(drawAmount)).floatValue())*100)));//结算到账金额 单位分
+	     	contextjson.put("amount",String.valueOf((new BigDecimal(drawAmount)).multiply(new BigDecimal(100)).intValue()));//结算到账金额 单位分
 	     	contextjson.put("bankNo",bankAccount);//结算银行卡号
 	     	contextjson.put("bankAccount",accountName);//结算银行账户
 	     	contextjson.put("bankPhone",tel);//绑定手机号码
@@ -931,7 +931,7 @@ public class AgentPayController {
 			param.put("out_js_trade_no", orderCode);
 			param.put("sub_mch_id", merCode);
 			param.put("in_acc_no", bankAccount);
-			param.put("daifu_amt", String.valueOf((int)(((new BigDecimal(payMoney)).floatValue())*100)));
+			param.put("daifu_amt", String.valueOf((new BigDecimal(payMoney)).multiply(new BigDecimal(100)).intValue()));
 			param.put("notifyurl", callBack);
 			
 			Date t = new Date();
