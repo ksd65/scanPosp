@@ -96,6 +96,8 @@ import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberMerchantKey;
 import com.epay.scanposp.entity.MemberMerchantKeyExample;
+import com.epay.scanposp.entity.MemberPayType;
+import com.epay.scanposp.entity.MemberPayTypeExample;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayResultNotice;
@@ -121,6 +123,7 @@ import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
+import com.epay.scanposp.service.MemberPayTypeService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
@@ -199,6 +202,9 @@ public class BankPayController {
 	
 	@Autowired
 	private BankRouteService bankRouteService;
+	
+	@Autowired
+	private MemberPayTypeService memberPayTypeService;
 	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/toPay")
@@ -358,6 +364,14 @@ public class BankPayController {
 			return result;
 		}
 		
+		MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+		memberPayTypeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_YL).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_YL).andDelFlagEqualTo("0");
+		List<MemberPayType> memberPayTypeList =  memberPayTypeService.selectByExample(memberPayTypeExample);
+		if(memberPayTypeList==null || memberPayTypeList.size()==0){
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，商户未开通该支付权限");
+			return result;
+		}
 		
 		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_YL,PayTypeConstant.PAY_TYPE_YL);
 		String routeCode = rtMap.get("routeCode");
@@ -529,7 +543,7 @@ public class BankPayController {
 			OrderRequest orderRequest = new OrderRequest();
 			orderRequest.setMerchantId(merchantCode.getWxMerchantCode());
 			orderRequest.setMerchantOrderId(orderCode);
-			orderRequest.setMerchantOrderAmt(String.valueOf((int)((new BigDecimal(payMoney)).floatValue()*100)));
+			orderRequest.setMerchantOrderAmt(String.valueOf((new BigDecimal(payMoney)).multiply(new BigDecimal(100)).intValue()));
 			orderRequest.setMerchantOrderDesc(memberInfo.getName() + " 收款");
 			orderRequest.setMerchantPayNotifyUrl(callBack);
 			orderRequest.setMerchantFrontEndUrl(SLFConfig.merchantFrontEndUrl);
@@ -1315,7 +1329,7 @@ public class BankPayController {
 			receivePayRequest.setBankGeneralName(memberBank.getBankOpen());
 			receivePayRequest.setAccNo(memberBank.getAccountNumber());
 			receivePayRequest.setAccName(memberBank.getAccountName());
-			receivePayRequest.setAmount(String.valueOf((int)((new BigDecimal(payMoney)).floatValue()*100)));
+			receivePayRequest.setAmount(String.valueOf((new BigDecimal(payMoney)).multiply(new BigDecimal(100)).intValue()));
 			receivePayRequest.setCredentialType("01");//证件类型  01 身份证，对私必填
 	
 			receivePayRequest.setCredentialNo(memberInfo.getCertNbr());
@@ -1545,7 +1559,7 @@ public class BankPayController {
 			TreeMap<String, Object> map2 = new TreeMap<>();
 			map.put("mch_id", merchantCode.getQqMerchantCode());
 			map.put("out_order_no", orderCode);
-			map.put("payment_fee", String.valueOf((int)(((new BigDecimal(amount)).floatValue())*100)));
+			map.put("payment_fee", String.valueOf((new BigDecimal(amount)).multiply(new BigDecimal(100)).intValue()));
 			map.put("payee_acct_no", draw.getBankAccount());
 			map.put("payee_acct_name", draw.getAccountName());
 			map.put("card_type", "1");//1、借记卡 2、贷记卡
@@ -1970,7 +1984,8 @@ public class BankPayController {
 			receivePayRequest.setBankGeneralName(bankName);
 			receivePayRequest.setAccNo(bankAccount);
 			receivePayRequest.setAccName(accountName);
-			receivePayRequest.setAmount(String.valueOf((int)(((new BigDecimal(payMoney)).floatValue()-1)*100)));
+			//receivePayRequest.setAmount(String.valueOf((int)(((new BigDecimal(payMoney)).floatValue()-1)*100)));
+			receivePayRequest.setAmount(String.valueOf((new BigDecimal(payMoney)).subtract(new BigDecimal(1)).multiply(new BigDecimal(100)).intValue()));
 			receivePayRequest.setCredentialType("01");//证件类型  01 身份证，对私必填
 	
 			receivePayRequest.setCredentialNo(certNo);

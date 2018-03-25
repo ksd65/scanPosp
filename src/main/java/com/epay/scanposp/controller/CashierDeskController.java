@@ -127,6 +127,8 @@ import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberMerchantKey;
 import com.epay.scanposp.entity.MemberMerchantKeyExample;
+import com.epay.scanposp.entity.MemberPayType;
+import com.epay.scanposp.entity.MemberPayTypeExample;
 import com.epay.scanposp.entity.MemberPayee;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
@@ -176,6 +178,7 @@ import com.epay.scanposp.service.MemberIpRuleService;
 import com.epay.scanposp.service.MemberIpWhiteListService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
+import com.epay.scanposp.service.MemberPayTypeService;
 import com.epay.scanposp.service.MemberPayeeService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayQrCodeService;
@@ -330,6 +333,9 @@ public class CashierDeskController {
 	
 	@Autowired
 	private CommonUtilService commonUtilService;
+	
+	@Autowired
+	private MemberPayTypeService memberPayTypeService;
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/getQrcodePay")
@@ -1224,6 +1230,16 @@ public class CashierDeskController {
 		}else if("5".equals(payType)){
 			payTypeStr = "JD";
 		}
+		
+		MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+		memberPayTypeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_SMZF).andPayTypeEqualTo(payTypeStr).andDelFlagEqualTo("0");
+		List<MemberPayType> memberPayTypeList =  memberPayTypeService.selectByExample(memberPayTypeExample);
+		if(memberPayTypeList==null || memberPayTypeList.size()==0){
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，商户未开通该支付权限");
+			return result;
+		}
+		
 		
 		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_SMZF,payTypeStr);
 		String routeCode = rtMap.get("routeCode");

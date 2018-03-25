@@ -20,4 +20,7 @@ public class MemberMerchantCodeService extends BaseService<MemberMerchantCode,Me
 		this.memberMerchantCodeMapper = memberMerchantCodeMapper;
 	}
 	
+	public int updateDelFlagByExample(MemberMerchantCodeExample example){
+		return memberMerchantCodeMapper.updateDelFlagByExample(example);
+	}
 }

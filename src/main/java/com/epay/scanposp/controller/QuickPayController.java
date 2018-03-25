@@ -80,6 +80,8 @@ import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberMerchantKey;
 import com.epay.scanposp.entity.MemberMerchantKeyExample;
+import com.epay.scanposp.entity.MemberPayType;
+import com.epay.scanposp.entity.MemberPayTypeExample;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
 import com.epay.scanposp.entity.PayResultNotice;
@@ -106,6 +108,7 @@ import com.epay.scanposp.service.MemberBindAccDtlService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
+import com.epay.scanposp.service.MemberPayTypeService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
@@ -194,6 +197,9 @@ public class QuickPayController {
 	
 	@Autowired
 	private BankService bankService;
+	
+	@Autowired
+	private MemberPayTypeService memberPayTypeService;
 	
 	/**
 	 * 快捷支付短信发送接口
@@ -2192,6 +2198,15 @@ public class QuickPayController {
 			}
 			
 			String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
+			
+			MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+			memberPayTypeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_YL).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_KJ).andDelFlagEqualTo("0");
+			List<MemberPayType> memberPayTypeList =  memberPayTypeService.selectByExample(memberPayTypeExample);
+			if(memberPayTypeList==null || memberPayTypeList.size()==0){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，该商户未开通快捷支付的权限");
+				return result;
+			}
 			
 			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
 			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");

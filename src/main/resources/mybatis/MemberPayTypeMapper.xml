@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.MemberPayTypeMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.MemberPayType">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="member_id" jdbcType="INTEGER" property="memberId" />
+    <result column="pay_method" jdbcType="VARCHAR" property="payMethod" />
+    <result column="pay_type" jdbcType="VARCHAR" property="payType" />
+    <result column="route_code" jdbcType="VARCHAR" property="routeCode" />
+    <result column="aisle_type" jdbcType="VARCHAR" property="aisleType" />
+    <result column="merchant_code" jdbcType="VARCHAR" property="merchantCode" />
+    <result column="t0_draw_fee" jdbcType="DECIMAL" property="t0DrawFee" />
+    <result column="t0_trade_rate" jdbcType="DECIMAL" property="t0TradeRate" />
+    <result column="t1_draw_fee" jdbcType="DECIMAL" property="t1DrawFee" />
+    <result column="t1_trade_rate" jdbcType="DECIMAL" property="t1TradeRate" />
+    <result column="t1_draw_rate" jdbcType="DECIMAL" property="t1DrawRate" />
+    <result column="t0_draw_rate" jdbcType="DECIMAL" property="t0DrawRate" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id,member_id,pay_method,pay_type,route_code,aisle_type,merchant_code,t0_draw_fee,t0_draw_rate,t0_trade_rate,
+    t1_draw_fee,t1_draw_rate,t1_trade_rate,create_by, create_date, update_by, update_date,del_flag
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberPayTypeExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_member_paytype
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from bu_member_paytype
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from bu_member_paytype
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.MemberPayTypeExample">
+    delete from bu_member_paytype
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  
+  
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.MemberPayTypeExample" resultType="java.lang.Integer">
+    select count(*) from bu_member_paytype
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.MemberPayType" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into bu_member_paytype
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="memberId != null" >
+        member_id,
+      </if>
+      <if test="payMethod != null" >
+        pay_method,
+      </if>
+      <if test="payType != null" >
+        pay_type,
+      </if>
+      <if test="routeCode != null">
+        route_code,
+      </if>
+      <if test="aisleType != null">
+        aisle_type,
+      </if>
+      <if test="merchantCode != null">
+        merchant_code,
+      </if>
+      <if test="t0DrawFee != null">
+        t0_draw_fee,
+      </if>
+      <if test="t0TradeRate != null">
+        t0_trade_rate,
+      </if>
+      <if test="t1DrawFee != null">
+        t1_draw_fee,
+      </if>
+      <if test="t1TradeRate != null">
+        t1_trade_rate,
+      </if>
+      <if test="t1DrawRate != null">
+        t1_draw_rate,
+      </if>
+      <if test="t0DrawRate != null">
+        t0_draw_rate,
+      </if>
+      
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="memberId != null" >
+        #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="payMethod != null" >
+        #{payMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="payType != null" >
+        #{payType,jdbcType=VARCHAR},
+      </if>
+      <if test="routeCode != null">
+        #{routeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="aisleType != null">
+        #{aisleType,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantCode != null">
+        #{merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="t0DrawFee != null">
+        #{t0DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t0TradeRate != null">
+        #{t0TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawFee != null">
+        #{t1DrawFee,jdbcType=DECIMAL},
+      </if>
+      <if test="t1TradeRate != null">
+        #{t1TradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t1DrawRate != null">
+        #{t1DrawRate,jdbcType=DECIMAL},
+      </if>
+      <if test="t0DrawRate != null">
+        #{t0DrawRate,jdbcType=DECIMAL},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.MemberPayType">
+    update bu_member_paytype
+    set member_id = #{memberId,jdbcType=INTEGER},
+      pay_method = #{payMethod,jdbcType=VARCHAR},
+      pay_type = #{payType,jdbcType=VARCHAR},
+      t0_draw_fee = #{t0DrawFee,jdbcType=DECIMAL},
+      t1_draw_fee = #{t1DrawFee,jdbcType=DECIMAL},
+      t0_trade_rate = #{t0TradeRate,jdbcType=DECIMAL},
+      t1_trade_rate = #{t1TradeRate,jdbcType=DECIMAL},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      del_flag = #{delFlag,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateDelFlagByExample" parameterType="com.epay.scanposp.entity.MemberPayTypeExample">
+    update bu_member_paytype set del_flag='1',update_date = sysdate()
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </update>
+  
+</mapper>

@@ -105,6 +105,8 @@ import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberMerchantKey;
 import com.epay.scanposp.entity.MemberMerchantKeyExample;
+import com.epay.scanposp.entity.MemberPayType;
+import com.epay.scanposp.entity.MemberPayTypeExample;
 import com.epay.scanposp.entity.MemberPayee;
 import com.epay.scanposp.entity.MsResultNotice;
 import com.epay.scanposp.entity.MsResultNoticeExample;
@@ -149,6 +151,7 @@ import com.epay.scanposp.service.MemberIpWhiteListService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.MemberOpenidService;
+import com.epay.scanposp.service.MemberPayTypeService;
 import com.epay.scanposp.service.MemberPayeeService;
 import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.MsbillService;
@@ -281,6 +284,9 @@ public class DebitNoteController {
 	
 	@Resource
 	private PayeeService payeeService;
+	
+	@Autowired
+	private MemberPayTypeService memberPayTypeService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -4595,6 +4601,15 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			payTypeStr = PayTypeConstant.PAY_TYPE_JD;
 		}else if("2".equals(payType)){
 			payTypeStr = PayTypeConstant.PAY_TYPE_ZFB;
+		}
+		
+		MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+		memberPayTypeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_H5).andPayTypeEqualTo(payTypeStr).andDelFlagEqualTo("0");
+		List<MemberPayType> memberPayTypeList =  memberPayTypeService.selectByExample(memberPayTypeExample);
+		if(memberPayTypeList==null || memberPayTypeList.size()==0){
+			result.put("returnCode", "0008");
+			result.put("returnMsg", "对不起，商户未开通该支付权限");
+			return result;
 		}
 		
 		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_H5,payTypeStr);

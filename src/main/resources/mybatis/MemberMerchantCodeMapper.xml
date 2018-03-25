@@ -476,4 +476,11 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
   
+  <update id="updateDelFlagByExample" parameterType="com.epay.scanposp.entity.MemberMerchantCodeExample">
+    update bu_member_merchant_code set del_flag='1',update_date = sysdate()
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </update>
+  
 </mapper>
