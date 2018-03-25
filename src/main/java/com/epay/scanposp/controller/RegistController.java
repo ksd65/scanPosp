@@ -41,6 +41,7 @@ import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.StringUtil;
+import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.SequenseTypeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
@@ -66,6 +67,8 @@ import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberMerchantKey;
+import com.epay.scanposp.entity.MemberPayType;
+import com.epay.scanposp.entity.MemberPayTypeExample;
 import com.epay.scanposp.entity.PayTypeMerchantDefault;
 import com.epay.scanposp.entity.PayTypeMerchantDefaultExample;
 import com.epay.scanposp.entity.RegisterTmp;
@@ -81,6 +84,7 @@ import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
+import com.epay.scanposp.service.MemberPayTypeService;
 import com.epay.scanposp.service.PayTypeMerchantDefaultService;
 import com.epay.scanposp.service.RegisterTmpService;
 import com.epay.scanposp.service.SysCommonConfigService;
@@ -126,6 +130,9 @@ public class RegistController {
 	
 	@Autowired
 	private PayTypeMerchantDefaultService payTypeMerchantDefaultService;
+	
+	@Autowired
+	private MemberPayTypeService memberPayTypeService;
 
 	@ResponseBody
 	@RequestMapping("/memberInfo/toRegist")
@@ -1002,6 +1009,8 @@ public class RegistController {
 			String[] obj = tardeObj[0].split("#");
 			String t0TradeRate = obj[2];
 			String t1TradeRate = obj[3];
+			String t0DrawFee = obj[4];
+			String t1DrawFee = obj[5];
 			
 			if(StringUtil.isEmpty(shortName)){
 				shortName = name;
@@ -1106,14 +1115,18 @@ public class RegistController {
 			memberInfo.setEmail(registerTmp.getEmail());
 			memberInfo.setLevel("0");
 			memberInfo.setDrawStatus("1"); //默认D+0提现状态关闭
-			//memberInfo.setT0DrawFee(new BigDecimal(settleFee));
-			//memberInfo.setT1DrawFee(new BigDecimal(settleFee));
+			if(StringUtils.isNotBlank(t0DrawFee)){
+				memberInfo.setT0DrawFee(new BigDecimal(t0DrawFee));
+			}
+			if(StringUtils.isNotBlank(t1DrawFee)){
+				memberInfo.setT1DrawFee(new BigDecimal(t1DrawFee));
+			}
 			memberInfo.setT0TradeRate(new BigDecimal(t0TradeRate));
 			memberInfo.setT1TradeRate(new BigDecimal(t1TradeRate));
 			memberInfo.setWxRouteId("1004");
 			memberInfo.setZfbRouteId("1004");
 			memberInfo.setRemarks(registerTmp.getRemarks());
-			memberInfo.setStatus("0");
+			memberInfo.setStatus("3");
 			memberInfo.setWxStatus("1");
 			memberInfo.setZfbStatus("1");
 		//	memberInfo.setOrderNo(orderCode);
@@ -1125,12 +1138,34 @@ public class RegistController {
 				String txnType = arr[1];
 				String t0_radeRate = arr[2];
 				String t1_radeRate = arr[3];
+				String t0_drawFee = arr[4];
+				String t1_drawFee = arr[5];
 				String payType = transPayType(txnType);
+				
 				PayTypeMerchantDefaultExample payTypeMerchantDefaultExample = new PayTypeMerchantDefaultExample();
 				payTypeMerchantDefaultExample.or().andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
 				List<PayTypeMerchantDefault> plist =  payTypeMerchantDefaultService.selectByExample(payTypeMerchantDefaultExample);
 				if(plist != null && plist.size()>0){
 					PayTypeMerchantDefault merchantDefault = plist.get(0);
+					
+					MemberPayType memberPayType = new MemberPayType();
+					memberPayType.setMemberId(memberInfo.getId());
+					memberPayType.setPayMethod(payMethod);
+					memberPayType.setPayType(payType);
+					memberPayType.setRouteCode(merchantDefault.getRouteCode());
+					memberPayType.setAisleType(merchantDefault.getAisleType());
+					memberPayType.setMerchantCode(merchantDefault.getMerchantCode());
+					memberPayType.setT0TradeRate(new BigDecimal(t0_radeRate));
+					memberPayType.setT1TradeRate(new BigDecimal(t1_radeRate));
+					if(StringUtils.isNotBlank(t0_drawFee)){
+						memberPayType.setT0DrawFee(new BigDecimal(t0_drawFee));
+					}
+					if(StringUtils.isNotBlank(t1_drawFee)){
+						memberPayType.setT1DrawFee(new BigDecimal(t1_drawFee));
+					}
+					memberPayType.setCreateDate(new Date());
+					memberPayTypeService.insertSelective(memberPayType);
+					
 					MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
 					if(StringUtils.isBlank(merchantDefault.getAisleType())){
 						memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(merchantDefault.getRouteCode()).andDelFlagEqualTo("0");
@@ -1138,66 +1173,82 @@ public class RegistController {
 						memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(merchantDefault.getRouteCode()).andAisleTypeEqualTo(merchantDefault.getAisleType()).andDelFlagEqualTo("0");
 					}
 					List<MemberMerchantCode> mlist = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+					MemberMerchantCode memberMerchantCode = null;
 					if(mlist==null || mlist.size()==0){
-						MemberMerchantCode memberMerchantCode = new MemberMerchantCode();
+						memberMerchantCode = new MemberMerchantCode();
 						memberMerchantCode.setMemberId(memberInfo.getId());
 						memberMerchantCode.setRouteCode(merchantDefault.getRouteCode());
 						memberMerchantCode.setAisleType(merchantDefault.getAisleType());
-						if("WX".equals(payType)){
-							memberMerchantCode.setWxMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("QQ".equals(payType)){
-							memberMerchantCode.setQqMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setQqT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setQqT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("ZFB".equals(payType)){
-							memberMerchantCode.setZfbMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setZfbT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setZfbT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("JD".equals(payType)){
-							memberMerchantCode.setJdMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setJdT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setJdT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("YL".equals(payType)){
-							memberMerchantCode.setWyMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setWyT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setWyT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("KJ".equals(payType)){
-							memberMerchantCode.setKjMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setKjT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setKjT1TradeRate(new BigDecimal(t1_radeRate));
-						}
 						memberMerchantCode.setCreateDate(new Date());
+					}else{
+						memberMerchantCode = mlist.get(0);
+						memberMerchantCode.setUpdateDate(new Date());
+					}
+					if("WX".equals(payType)){
+						memberMerchantCode.setWxMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("QQ".equals(payType)){
+						memberMerchantCode.setQqMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setQqT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setQqT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setQqT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setQqT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("ZFB".equals(payType)){
+						memberMerchantCode.setZfbMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setZfbT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setZfbT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setZfbT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setZfbT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("JD".equals(payType)){
+						memberMerchantCode.setJdMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setJdT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setJdT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setJdT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setJdT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("YL".equals(payType)){
+						memberMerchantCode.setWyMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setWyT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setWyT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setWyT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setWyT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("KJ".equals(payType)){
+						memberMerchantCode.setKjMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setKjT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setKjT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setKjT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setKjT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}
+					
+					if(mlist==null || mlist.size()==0){
 						memberMerchantCodeService.insertSelective(memberMerchantCode);
 					}else{
-						MemberMerchantCode memberMerchantCode = mlist.get(0);
-						if("WX".equals(payType)){
-							memberMerchantCode.setWxMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("QQ".equals(payType)){
-							memberMerchantCode.setQqMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setQqT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setQqT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("ZFB".equals(payType)){
-							memberMerchantCode.setZfbMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setZfbT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setZfbT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("JD".equals(payType)){
-							memberMerchantCode.setJdMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setJdT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setJdT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("YL".equals(payType)){
-							memberMerchantCode.setWyMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setWyT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setWyT1TradeRate(new BigDecimal(t1_radeRate));
-						}else if("KJ".equals(payType)){
-							memberMerchantCode.setKjMerchantCode(merchantDefault.getMerchantCode());
-							memberMerchantCode.setKjT0TradeRate(new BigDecimal(t0_radeRate));
-							memberMerchantCode.setKjT1TradeRate(new BigDecimal(t1_radeRate));
-						}
-						memberMerchantCode.setUpdateDate(new Date());
 						memberMerchantCodeService.updateByPrimaryKey(memberMerchantCode);
 					}
 				}
@@ -1242,10 +1293,12 @@ public class RegistController {
 			if(officeList !=null && officeList.size()>0){
 				SysOffice sysOffice = officeList.get(0);
 				if(StringUtils.isBlank(sysOffice.getPublicKeyRsa())&&StringUtils.isBlank(sysOffice.getPrivateKeyRsa())){
-					System.out.println("私钥："+Base64.encodeBase64String(privateKey));
-					System.out.println("公："+Base64.encodeBase64String(publicKey));
-					sysOffice.setPublicKeyRsa(Base64.encodeBase64String(publicKey));
-					sysOffice.setPrivateKeyRsa(Base64.encodeBase64String(privateKey));
+					String privateStr = Base64.encodeBase64String(privateKey);
+					String publicStr = Base64.encodeBase64String(publicKey);
+					System.out.println("私钥："+privateStr);
+					System.out.println("公钥："+publicStr);
+					sysOffice.setPublicKeyRsa(publicStr);
+					sysOffice.setPrivateKeyRsa(privateStr);
 					sysOffice.setUpdateDate(new Date());
 					sysOfficeService.updateByPrimaryKeySelective(sysOffice);
 				}
@@ -1269,6 +1322,218 @@ public class RegistController {
 		obj.put("9", "KJ");
 		return obj.get(txnType);
 	}
+	
+	
+	@ResponseBody
+	@RequestMapping("/api/memberInfo/updateMember")
+	public JSONObject updateMember(Model model, HttpServletRequest request) {
+		JSONObject requestPRM = (JSONObject) request.getAttribute("requestPRM");
+		JSONObject reqDataJson = requestPRM.getJSONObject("reqData");// 获取请求参数
+		JSONObject result=new JSONObject();
+		try {
+			String memberId =  reqDataJson.getString("memberId");
+			String name =  reqDataJson.getString("name");
+			String shortName =  reqDataJson.getString("shortName");
+			String contact =  reqDataJson.getString("contact");
+			String mobilePhone =  reqDataJson.getString("mobilePhone");
+			String certNbr =  reqDataJson.getString("certNbr");
+			String busLicenceNbr =  reqDataJson.getString("busLicenceNbr");
+			String email =  reqDataJson.getString("email");
+			String remarks =  reqDataJson.getString("remarks");
+			String tradeInfo =  reqDataJson.getString("tradeInfo");
+			
+			String[] tardeObj = tradeInfo.split(";");
+			String[] obj = tardeObj[0].split("#");
+			String t0TradeRate = obj[2];
+			String t1TradeRate = obj[3];
+			String t0DrawFee = obj[4];
+			String t1DrawFee = obj[5];
+			
+			if(StringUtil.isEmpty(shortName)){
+				shortName = name;
+			}
+			if(StringUtil.isEmpty(contact)){
+				contact = name;
+			}
+			
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(Integer.parseInt(memberId));
+			if(memberInfo==null){
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "商户不存在");
+				return result;
+			}
+			memberInfo.setContact(contact);
+			memberInfo.setCertNbr(certNbr);
+			memberInfo.setUpdateBy("1");
+			memberInfo.setUpdateDate(new Date());
+			memberInfo.setName(name);
+			memberInfo.setShortName(shortName);
+			memberInfo.setBusLicenceNbr(busLicenceNbr);//营业执照编号
+			memberInfo.setEmail(email);
+			memberInfo.setMobilePhone(mobilePhone);
+			if(StringUtils.isNotBlank(t0DrawFee)){
+				memberInfo.setT0DrawFee(new BigDecimal(t0DrawFee));
+			}
+			if(StringUtils.isNotBlank(t1DrawFee)){
+				memberInfo.setT1DrawFee(new BigDecimal(t1DrawFee));
+			}
+			memberInfo.setT0TradeRate(new BigDecimal(t0TradeRate));
+			memberInfo.setT1TradeRate(new BigDecimal(t1TradeRate));
+			memberInfo.setRemarks(remarks);
+			memberInfoService.updateByPrimaryKey(memberInfo);
+			
+			MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+			memberPayTypeExample.or().andMemberIdEqualTo(Integer.parseInt(memberId)).andDelFlagEqualTo("0");
+			memberPayTypeService.updateDelFlagByExample(memberPayTypeExample);
+			
+			PayTypeMerchantDefaultExample merchantDefaultExample = new PayTypeMerchantDefaultExample();
+			merchantDefaultExample.or().andDelFlagEqualTo("0");
+			List<PayTypeMerchantDefault> plist1 =  payTypeMerchantDefaultService.selectByExample(merchantDefaultExample);
+			List<String> routecodes = new ArrayList<String>();
+			if(plist1 != null && plist1.size()>0){
+				for(PayTypeMerchantDefault md : plist1){
+					routecodes.add(md.getRouteCode());
+				}
+			}
+			
+			MemberMerchantCodeExample merchantCodeExample = new MemberMerchantCodeExample();
+			merchantCodeExample.or().andMemberIdEqualTo(Integer.parseInt(memberId)).andRouteCodeIn(routecodes).andDelFlagEqualTo("0");
+			memberMerchantCodeService.updateDelFlagByExample(merchantCodeExample);
+			
+			
+			for(String trade:tardeObj){
+				String[] arr = trade.split("#");
+				String payMethod = arr[0];
+				String txnType = arr[1];
+				String t0_radeRate = arr[2];
+				String t1_radeRate = arr[3];
+				String t0_drawFee = arr[4];
+				String t1_drawFee = arr[5];
+				String payType = transPayType(txnType);
+				
+				PayTypeMerchantDefaultExample payTypeMerchantDefaultExample = new PayTypeMerchantDefaultExample();
+				payTypeMerchantDefaultExample.or().andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
+				List<PayTypeMerchantDefault> plist =  payTypeMerchantDefaultService.selectByExample(payTypeMerchantDefaultExample);
+				if(plist != null && plist.size()>0){
+					PayTypeMerchantDefault merchantDefault = plist.get(0);
+					
+					MemberPayType memberPayType = new MemberPayType();
+					memberPayType.setMemberId(memberInfo.getId());
+					memberPayType.setPayMethod(payMethod);
+					memberPayType.setPayType(payType);
+					memberPayType.setRouteCode(merchantDefault.getRouteCode());
+					memberPayType.setAisleType(merchantDefault.getAisleType());
+					memberPayType.setMerchantCode(merchantDefault.getMerchantCode());
+					memberPayType.setT0TradeRate(new BigDecimal(t0_radeRate));
+					memberPayType.setT1TradeRate(new BigDecimal(t1_radeRate));
+					if(StringUtils.isNotBlank(t0_drawFee)){
+						memberPayType.setT0DrawFee(new BigDecimal(t0_drawFee));
+					}
+					if(StringUtils.isNotBlank(t1_drawFee)){
+						memberPayType.setT1DrawFee(new BigDecimal(t1_drawFee));
+					}
+					memberPayType.setCreateDate(new Date());
+					memberPayTypeService.insertSelective(memberPayType);
+					
+					MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+					if(StringUtils.isBlank(merchantDefault.getAisleType())){
+						memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(merchantDefault.getRouteCode()).andDelFlagEqualTo("0");
+					}else{
+						memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(merchantDefault.getRouteCode()).andAisleTypeEqualTo(merchantDefault.getAisleType()).andDelFlagEqualTo("0");
+					}
+					List<MemberMerchantCode> mlist = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+					MemberMerchantCode memberMerchantCode = null;
+					if(mlist==null || mlist.size()==0){
+						memberMerchantCode = new MemberMerchantCode();
+						memberMerchantCode.setMemberId(memberInfo.getId());
+						memberMerchantCode.setRouteCode(merchantDefault.getRouteCode());
+						memberMerchantCode.setAisleType(merchantDefault.getAisleType());
+						memberMerchantCode.setCreateDate(new Date());
+					}else{
+						memberMerchantCode = mlist.get(0);
+						memberMerchantCode.setUpdateDate(new Date());
+					}
+					if("WX".equals(payType)){
+						memberMerchantCode.setWxMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("QQ".equals(payType)){
+						memberMerchantCode.setQqMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setQqT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setQqT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setQqT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setQqT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("ZFB".equals(payType)){
+						memberMerchantCode.setZfbMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setZfbT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setZfbT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setZfbT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setZfbT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("JD".equals(payType)){
+						memberMerchantCode.setJdMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setJdT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setJdT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setJdT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setJdT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("YL".equals(payType)){
+						memberMerchantCode.setWyMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setWyT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setWyT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setWyT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setWyT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}else if("KJ".equals(payType)){
+						memberMerchantCode.setKjMerchantCode(merchantDefault.getMerchantCode());
+						memberMerchantCode.setKjT0TradeRate(new BigDecimal(t0_radeRate));
+						memberMerchantCode.setKjT1TradeRate(new BigDecimal(t1_radeRate));
+						if(StringUtils.isNotBlank(t0_drawFee)){
+							memberMerchantCode.setKjT0DrawFee(new BigDecimal(t0_drawFee));
+						}
+						if(StringUtils.isNotBlank(t1_drawFee)){
+							memberMerchantCode.setKjT1DrawFee(new BigDecimal(t1_drawFee));
+						}
+					}
+					
+					if(mlist==null || mlist.size()==0){
+						memberMerchantCodeService.insertSelective(memberMerchantCode);
+					}else{
+						memberMerchantCodeService.updateByPrimaryKey(memberMerchantCode);
+					}
+				}
+			}
+			
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "修改成功");
+		}catch(Exception e){
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	
+	
 	
 	/**
 	 * 易生商户进件
@@ -1639,6 +1904,20 @@ public class RegistController {
 		memberMerchantCode.setCreateDate(new Date());
 		memberMerchantCodeService.insertSelective(memberMerchantCode);
 		
+		MemberPayType memberPayType = new MemberPayType();
+		memberPayType.setMemberId(memberInfo.getId());
+		memberPayType.setPayMethod(PayTypeConstant.PAY_METHOD_YL);
+		memberPayType.setPayType(PayTypeConstant.PAY_TYPE_KJ);
+		memberPayType.setRouteCode(routeCode);
+		//memberPayType.setAisleType(merchantDefault.getAisleType());
+		memberPayType.setMerchantCode(merchantCode);
+		memberPayType.setT0TradeRate(new BigDecimal(tradeRate));
+		memberPayType.setT1TradeRate(new BigDecimal(tradeRate));
+		memberPayType.setT0DrawFee(new BigDecimal(settleFee));
+		memberPayType.setT1DrawFee(new BigDecimal(settleFee));
+		memberPayType.setCreateDate(new Date());
+		memberPayTypeService.insertSelective(memberPayType);
+		
 	/*	MemberMerchantKey memberMerchantKey = new MemberMerchantKey();
 		memberMerchantKey.setRouteCode(routeCode);
 		memberMerchantKey.setMerchantCode(merchantCode);
@@ -1907,6 +2186,20 @@ public class RegistController {
 			memberInfo.setT0TradeRate(new BigDecimal(tradeRate));
 			memberInfo.setT1TradeRate(new BigDecimal(tradeRate));
 			memberInfoService.updateByPrimaryKey(memberInfo);
+			
+			MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+			memberPayTypeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_YL).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_KJ).andDelFlagEqualTo("0");
+			List<MemberPayType> memberPayTypeList =  memberPayTypeService.selectByExample(memberPayTypeExample);
+			if(memberPayTypeList !=null && memberPayTypeList.size()>0){
+				MemberPayType memberPayType = memberPayTypeList.get(0);
+				memberPayType.setT0TradeRate(new BigDecimal(tradeRate));
+				memberPayType.setT1TradeRate(new BigDecimal(tradeRate));
+				memberPayType.setT0DrawFee(new BigDecimal(settleFee));
+				memberPayType.setT1DrawFee(new BigDecimal(settleFee));
+				memberPayType.setUpdateDate(new Date());
+				memberPayTypeService.updateByPrimaryKey(memberPayType);
+			}
+			
 			result.put("returnCode", "0000");
 			result.put("returnMsg", "修改商户费率成功");
 		}catch(Exception e){
@@ -2173,5 +2466,7 @@ public class RegistController {
 		}
 		return result;
 	}
+	
+	
 	
 }
