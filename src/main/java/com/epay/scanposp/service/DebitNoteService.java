@@ -35,4 +35,8 @@ public class DebitNoteService extends BaseService<DebitNote,DebitNoteExample> {
 	public Double countTransactionRateByCondition(Map<String,Object> paramMap){
 		return debitNoteMapper.countTransactionRateByCondition(paramMap);
 	}
+	
+	public int selectFailCountsWithinTime(Map<String,Object> paramMap){
+		return debitNoteMapper.selectFailCountsWithinTime(paramMap);
+	}
 }

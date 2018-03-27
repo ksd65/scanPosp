@@ -148,6 +148,54 @@ public class CommonUtilService {
 		return null;
 	}
 	
+	/**
+	 * 验证限制某种支付方式失败后一定配置时间内不允许请求
+	 * @param payMethod
+	 * @param payType
+	 * @param memberId
+	 * @param ip
+	 * @return
+	 */
+	public JSONObject checkLimitIpFail(String payMethod, String payType, int memberId, String ip){
+		JSONObject result = new JSONObject();
+		String configName = "LIMIT_FAIL_TIMES_"+payMethod+"_"+payType;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("memberId", memberId);
+			param.put("ip", ip);
+			param.put("txnMethod", payMethod);
+			param.put("txnType", transPayType(payType));
+			param.put("seconds", value);
+			int count = debitNoteService.selectFailCountsWithinTime(param);
+			if(count>0){
+				logger.info("该IP支付失败，限制请求，规则："+value+"秒");
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "支付失败，请稍后再试");
+				return result;
+			}
+		}
+		return null;
+	}
+	
+	private String transPayType(String payType){
+		Map<String,String> obj = new HashMap<String, String>();
+		obj.put("WX","1");
+		obj.put("ZFB","2");
+		obj.put("QQ","3");
+		obj.put("BD","4");
+		obj.put("JD","5");
+		obj.put("YL","8");
+		obj.put("KJ","9");
+		return obj.get(payType);
+	}
+	
 	public JSONObject checkLimitIp(String payMethod, String payType, int memberId, String routeCode, String merchantCode, String ip){
 		
 		JSONObject result = new JSONObject();

@@ -560,5 +560,29 @@
 	      	</if>
 		
   	</select>
+  	
+  	<select id="selectFailCountsWithinTime" parameterType="java.util.Map" resultType="int">
+	  	SELECT count(1) 
+	    from bu_debit_note t
+	   where 1=1 AND t.`status` in('0','2') 
+	   <if test="memberId != null" >
+			AND t.member_id = #{memberId,jdbcType=INTEGER} 
+		</if>
+	   <if test="ip != null">
+	       AND t.ip = #{ip,jdbcType=VARCHAR}
+	   </if>
+	   <if test="txnMethod != null">
+	       AND t.txn_method = #{txnMethod,jdbcType=VARCHAR}
+	   </if>
+	   <if test="txnType != null">
+	       AND t.txn_type = #{txnType,jdbcType=VARCHAR}
+	   </if>
+	   <![CDATA[
+	 		AND t.create_date >= DATE_SUB(
+			SYSDATE(),
+			INTERVAL #{seconds,jdbcType=INTEGER}  SECOND
+			)
+	 	]]>
+  </select>
   
 </mapper>

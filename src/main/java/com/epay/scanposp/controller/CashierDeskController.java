@@ -1752,6 +1752,13 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip);
+			if(null != timeResult){
+				debitNote.setStatus("12");
+				debitNoteService.insertSelective(debitNote);
+				return timeResult;
+			}
+			
 			JSONObject ipResult = checkLimitIp(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, merCode, ip);
 			if(null != ipResult){
 				debitNote.setStatus("6");
@@ -6149,6 +6156,13 @@ public class CashierDeskController {
 				debitNote.setStatus("5");
 				debitNoteService.insertSelective(debitNote);
 				return checkResult;
+			}
+			
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip);
+			if(null != timeResult){
+				debitNote.setStatus("12");
+				debitNoteService.insertSelective(debitNote);
+				return timeResult;
 			}
 			
 			configName = "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payTypeStr;
