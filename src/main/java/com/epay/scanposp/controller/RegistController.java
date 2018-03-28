@@ -1687,7 +1687,7 @@ public class RegistController {
 		
 		String platTradeRate = "", platDrawFee = "";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
-		sysCommonConfigExample.or().andNameEqualTo("PLAT_TRADE_RATE_"+routeCode).andDelFlagEqualTo("0");
+		sysCommonConfigExample.or().andNameEqualTo("PLAT_TRADE_RATE_"+routeCode+"_"+officeId).andDelFlagEqualTo("0");
 		List<SysCommonConfig>  sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
 		if (sysCommonConfig.size() == 0) {
 			result.put("returnCode", "4004");
@@ -1697,7 +1697,7 @@ public class RegistController {
 		platTradeRate = sysCommonConfig.get(0).getValue();
 		
 		sysCommonConfigExample = new SysCommonConfigExample();
-		sysCommonConfigExample.or().andNameEqualTo("PLAT_DRAW_FEE_"+routeCode).andDelFlagEqualTo("0");
+		sysCommonConfigExample.or().andNameEqualTo("PLAT_DRAW_FEE_"+routeCode+"_"+officeId).andDelFlagEqualTo("0");
 		sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
 		if (sysCommonConfig.size() == 0) {
 			result.put("returnCode", "4004");
@@ -2121,7 +2121,7 @@ public class RegistController {
 			
 			String platTradeRate = "", platDrawFee = "";
 			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
-			sysCommonConfigExample.or().andNameEqualTo("PLAT_TRADE_RATE_"+routeCode).andDelFlagEqualTo("0");
+			sysCommonConfigExample.or().andNameEqualTo("PLAT_TRADE_RATE_"+routeCode+"_"+sysOffice.getId()).andDelFlagEqualTo("0");
 			List<SysCommonConfig>  sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
 			if (sysCommonConfig.size() == 0) {
 				result.put("returnCode", "4004");
@@ -2131,7 +2131,7 @@ public class RegistController {
 			platTradeRate = sysCommonConfig.get(0).getValue();
 			
 			sysCommonConfigExample = new SysCommonConfigExample();
-			sysCommonConfigExample.or().andNameEqualTo("PLAT_DRAW_FEE_"+routeCode).andDelFlagEqualTo("0");
+			sysCommonConfigExample.or().andNameEqualTo("PLAT_DRAW_FEE_"+routeCode+"_"+sysOffice.getId()).andDelFlagEqualTo("0");
 			sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
 			if (sysCommonConfig.size() == 0) {
 				result.put("returnCode", "4004");
