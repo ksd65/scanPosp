@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.epay.scanposp.common.constant.SysConfig;
+import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.XinFuConfig;
 import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
@@ -1567,7 +1568,7 @@ public class RegistController {
 		String settleFee = request.getParameter("settleFee");
 		String signStr = request.getParameter("signStr");
 		
-		String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
+		String routeCode = SysConfig.kjRouteCode;
 		
 		//待签名字符串
 		Map<String,String> params = new HashMap<String,String>();
@@ -1832,7 +1833,12 @@ public class RegistController {
 		memberBank.setMobilePhone("");
 		memberBank.setSettleType(memberInfo.getSettleType());
 		
-		JSONObject merchantObj =  registYsAccount(memberInfo, memberBank,tradeRate,settleFee);
+		JSONObject merchantObj =  null;
+		if(routeCode.equals(RouteCodeConstant.YS_ROUTE_CODE)){
+			merchantObj =  registYsAccount(memberInfo, memberBank,tradeRate,settleFee);
+		}else if(routeCode.equals(RouteCodeConstant.WW_ROUTE_CODE)){
+			merchantObj =  registWwAccount(memberInfo, memberBank,tradeRate,settleFee);
+		}
 		
 		String merchantCode = "",orderCode = "";
 		if("0000".equals(merchantObj.getString("returnCode"))){
@@ -1852,7 +1858,7 @@ public class RegistController {
 			}
 			registerTmpService.updateByPrimaryKeySelective(registerTempUpdate);
 			result.put("returnCode", "0003");
-			result.put("returnMsg", "商户入驻失败："+resultMsg);
+			result.put("returnMsg", resultMsg);
 			return CommonUtil.signReturn(result);
 		}
 		
@@ -2030,7 +2036,7 @@ public class RegistController {
 			String settleFee = request.getParameter("settleFee");
 			String signStr = request.getParameter("signStr");
 			
-			String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
+			String routeCode = SysConfig.kjRouteCode;
 			
 			//待签名字符串
 			Map<String,String> params = new HashMap<String,String>();
@@ -2163,7 +2169,13 @@ public class RegistController {
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
 			
-			JSONObject cardObj = modifyRateYs(memberInfo,merchantCode,routeCode,tradeRate,settleFee);
+			JSONObject cardObj = null;
+			if(routeCode.equals(RouteCodeConstant.YS_ROUTE_CODE)){
+				cardObj = modifyRateYs(memberInfo,merchantCode,routeCode,tradeRate,settleFee);
+			}else if(routeCode.equals(RouteCodeConstant.WW_ROUTE_CODE)){
+				cardObj = modifyRateWw(memberInfo,merchantCode,routeCode,tradeRate,settleFee);
+			}
+			
 			if(!"0000".equals(cardObj.getString("returnCode"))){
 				String resultMsg = cardObj.getString("returnMsg");
 				result.put("returnCode", "0003");
@@ -2293,7 +2305,7 @@ public class RegistController {
 			String memberCode = request.getParameter("memberCode");
 			String signStr = request.getParameter("signStr");
 			
-			String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
+			String routeCode = SysConfig.kjRouteCode;
 			
 			//待签名字符串
 			Map<String,String> params = new HashMap<String,String>();
@@ -2383,7 +2395,19 @@ public class RegistController {
 					result.put("balance", new DecimalFormat("0.00").format(balance));
 				}else{
 					result.put("returnCode", "0003");
-					result.put("returnMsg", "账户余额查询失败:"+resObjb.getString("msg"));
+					result.put("returnMsg", resObjb.getString("returnMsg"));
+				}
+			}else if(routeCode.equals(RouteCodeConstant.WW_ROUTE_CODE)){
+				JSONObject resObjb = wwBalance(merchantCode.getKjMerchantCode());
+				Double balance = 0d;
+				if("0000".equals(resObjb.getString("returnCode"))){
+					balance = Double.valueOf(resObjb.getString("balance"));
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "余额查询成功");
+					result.put("balance", new DecimalFormat("0.00").format(balance));
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", resObjb.getString("returnMsg"));
 				}
 			}else{
 				result.put("returnCode", "0003");
@@ -2467,6 +2491,199 @@ public class RegistController {
 		return result;
 	}
 	
+	//微微商户进件
+	public JSONObject registWwAccount(MemberInfo memberInfo,MemberBank memberBank,String platTradeRate,String platDrawFee){
+		JSONObject result = new JSONObject();
+		try{
+			String orderCode = CommonUtil.getOrderCode();
+			String serverUrl = WWConfig.msServerUrl+"/memberInfo/toRegistNew";
+			String orgNo = WWConfig.officeId;//机构
+			String privateKey = WWConfig.privateKey;
+		
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("officeId", orgNo);
+			param.put("orderNum", orderCode);
+			param.put("name",memberInfo.getName() );
+			param.put("shortName",memberInfo.getShortName() );
+			param.put("userName", memberInfo.getContact());
+			param.put("mobilePhone", memberInfo.getMobilePhone());
+			param.put("certNbr", memberInfo.getCertNbr());
+			param.put("email", memberInfo.getEmail());
+			param.put("tradeRate", platTradeRate);//借记卡费率/贷记卡费率
+			param.put("settleFee", platDrawFee);
+			
+			String srcStr = StringUtil.orderedKey(param);
+			String sign = EpaySignUtil.sign(privateKey, srcStr);
+			param.put("signStr", sign);
+			
+			logger.info("微微商户进件参数[{}]",JSONObject.fromObject(param).toString() );
+			
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			List<String> keys = new ArrayList<String>(param.keySet());
+			for (int i = 0; i < keys.size(); i++) {
+				String name=(String) keys.get(i);
+				String value=(String) param.get(name);
+				if(value!=null && !"".equals(value)){
+					nvps.add(new BasicNameValuePair(name, value));
+				}
+			}
+			
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, "utf-8");
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			logger.info("微微商户进件返回报文[{}]", new Object[] { resObj });
+			
+			String code = resObj.getString("returnCode");
+			String resSign = resObj.getString("signStr");
+			resObj.remove("signStr");
+			srcStr = StringUtil.orderedKey(resObj);
+			if(EpaySignUtil.checksign(WWConfig.platPublicKey, srcStr, resSign)){
+				if("0000".equals(code)){
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "成功");
+					result.put("merchantCode", resObj.get("memberCode"));
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", resObj.getString("returnMsg"));
+				}
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "商户进件出参验签失败");
+			}
+			
+			result.put("orderCode", orderCode);
+		}catch(Exception e){
+			logger.info(e.getMessage(), e);
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
 	
+	/**
+	 * 微微商户余额查询
+	 * @param merCode
+	 * @return
+	 */
+	public JSONObject wwBalance(String merCode){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = WWConfig.msServerUrl+"/memberInfo/balance";
+			String privateKey = WWConfig.privateKey;
+			
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("memberCode", merCode);
+			
+			String srcStr = StringUtil.orderedKey(param);
+			String sign = EpaySignUtil.sign(privateKey, srcStr);
+			param.put("signStr", sign);
+			logger.info("微微商户余额查询参数[{}]",JSONObject.fromObject(param).toString() );
+			
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			List<String> keys = new ArrayList<String>(param.keySet());
+			for (int i = 0; i < keys.size(); i++) {
+				String name=(String) keys.get(i);
+				String value=(String) param.get(name);
+				if(value!=null && !"".equals(value)){
+					nvps.add(new BasicNameValuePair(name, value));
+				}
+			}
+			
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, "utf-8");
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			logger.info("微微商户余额查询返回报文[{}]", new Object[] { respStr });
+			
+			String code = resObj.getString("returnCode");
+			String resSign = resObj.getString("signStr");
+			resObj.remove("signStr");
+			srcStr = StringUtil.orderedKey(resObj);
+			if(EpaySignUtil.checksign(WWConfig.platPublicKey, srcStr, resSign)){
+				if("0000".equals(code)){
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "成功");
+					result.put("balance", resObj.get("balance"));
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", resObj.getString("returnMsg"));
+				}
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "商户余额查询出参验签失败");
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
 	
+	public JSONObject modifyRateWw(MemberInfo memberInfo,MemberMerchantCode merchantCode,String routeCode,String tradeRate,String drawFee){
+		JSONObject result = new JSONObject();
+		try{
+			String orderCode = CommonUtil.getOrderCode();
+			String serverUrl = WWConfig.msServerUrl+"/memberInfo/modifyTradeRate";
+			String privateKey = WWConfig.privateKey;
+			
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("orderNum", orderCode);
+			param.put("memberCode",merchantCode.getKjMerchantCode() );
+			param.put("tradeRate", tradeRate);//借记卡费率/贷记卡费率
+			param.put("settleFee", drawFee);
+			
+			String srcStr = StringUtil.orderedKey(param);
+			String sign = EpaySignUtil.sign(privateKey, srcStr);
+			param.put("signStr", sign);
+			logger.info("微微快捷费率修改参数[{}]",JSONObject.fromObject(param).toString() );
+			
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			List<String> keys = new ArrayList<String>(param.keySet());
+			for (int i = 0; i < keys.size(); i++) {
+				String name=(String) keys.get(i);
+				String value=(String) param.get(name);
+				if(value!=null && !"".equals(value)){
+					nvps.add(new BasicNameValuePair(name, value));
+				}
+			}
+			
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, "utf-8");
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			logger.info("微微快捷费率修改返回报文[{}]", new Object[] { respStr });
+			
+			String code = resObj.getString("returnCode");
+			String resSign = resObj.getString("signStr");
+			resObj.remove("signStr");
+			srcStr = StringUtil.orderedKey(resObj);
+			if(EpaySignUtil.checksign(WWConfig.platPublicKey, srcStr, resSign)){
+				if("0000".equals(code)){
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "成功");
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", resObj.getString("returnMsg"));
+				}
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "快捷费率修改出参验签失败");
+			}
+			
+			result.put("orderCode", orderCode);
+		}catch(Exception e){
+			logger.info(e.getMessage(), e);
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	public static void main(String[] args) {
+		JSONObject result = new JSONObject();
+		result.put("returnCode", "0000");
+		result.put("returnMsg", "商户进件成功");
+		result.put("memberCode", "9010000654");
+		System.out.println(CommonUtil.signReturn(result));
+	}
 }

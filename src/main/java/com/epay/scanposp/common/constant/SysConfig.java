@@ -20,6 +20,7 @@ public class SysConfig {
  public static String frontUrl;
  public static String platPrivateKey;
  public static String platPublicKey;
+ public static String kjRouteCode;
 	/**
 	 * 初始化系统配置
 	 */
@@ -40,6 +41,7 @@ public class SysConfig {
 			frontUrl = configuration.getString("frontUrl");
 			platPrivateKey = configuration.getString("platPrivateKey");
 			platPublicKey = configuration.getString("platPublicKey");
+			kjRouteCode = configuration.getString("kjRouteCode");
 		} catch (Exception e) {
 			throw new RuntimeException("[加载配置文件失败]", e);
 		}

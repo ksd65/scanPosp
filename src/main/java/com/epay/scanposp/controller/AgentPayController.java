@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.epay.scanposp.common.constant.SysConfig;
+import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.utils.CommonUtil;
@@ -798,7 +799,7 @@ public class AgentPayController {
 				return result;
 			}
 			
-			String routeCode = RouteCodeConstant.YS_ROUTE_CODE;
+			String routeCode = SysConfig.kjRouteCode;
 			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
 			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
@@ -897,16 +898,26 @@ public class AgentPayController {
 				return result;
 			}
 			
-			JSONObject resObjb = ysBalance(merCode);
+			JSONObject resObjb = null;
+			if(routeCode.equals(RouteCodeConstant.YS_ROUTE_CODE)){
+				resObjb = ysBalance(merCode);
+			}else if(routeCode.equals(RouteCodeConstant.WW_ROUTE_CODE)){
+				resObjb = wwBalance(merCode);
+			}
+			
 			Double balance = 0d;
 			if("0000".equals(resObjb.getString("returnCode"))){
-				balance = Double.valueOf(resObjb.getString("balance"))/100;
+				if(routeCode.equals(RouteCodeConstant.YS_ROUTE_CODE)){
+					balance = Double.valueOf(resObjb.getString("balance"))/100;
+				}else if(routeCode.equals(RouteCodeConstant.WW_ROUTE_CODE)){
+					balance = Double.valueOf(resObjb.getString("balance"));
+				}
 			}else{
 				result.put("returnCode", "0003");
-				result.put("returnMsg", "账户余额查询失败:"+resObjb.getString("msg"));
+				result.put("returnMsg", "账户余额查询失败:"+resObjb.getString("returnMsg"));
 				draw.setRespType("E");
-				draw.setRespCode(resObjb.getString("code"));
-				draw.setRespMsg(resObjb.getString("msg"));
+				draw.setRespCode(resObjb.getString("returnCode"));
+				draw.setRespMsg(resObjb.getString("returnMsg"));
 				draw.setUpdateDate(new Date());
 				routewayDrawService.updateByPrimaryKey(draw);
 				return result;
@@ -921,6 +932,51 @@ public class AgentPayController {
 				return result;
 			}
 			
+			JSONObject resObj = null;
+			if(routeCode.equals(RouteCodeConstant.YS_ROUTE_CODE)){
+				resObj = ysAgentPay(orderCode, merCode, bankAccount, payMoney);
+			}else if(routeCode.equals(RouteCodeConstant.WW_ROUTE_CODE)){
+				resObj = wwAgentPay(orderCode, merCode, bankAccount, payMoney);
+			}
+			String code = resObj.getString("returnCode");
+			String resultMsg = "";
+			boolean flag = false;
+			String channelNo = "";
+			if(resObj.containsKey("channelNo")){
+				channelNo = resObj.getString("channelNo");
+			}
+			if("0000".equals(code)){
+				draw.setRespType("R");
+				draw.setUpdateDate(new Date());
+				draw.setChannelNo(channelNo);
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "提交成功");
+				flag = true;
+			}else{
+				resultMsg = resObj.getString("returnMsg");
+			}
+			if(!flag){
+				result.put("returnCode", "0003");
+				result.put("returnMsg", resultMsg);
+				draw.setRespType("E");
+				draw.setRespCode(code);
+				draw.setChannelNo(channelNo);
+				draw.setRespMsg(resultMsg);
+				draw.setUpdateDate(new Date());
+			}
+			
+			routewayDrawService.updateByPrimaryKey(draw);
+		}catch(Exception e){
+			logger.info(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	//易生代付
+	public JSONObject ysAgentPay(String orderCode,String merCode,String bankAccount,String payMoney){
+		JSONObject result = new JSONObject();
+		try{
 			String callBack = SysConfig.serverUrl + "/agentPay/ysReceivePayNotify";
 			String serverUrl = YSConfig.msServerUrl + "/swp/dh/jiesuan.do";
 			String privateKey = YSConfig.privateKey;
@@ -964,11 +1020,9 @@ public class AgentPayController {
 				if(resSign.equals(SwpHashUtil.getSign(srcStr, privateKey, "SHA256"))){
 					String trade_state = resObj.getString("trade_state");
 					if("SUCCESS".equals(trade_state)||"PROCESSING".equals(trade_state)){
-						draw.setRespType("R");
-						draw.setUpdateDate(new Date());
-						draw.setChannelNo(channelNo);
 						result.put("returnCode", "0000");
 						result.put("returnMsg", "提交成功");
+						result.put("channelNo", channelNo);
 						flag = true;
 					}else{
 						resultMsg = resObj.getString("trade_state_desc");
@@ -982,21 +1036,71 @@ public class AgentPayController {
 			if(!flag){
 				result.put("returnCode", "0003");
 				result.put("returnMsg", resultMsg);
-				draw.setRespType("E");
-				draw.setRespCode(code);
-				draw.setChannelNo(channelNo);
-				draw.setRespMsg(resultMsg);
-				draw.setUpdateDate(new Date());
 			}
-			
-			routewayDrawService.updateByPrimaryKey(draw);
 		}catch(Exception e){
-			logger.info(e.getMessage());
+			logger.error(e.getMessage());
 			result.put("returnCode", "0096");
 			result.put("returnMsg", e.getMessage());
 		}
 		return result;
 	}
+	//微微代付
+	public JSONObject wwAgentPay(String orderCode,String merCode,String bankAccount,String payMoney){
+		JSONObject result = new JSONObject();
+		try{
+			String serverUrl = WWConfig.msServerUrl + "/agentPay/toSameNamePay";
+			String privateKey = WWConfig.privateKey;
+			
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("orderNum", orderCode);
+			param.put("memberCode", merCode);
+			param.put("bankAccount", bankAccount);
+			param.put("payMoney", payMoney);
+			
+			String srcStr = StringUtil.orderedKey(param);
+			String sign = EpaySignUtil.sign(privateKey, srcStr);
+			param.put("signStr", sign);
+			logger.info("微微代付参数[{}]",JSONObject.fromObject(param).toString() );
+
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			List<String> keys = new ArrayList<String>(param.keySet());
+			for (int i = 0; i < keys.size(); i++) {
+				String name=(String) keys.get(i);
+				String value=(String) param.get(name);
+				if(value!=null && !"".equals(value)){
+					nvps.add(new BasicNameValuePair(name, value));
+				}
+			}
+			
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, "utf-8");
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			logger.info("微微代付返回报文[{}]", new Object[] { respStr });
+			
+			String code = resObj.getString("returnCode");
+			String resSign = resObj.getString("signStr");
+			resObj.remove("signStr");
+			srcStr = StringUtil.orderedKey(resObj);
+			if(EpaySignUtil.checksign(WWConfig.platPublicKey, srcStr, resSign)){
+				if("0000".equals(code)){
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "提交成功");
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", resObj.getString("returnMsg"));
+				}
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "代付出参验签失败");
+			}
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
 	
 	/**
 	 * 易生商户余额查询
@@ -1134,6 +1238,66 @@ public class AgentPayController {
 			e.printStackTrace();
 			logger.error(e.getMessage());
 		}
+	}
+	
+	/**
+	 * 微微商户余额查询
+	 * @param merCode
+	 * @return
+	 */
+	public JSONObject wwBalance(String merCode){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = WWConfig.msServerUrl+"/memberInfo/balance";
+			String privateKey = WWConfig.privateKey;
+			
+			Map<String,String> param = new HashMap<String, String>();
+			param.put("memberCode", merCode);
+			
+			String srcStr = StringUtil.orderedKey(param);
+			String sign = EpaySignUtil.sign(privateKey, srcStr);
+			param.put("signStr", sign);
+			logger.info("微微商户余额查询参数[{}]",JSONObject.fromObject(param).toString() );
+			
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			List<String> keys = new ArrayList<String>(param.keySet());
+			for (int i = 0; i < keys.size(); i++) {
+				String name=(String) keys.get(i);
+				String value=(String) param.get(name);
+				if(value!=null && !"".equals(value)){
+					nvps.add(new BasicNameValuePair(name, value));
+				}
+			}
+			
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, "utf-8");
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			logger.info("微微商户余额查询返回报文[{}]", new Object[] { respStr });
+			
+			String code = resObj.getString("returnCode");
+			String resSign = resObj.getString("signStr");
+			resObj.remove("signStr");
+			srcStr = StringUtil.orderedKey(resObj);
+			if(EpaySignUtil.checksign(WWConfig.platPublicKey, srcStr, resSign)){
+				if("0000".equals(code)){
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "成功");
+					result.put("balance", resObj.get("balance"));
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", resObj.getString("returnMsg"));
+				}
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "商户余额查询出参验签失败");
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
 	}
 	
 }

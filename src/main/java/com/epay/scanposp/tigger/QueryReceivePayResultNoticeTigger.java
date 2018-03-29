@@ -28,6 +28,7 @@ import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.HLBConfig;
 import com.epay.scanposp.common.constant.RFConfig;
+import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.utils.HttpUtil;
@@ -498,6 +499,65 @@ public class QueryReceivePayResultNoticeTigger {
 							}
 						}else{
 							logger.info(resObj.getString("message"));
+						}
+					}else if(RouteCodeConstant.WW_ROUTE_CODE.equals(routeCode)){
+						String serverUrl = WWConfig.msServerUrl+"/bankPay/queryAgentPayResult";
+						String privateKey = WWConfig.privateKey;
+				        
+				        Map<String,String> param = new HashMap<String, String>();
+						param.put("memberCode", draw.getMerchantCode());
+						param.put("orderNum", draw.getOrderCode());
+						
+						String srcStr1 = StringUtil.orderedKey(param);
+						String sign = EpaySignUtil.sign(privateKey, srcStr1);
+						param.put("signStr", sign);
+						logger.info("微微代付订单查询参数[{}]",JSONObject.fromObject(param).toString() );
+
+						List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+						List<String> keys = new ArrayList<String>(param.keySet());
+						for (int i = 0; i < keys.size(); i++) {
+							String name=(String) keys.get(i);
+							String value=(String) param.get(name);
+							if(value!=null && !"".equals(value)){
+								nvps.add(new BasicNameValuePair(name, value));
+							}
+						}
+						
+						byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+						String respStr = new String(b, "utf-8");
+						JSONObject resObj = JSONObject.fromObject(respStr);
+						logger.info("微微代付订单查询返回报文[{}]", new Object[] { respStr });
+						
+						String code = resObj.getString("returnCode");
+						String resSign = resObj.getString("signStr");
+						resObj.remove("signStr");
+						srcStr1 = StringUtil.orderedKey(resObj);
+						if(EpaySignUtil.checksign(WWConfig.platPublicKey, srcStr1, resSign)){
+							if("0000".equals(code)){
+								String daifu_state = resObj.getString("oriRespType");
+								if("S".equals(daifu_state)){
+									draw.setRespType("S");
+									draw.setRespCode("000");
+								}else if("R".equals(daifu_state)){
+									draw.setRespType("R");
+								}else{
+									draw.setRespType("E");
+									draw.setRespCode(daifu_state);
+								}
+								if(resObj.containsKey("oriRespMsg")){
+									draw.setRespMsg(resObj.getString("oriRespMsg"));
+								}
+								if(resObj.containsKey("orderCode")){
+									draw.setChannelNo(resObj.getString("orderCode"));
+								}
+								draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+								draw.setUpdateDate(new Date());
+								routewayDrawService.updateByPrimaryKey(draw);
+							}else{
+								logger.info(resObj.getString("returnMsg"));
+							}
+						}else{
+							logger.info("查询接口出参验签失败");
 						}
 					}
 				}

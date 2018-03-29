@@ -8214,8 +8214,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			logger.error(e.getMessage());
 		}
 		try {
-			rtObj.put("code", 0);
-    		rtObj.put("message", "接收成功");
+			rtObj.put("resCode", "0000");
     		response.getWriter().write(rtObj.toString());
 		} catch (IOException e) {
 			e.printStackTrace();

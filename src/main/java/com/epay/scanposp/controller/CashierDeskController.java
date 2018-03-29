@@ -54,6 +54,7 @@ import com.epay.scanposp.common.constant.POSPConfig;
 import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.TBConfig;
+import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.WxConfig;
 import com.epay.scanposp.common.constant.YLConfig;
 import com.epay.scanposp.common.constant.YSConfig;
@@ -5356,6 +5357,55 @@ public class CashierDeskController {
 				}else{
 					result.put("returnCode", "0012");
 					result.put("returnMsg", resObj.getString("message"));
+				}
+			}else if(RouteCodeConstant.WW_ROUTE_CODE.equals(routeCode)){
+		        String serverUrl = WWConfig.msServerUrl+"/cashierDesk/orderQuery";
+		        String privateKey = WWConfig.privateKey;
+		        
+		        Map<String,String> param = new HashMap<String, String>();
+				param.put("memberCode", debitNote.getMerchantCode());
+				param.put("orderNum", debitNote.getOrderCode());
+				
+				String srcStr1 = StringUtil.orderedKey(param);
+				String sign = EpaySignUtil.sign(privateKey, srcStr1);
+				param.put("signStr", sign);
+				logger.info("微微快捷支付订单查询参数[{}]",JSONObject.fromObject(param).toString() );
+
+				List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+				List<String> keys = new ArrayList<String>(param.keySet());
+				for (int i = 0; i < keys.size(); i++) {
+					String name=(String) keys.get(i);
+					String value=(String) param.get(name);
+					if(value!=null && !"".equals(value)){
+						nvps.add(new BasicNameValuePair(name, value));
+					}
+				}
+				
+				byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+				String respStr = new String(b, "utf-8");
+				JSONObject resObj = JSONObject.fromObject(respStr);
+				logger.info("微微快捷支付订单查询返回报文[{}]", new Object[] { respStr });
+				
+				String code = resObj.getString("returnCode");
+				String resSign = resObj.getString("signStr");
+				resObj.remove("signStr");
+				srcStr1 = StringUtil.orderedKey(resObj);
+				if(EpaySignUtil.checksign(WWConfig.platPublicKey, srcStr1, resSign)){
+					if("0000".equals(code)){
+						result.put("oriRespType", resObj.get("oriRespType"));
+						result.put("oriRespCode", resObj.get("oriRespCode"));
+						result.put("oriRespMsg", resObj.get("oriRespMsg"));
+						if(resObj.containsKey("totalAmount")){
+							result.put("totalAmount", resObj.get("totalAmount"));
+						}
+					}else{
+						result.put("returnCode", "0012");
+						result.put("returnMsg", resObj.getString("returnMsg"));
+					}
+					
+				}else{
+					result.put("returnCode", "0012");
+					result.put("returnMsg", "查询接口出参验签失败");
 				}
 			}else{
 				String serverUrl = MSConfig.msServerUrl;
