@@ -3460,7 +3460,7 @@ public class BankPayController {
 			reqData.put("orderNumber", orderCode);
 			reqData.put("tranCode", tranCode);
 			reqData.put("aisleType", merchantCode.getAisleType());
-			reqData.put("totalAmount", String.valueOf(amount));
+			reqData.put("totalAmount", new DecimalFormat("#.00").format(amount));
 			reqData.put("callback", callBack);
 			reqData.put("bankNo", bankCode);
 			reqData.put("accountNo", draw.getBankAccount());
