@@ -5278,7 +5278,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			if("R".equals(respJSONObject.getString("respType"))&&"555555".equals(respJSONObject.getString("respCode"))){
 				if(respJSONObject.containsKey("pay_url")&&!"".equals(respJSONObject.getString("pay_url"))){
-					result.put("payUrl", respJSONObject.getString("pay_url")+"&redirecturl=http://www.johutech.com/johuPay/debitNote/payCallBack?orderCode="+orderCode);
+					result.put("payUrl", respJSONObject.getString("pay_url")+"&redirecturl="+SysConfig.frontUrl+"/debitNote/payCallBack?orderCode="+orderCode);
 					//result.put("payUrl", respJSONObject.getString("pay_url"));
 					result.put("returnCode", "0000");
 					result.put("returnMsg", "成功");
