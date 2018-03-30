@@ -58,7 +58,7 @@ public class AccountBalanceTigger {
 		try{
 			logger.info("账户余额更新定时。。。");
 			
-			AccountExample accountExample = new AccountExample();
+		/*	AccountExample accountExample = new AccountExample();
 			accountExample.createCriteria().andDelFlagEqualTo("0");
 			List<Account> accountList = accountService.selectByExample(accountExample);
 			if(accountList!=null && accountList.size()>0){
@@ -144,10 +144,10 @@ public class AccountBalanceTigger {
 					accountService.updateByPrimaryKey(account);
 				}
 			}
-			
+			*/
 			
 			MemberInfoExample memberInfoExample = new MemberInfoExample();
-			memberInfoExample.createCriteria().andDelFlagEqualTo("0");
+			memberInfoExample.createCriteria().andDelFlagEqualTo("0").andWxRouteIdNotEqualTo(RouteCodeConstant.YS_ROUTE_CODE);
 			List<MemberInfo> memberList = memberInfoService.selectByExample(memberInfoExample);
 			if(memberList!=null && memberList.size()>0){
 				String routeCode = RouteCodeConstant.RF_ROUTE_CODE;
@@ -479,6 +479,57 @@ public class AccountBalanceTigger {
 					}
 				
 				}
+				
+				routeCode = RouteCodeConstant.ESKHLB_ROUTE_CODE;
+				for(MemberInfo member:memberList){
+					Integer memberId = member.getId();
+					RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
+					routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+					List<RoutewayAccount> routewayAccountList = routewayAccountService.selectByExample(routewayAccountExample);
+					
+					RoutewayAccount routewayAccount = null;
+					Double balanceHis = 0d;
+					if(routewayAccountList != null && routewayAccountList.size()>0){
+						routewayAccount = routewayAccountList.get(0);
+						balanceHis = routewayAccount.getBalance().doubleValue();
+					}
+					
+					Map<String,Object> paramMap = new HashMap<String, Object>();
+					paramMap = new HashMap<String, Object>();
+					paramMap.put("memberId", memberId);
+					paramMap.put("routeId", routeCode);
+					paramMap.put("startDate", yesterday);
+					paramMap.put("endDate", yesterday);
+					paramMap.put("settleType", "0");//D0
+					Double tradeMoneyBalance = commonService.countTransactionRealMoneyByCondition(paramMap);
+					tradeMoneyBalance = tradeMoneyBalance == null ? 0 : tradeMoneyBalance;//昨天交易账户余额
+				
+					paramMap = new HashMap<String, Object>();
+					paramMap.put("memberId", memberId);
+					paramMap.put("routeCode", routeCode);
+					paramMap.put("respType", "S");
+					//前一天成功提现金额（包含代付）
+					paramMap.put("respDate", yesterday);
+					Double drawMoneyCountYesterDay = commonService.countDrawMoneyByCondition(paramMap);
+					drawMoneyCountYesterDay = drawMoneyCountYesterDay == null ? 0 : drawMoneyCountYesterDay;
+					
+					Double balance = balanceHis + tradeMoneyBalance - drawMoneyCountYesterDay;
+					if(routewayAccount!=null){
+						routewayAccount.setBalance(new BigDecimal(balance));
+						routewayAccount.setUpdateDate(new Date());
+						routewayAccountService.updateByPrimaryKey(routewayAccount);
+					}else{
+						routewayAccount = new RoutewayAccount();
+						routewayAccount.setMemberId(memberId);
+						routewayAccount.setRouteCode(routeCode);
+						routewayAccount.setBalance(new BigDecimal(balance));
+						routewayAccount.setCreateDate(new Date());
+						routewayAccount.setT1Balance(new BigDecimal(0));
+						routewayAccountService.insertSelective(routewayAccount);
+					}
+				
+				}
+				
 			}
 			
 			

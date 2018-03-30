@@ -27,6 +27,7 @@ public class ESKConfig {
 	public static String yhPublicKey;
 	public static String privateKey;
 	public static String jsDomain;
+	public static String agentServerUrl;
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "esk_config");
@@ -53,5 +54,6 @@ public class ESKConfig {
 		yhPublicKey=bundle.getString("yhPublicKey");
 		privateKey=bundle.getString("privateKey");
 		jsDomain=bundle.getString("jsDomain");
+		agentServerUrl=bundle.getString("agentServerUrl");
 	}
 }
