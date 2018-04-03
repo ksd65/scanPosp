@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -26,19 +27,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.CJConfig;
+import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.HLBConfig;
 import com.epay.scanposp.common.constant.RFConfig;
 import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
+import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.cj.util.HttpURLConection;
 import com.epay.scanposp.common.utils.cj.util.MD5Util;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
+import com.epay.scanposp.common.utils.esk.Key;
 import com.epay.scanposp.common.utils.hlb.Disguiser;
 import com.epay.scanposp.common.utils.hlb.RSA;
+import com.epay.scanposp.common.utils.ms.CryptoUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
 import com.epay.scanposp.common.utils.slf.MerchantClient;
@@ -559,6 +564,66 @@ public class QueryReceivePayResultNoticeTigger {
 						}else{
 							logger.info("查询接口出参验签失败");
 						}
+					}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
+						
+						String serverUrl = ESKConfig.agentServerUrl;
+						String tranCode = "101";
+						String charset = "utf-8";
+						
+						JSONObject reqData = new JSONObject();
+						reqData.put("oriOrderNumber", draw.getOrderCode());
+						reqData.put("tranCode", tranCode);
+						reqData.put("orderNumber", "Q"+CommonUtil.getOrderCode());
+						
+						logger.info("易收款代付订单查询请求参数[{}]",  reqData );
+						
+						String plainXML = reqData.toString();
+						byte[] plainBytes = plainXML.getBytes(charset);
+						String keyStr = MSCommonUtil.generateLenString(16);
+						
+						byte[] keyBytes = keyStr.getBytes(charset);
+						String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+						String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+						String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+						List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+						nvps.add(new BasicNameValuePair("Context", encryptData));
+						nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+						
+						nvps.add(new BasicNameValuePair("signData", signData));
+						nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+						byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+						String respStr = new String(b, charset);
+					//	logger.info("返回报文[{}]", new Object[] { respStr });
+						
+						JSONObject jsonObject = JSONObject.fromObject(respStr);
+						String resEncryptData = jsonObject.getString("Context");
+						String resEncryptKey = jsonObject.getString("encrtpKey");
+						byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+						byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+						// 使用base64解码商户请求报文
+						byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+						// 用解密得到的merchantAESKey解密encryptData
+						byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+						String resXml = new String(merchantXmlDataBytes, charset);
+						JSONObject respJSONObject = JSONObject.fromObject(resXml);
+						logger.info("易收款代付订单查询返回报文[{}]",  respJSONObject );
+						
+						String respCode = respJSONObject.getString("respCode");
+						String respType = respJSONObject.getString("respType");
+						String respMsg = respJSONObject.getString("respMsg");
+						if("000000".equals(respCode)&&"S".equals(respType)){
+							draw.setRespType("S");
+							draw.setRespCode("000");
+						}else if("R".equals(respType)){
+							draw.setRespType("R");
+						}else{
+							draw.setRespType("E");
+							draw.setRespCode(respCode);
+						}
+						draw.setRespMsg(respMsg);
+			            draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+						draw.setUpdateDate(new Date());
+						routewayDrawService.updateByPrimaryKey(draw);
 					}
 				}
 			}

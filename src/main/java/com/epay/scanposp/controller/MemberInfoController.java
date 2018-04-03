@@ -496,7 +496,7 @@ public class MemberInfoController {
 				resData.put("drawFee", new DecimalFormat("0.00").format(drawFee));
 				result.put("resData", resData);
 				
-			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){//畅捷，快捷支付 走T1
+			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){//畅捷，快捷支付 走T1 
 				drawFee = merchantCode.getKjT1DrawFee().doubleValue();
 				
 				paramMap = new HashMap<String, Object>();
@@ -584,6 +584,8 @@ public class MemberInfoController {
 					drawFee = merchantCode.getT0DrawFee().doubleValue();
 				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)){//易收款合利宝 qqH5
 					drawFee = merchantCode.getQqT0DrawFee().doubleValue();
+				}else if(RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){// 易收款先锋 微信h5 
+					drawFee = merchantCode.getT0DrawFee().doubleValue();
 				}else{
 					if("0".equals(memberInfo.getSettleType())){
 						drawFee = merchantCode.getT0DrawFee().doubleValue();
@@ -835,6 +837,8 @@ public class MemberInfoController {
 				drawFee = merchantCode.getQqT0DrawFee().doubleValue();
 			}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){//环迅网银，走D1
 				drawFee = merchantCode.getWyT1DrawFee().doubleValue();
+			}else if(RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){//易收款先锋微信h5
+				drawFee = merchantCode.getT0DrawFee().doubleValue();
 			}else if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
 				if("0".equals(memberInfo.getSettleType())){
 					tradeRate = merchantCode.getT0TradeRate().doubleValue();

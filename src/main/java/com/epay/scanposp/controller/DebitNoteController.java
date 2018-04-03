@@ -4834,7 +4834,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				result = rfH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent );
 			}
 		}else if(RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
-			memberInfo.setSettleType("1");
+			memberInfo.setSettleType("0");
 			if("1".equals(payType)){
 				result = eskH5Pay(platformType,memberInfo, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType );
 			}else if("3".equals(payType)){

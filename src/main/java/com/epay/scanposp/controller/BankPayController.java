@@ -1220,7 +1220,7 @@ public class BankPayController {
 				obj = receivePayZhzf(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayHlb(memberId, String.valueOf(draw.getMoney()), draw);
-			}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)){
+			}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayEskHlb(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayCJ(memberId, String.valueOf(draw.getMoney()), draw);
@@ -2109,12 +2109,12 @@ public class BankPayController {
 				return signReturn(result);
 			}
 			
-			SysOffice sysOffice = sysOfficeList.get(0);
+		/*	SysOffice sysOffice = sysOfficeList.get(0);
 			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 				return signReturn(result);
-			}
+			}*/
 			
 			
 			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
@@ -2573,7 +2573,7 @@ public class BankPayController {
 					}else{
 						logger.info("查询接口出参验签失败");
 					}
-				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)){
+				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
 					
 					String serverUrl = ESKConfig.agentServerUrl;
 					String tranCode = "101";
@@ -2584,8 +2584,7 @@ public class BankPayController {
 					reqData.put("tranCode", tranCode);
 					reqData.put("orderNumber", "Q"+CommonUtil.getOrderCode());
 					
-					
-					System.out.println("待加密数据: "+reqData);
+					logger.info("易收款代付订单查询请求参数[{}]",  reqData );
 					
 					String plainXML = reqData.toString();
 					byte[] plainBytes = plainXML.getBytes(charset);
@@ -2603,7 +2602,7 @@ public class BankPayController {
 					nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
 					byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
 					String respStr = new String(b, charset);
-					logger.info("返回报文[{}]", new Object[] { respStr });
+				//	logger.info("返回报文[{}]", new Object[] { respStr });
 					
 					JSONObject jsonObject = JSONObject.fromObject(respStr);
 					String resEncryptData = jsonObject.getString("Context");
@@ -2616,45 +2615,25 @@ public class BankPayController {
 					byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
 					String resXml = new String(merchantXmlDataBytes, charset);
 					JSONObject respJSONObject = JSONObject.fromObject(resXml);
-					logger.info("返回报文[{}]",  respJSONObject );
+					logger.info("易收款代付订单查询返回报文[{}]",  respJSONObject );
 					
-					
-					
-					
-					
-					
-				/*	String code = resObj.getString("returnCode");
-					String resSign = resObj.getString("signStr");
-					resObj.remove("signStr");
-					srcStr1 = StringUtil.orderedKey(resObj);
-					if(EpaySignUtil.checksign(WWConfig.platPublicKey, srcStr1, resSign)){
-						if("0000".equals(code)){
-							String daifu_state = resObj.getString("oriRespType");
-							if("S".equals(daifu_state)){
-								draw.setRespType("S");
-								draw.setRespCode("000");
-							}else if("R".equals(daifu_state)){
-								draw.setRespType("R");
-							}else{
-								draw.setRespType("E");
-								draw.setRespCode(daifu_state);
-							}
-							if(resObj.containsKey("oriRespMsg")){
-								draw.setRespMsg(resObj.getString("oriRespMsg"));
-							}
-							if(resObj.containsKey("orderCode")){
-								draw.setChannelNo(resObj.getString("orderCode"));
-							}
-							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
-							draw.setUpdateDate(new Date());
-							routewayDrawService.updateByPrimaryKey(draw);
-						}else{
-							logger.info(resObj.getString("returnMsg"));
-						}
+					String respCode = respJSONObject.getString("respCode");
+					String respType = respJSONObject.getString("respType");
+					String respMsg = respJSONObject.getString("respMsg");
+					if("000000".equals(respCode)&&"S".equals(respType)){
+						draw.setRespType("S");
+						draw.setRespCode("000");
+					}else if("R".equals(respType)){
+						draw.setRespType("R");
 					}else{
-						logger.info("查询接口出参验签失败");
-					}*/
-				}
+						draw.setRespType("E");
+						draw.setRespCode(respCode);
+					}
+					draw.setRespMsg(respMsg);
+		            draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+					draw.setUpdateDate(new Date());
+					routewayDrawService.updateByPrimaryKey(draw);
+			    }
 			}
 			result.put("orderCode", draw.getOrderCode());
 			result.put("oriRespType", draw.getRespType());
@@ -3423,8 +3402,9 @@ public class BankPayController {
 				result.put("returnMsg", "对不起，商户不存在");
 				return result;
 			}
+			String routeCode = draw.getRouteCode();
 			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
-			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(draw.getRouteCode()).andDelFlagEqualTo("0");
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 			
 			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
 			if (merchantCodes == null || merchantCodes.size() != 1) {
@@ -3433,12 +3413,21 @@ public class BankPayController {
 				return result;
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			String merCode = "";
+			double drawFee = 0d;
+			if(routeCode.equals(RouteCodeConstant.ESKHLB_ROUTE_CODE)){
+				merCode = merchantCode.getQqMerchantCode();
+				drawFee = merchantCode.getQqT0DrawFee().doubleValue();
+			}else if(routeCode.equals(RouteCodeConstant.ESKXF_ROUTE_CODE)){
+				merCode = merchantCode.getWxMerchantCode();
+				drawFee = merchantCode.getT0DrawFee().doubleValue();
+			}
 			
-			double amount = (new BigDecimal(payMoney)).doubleValue()-merchantCode.getQqT0DrawFee().doubleValue();
+			double amount = (new BigDecimal(payMoney)).doubleValue()-drawFee;
 				
 	        String bankCode = draw.getBankCode();
 			BankRouteExample bankRouteExample = new BankRouteExample();
-			bankRouteExample.createCriteria().andCodeEqualTo(bankCode).andRouteCodeEqualTo(draw.getRouteCode()).andDelFlagEqualTo("0");
+			bankRouteExample.createCriteria().andCodeEqualTo(bankCode).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 			List<BankRoute> list = bankRouteService.selectByExample(bankRouteExample);
 			if(list!=null && list.size()>0){
 				bankCode = list.get(0).getRouteBankCode();
@@ -3456,7 +3445,7 @@ public class BankPayController {
 			String charset = "utf-8";
 			
 			JSONObject reqData = new JSONObject();
-			reqData.put("merchantCode", merchantCode.getQqMerchantCode());
+			reqData.put("merchantCode", merCode);
 			reqData.put("orderNumber", orderCode);
 			reqData.put("tranCode", tranCode);
 			reqData.put("aisleType", merchantCode.getAisleType());
@@ -3470,7 +3459,7 @@ public class BankPayController {
 			reqData.put("bankName", draw.getBankName());
 			reqData.put("certificateType", "ID");
 			reqData.put("IdCard", draw.getCertNo());
-			reqData.put("mobileNo", draw.getTel());
+			reqData.put("mobile", draw.getTel());
 			reqData.put("remark", "打款备注");
 			logger.info("易收款合利宝代付请求数据[{}]", new Object[] { JSONObject.fromObject(reqData).toString() });
 			String plainXML = reqData.toString();
@@ -3520,7 +3509,7 @@ public class BankPayController {
 			}
 			String reqDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 			result.put("orderCode", orderCode);
-			result.put("merchantCode", merchantCode.getQqMerchantCode());
+			result.put("merchantCode", merCode);
 			result.put("reqDate", reqDate);
 		}catch(Exception e){
 			logger.error(e.getMessage());
