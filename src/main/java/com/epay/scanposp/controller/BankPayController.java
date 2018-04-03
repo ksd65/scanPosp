@@ -2109,12 +2109,12 @@ public class BankPayController {
 				return signReturn(result);
 			}
 			
-		/*	SysOffice sysOffice = sysOfficeList.get(0);
+			SysOffice sysOffice = sysOfficeList.get(0);
 			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 				return signReturn(result);
-			}*/
+			}
 			
 			
 			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
