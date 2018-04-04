@@ -1667,7 +1667,7 @@ public class RegistController {
 		}
 		
 		
-		MemberInfoExample memberInfoExample = new MemberInfoExample();
+		/*MemberInfoExample memberInfoExample = new MemberInfoExample();
 		memberInfoExample.or().andCertNbrEqualTo(certNbr).andStatusNotEqualTo("1").andDelFlagEqualTo("0");
 		int countMemberInfo = memberInfoService.countByExample(memberInfoExample);
 		if(countMemberInfo >0){
@@ -1675,7 +1675,7 @@ public class RegistController {
 			result.put("returnMsg", "商户信息已存在，该身份证号码已注册");
 			return CommonUtil.signReturn(result);
 		}
-		/*memberInfoExample = new MemberInfoExample();
+		memberInfoExample = new MemberInfoExample();
 		memberInfoExample.or().andMobilePhoneEqualTo(mobilePhone).andStatusNotEqualTo("1").andDelFlagEqualTo("0");
 		countMemberInfo = memberInfoService.countByExample(memberInfoExample);
 		if(countMemberInfo > 0){
