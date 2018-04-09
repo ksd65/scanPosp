@@ -462,8 +462,13 @@ public class MemberInfoController {
 				resData.put("drawFee", new DecimalFormat("#.00").format(drawFee));
 				resData.put("memberInfo", memberInfo);
 				result.put("resData", resData);
-			}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){//环迅，走D1
-				drawFee = merchantCode.getWyT1DrawFee().doubleValue();
+			}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){//环迅，走D1  易收款杉德微信h5 D1
+				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){
+					drawFee = merchantCode.getWyT1DrawFee().doubleValue();
+				}else if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
+					drawFee = merchantCode.getT1DrawFee().doubleValue();
+				}
+				
 				
 				paramMap = new HashMap<String, Object>();
 				paramMap.put("memberId", reqDataJson.getInt("memberId"));
@@ -837,6 +842,8 @@ public class MemberInfoController {
 				drawFee = merchantCode.getQqT0DrawFee().doubleValue();
 			}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){//环迅网银，走D1
 				drawFee = merchantCode.getWyT1DrawFee().doubleValue();
+			}else if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){//易收款杉德 微信h5，走D1
+				drawFee = merchantCode.getT1DrawFee().doubleValue();
 			}else if(RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){//易收款先锋微信h5
 				drawFee = merchantCode.getT0DrawFee().doubleValue();
 			}else if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
@@ -944,7 +951,7 @@ public class MemberInfoController {
 				paramMap.put("routeId", routeCode);
 				paramMap.put("startDate", df.format(begin));
 				paramMap.put("endDate", df.format(end));
-				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
+				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 					paramMap.put("settleType", "1");//D1
 				}else{
 					paramMap.put("settleType", "0");//D0
@@ -952,7 +959,7 @@ public class MemberInfoController {
 				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
 				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
 				Double canDrawToday = balanceToday;//当天可提现的金额
-				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){
+				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 					canDrawToday = 0d;
 				}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 					canDrawToday = balanceToday * 0.8;

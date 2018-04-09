@@ -1220,7 +1220,7 @@ public class BankPayController {
 				obj = receivePayZhzf(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayHlb(memberId, String.valueOf(draw.getMoney()), draw);
-			}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
+			}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayEskHlb(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayCJ(memberId, String.valueOf(draw.getMoney()), draw);
@@ -2573,7 +2573,7 @@ public class BankPayController {
 					}else{
 						logger.info("查询接口出参验签失败");
 					}
-				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
+				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 					
 					String serverUrl = ESKConfig.agentServerUrl;
 					String tranCode = "101";
@@ -3421,6 +3421,9 @@ public class BankPayController {
 			}else if(routeCode.equals(RouteCodeConstant.ESKXF_ROUTE_CODE)){
 				merCode = merchantCode.getWxMerchantCode();
 				drawFee = merchantCode.getT0DrawFee().doubleValue();
+			}else if(routeCode.equals(RouteCodeConstant.ESK_ROUTE_CODE)){
+				merCode = merchantCode.getWxMerchantCode();
+				drawFee = merchantCode.getT1DrawFee().doubleValue();
 			}
 			
 			double amount = (new BigDecimal(payMoney)).doubleValue()-drawFee;
@@ -3448,7 +3451,11 @@ public class BankPayController {
 			reqData.put("merchantCode", merCode);
 			reqData.put("orderNumber", orderCode);
 			reqData.put("tranCode", tranCode);
-			reqData.put("aisleType", merchantCode.getAisleType());
+			if(routeCode.equals(RouteCodeConstant.ESK_ROUTE_CODE)){
+				reqData.put("aisleType", "10");
+			}else{
+				reqData.put("aisleType", merchantCode.getAisleType());
+			}
 			reqData.put("totalAmount", new DecimalFormat("#.00").format(amount));
 			reqData.put("callback", callBack);
 			reqData.put("bankNo", bankCode);
