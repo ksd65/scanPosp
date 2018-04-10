@@ -16,6 +16,7 @@ public class HXConfig {
 	public static String ipsMerName;
 	public static String ipsMerAccount;
 	public static String frontUrl;
+	public static String wapPayURL;
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "hx_config");
@@ -25,5 +26,6 @@ public class HXConfig {
 		ipsMerName = bundle.getString("ipsMerName");
 		ipsMerAccount = bundle.getString("ipsMerAccount");
 		frontUrl = bundle.getString("frontUrl");
+		wapPayURL = bundle.getString("wapPayURL");
 	}
 }
