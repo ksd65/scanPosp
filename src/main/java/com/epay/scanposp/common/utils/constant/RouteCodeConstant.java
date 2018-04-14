@@ -55,4 +55,6 @@ public class RouteCodeConstant {
 	public static String CJWG_ROUTE_CODE = "1026";//畅捷网关
 	
 	public static String YS_ROUTE_CODE = "1027";//易生
+	
+	public static String TL_ROUTE_CODE = "1028";//通联
 }

@@ -1831,6 +1831,7 @@ public class CashierDeskController {
 			reqData.put("desc", memberInfo.getName() + " 收款");
 			reqData.put("callback", callBack);
 			reqData.put("terminalId", ip);
+			reqData.put("onlyId", ip);
 			logger.info("易收款扫码请求待加密数据[{}]", new Object[] { reqData.toString() });
 			
 			String plainXML = reqData.toString();

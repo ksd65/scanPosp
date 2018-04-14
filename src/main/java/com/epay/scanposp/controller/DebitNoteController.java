@@ -5234,6 +5234,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			reqData.put("terminalId", ip);
 			reqData.put("sceneType", "2");
 			reqData.put("wapName", "聚合支付");
+			reqData.put("onlyId", ip);
 			System.out.println("待加密数据: "+reqData);
 			
 			String plainXML = reqData.toString();
@@ -5479,6 +5480,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			reqData.put("callback", callBack);
 			reqData.put("desc", memberInfo.getName() + " 收款");
 			reqData.put("terminalId", ip);
+			reqData.put("onlyId", ip);
 			System.out.println("待加密数据: "+reqData);
 			
 			String plainXML = reqData.toString();
