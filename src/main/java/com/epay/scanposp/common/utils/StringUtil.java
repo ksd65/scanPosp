@@ -111,4 +111,31 @@ public class StringUtil {
 	public static void main(String[] args) {
 		System.out.println(StringUtil.isRealDouble("0.002"));
 	}
+	
+	/**
+	 * 给map里面的参数按字母大小排序
+	 * @param dataMap
+	 * @return
+	 */
+	public static String orderedKeyObj(Map<String, Object> dataMap){
+		ArrayList<String> list = new ArrayList<String>();
+		for(String key:dataMap.keySet()){
+			if(dataMap.get(key)!=null&&!"".equals(dataMap.get(key))){
+				list.add(key + "=" + dataMap.get(key));
+			}
+		}
+		int size = list.size();
+		String [] arrayToSort = list.toArray(new String[size]);
+		Arrays.sort(arrayToSort, String.CASE_INSENSITIVE_ORDER);
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < size; i ++) {
+			sb.append(arrayToSort[i]);
+			sb.append("&");
+		}
+		String result = sb.toString();
+		if(StringUtils.isNotBlank(result)){//去掉最后的&
+			result = result.substring(0, result.length()-1);
+		}
+		return result;
+	}
 }

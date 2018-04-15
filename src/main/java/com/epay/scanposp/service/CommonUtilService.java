@@ -447,5 +447,29 @@ public class CommonUtilService {
 		result.put("returnCode", "0000");
 		return result;
 	}
+	
+	public JSONObject checkSingleDrawLimit(String configName, BigDecimal drawMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal singleLimit = new BigDecimal(value);
+			if (null != singleLimit && singleLimit.compareTo(BigDecimal.ZERO) > 0){
+				if (drawMoney.compareTo(singleLimit) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "代付单笔限额为"+singleLimit+"元,当前金额已超过");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
 
 }
