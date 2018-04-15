@@ -1468,6 +1468,7 @@ public class CashierDeskController {
 			memberInfo.setSettleType("1");
 			result = grsmScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");
 			result = tlScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else{
 			result = msScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl);
@@ -7240,7 +7241,7 @@ public class CashierDeskController {
 			
 			String callBack = SysConfig.serverUrl + "/cashierDesk/tlPayNotify";
 			
-			System.out.println("-------------通知地址------" + callBack + "------------");
+			//System.out.println("-------------通知地址------" + callBack + "------------");
 			
 			// 调用支付通道
 			
@@ -7524,7 +7525,8 @@ public class CashierDeskController {
 			
 			
 		}catch(Exception e){
-			
+			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 		try {
 			response.getWriter().write(respString);
