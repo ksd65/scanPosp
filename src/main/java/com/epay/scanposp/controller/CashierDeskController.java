@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -419,6 +420,14 @@ public class CashierDeskController {
 	@ResponseBody
 	@RequestMapping("/cashierDesk/qrcodePay")
 	public JSONObject qrcodePay(HttpServletRequest request,HttpServletResponse response){
+		Map<String,String> inparam = new HashMap<String, String>();
+		Enumeration<String> pNames=request.getParameterNames();
+		while(pNames.hasMoreElements()){
+		    String name=(String)pNames.nextElement();
+		    String value=request.getParameter(name);
+		    inparam.put(name, value);
+		}
+		logger.info("扫码支付下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
 		String payMoney = request.getParameter("payMoney");
 		String payType = request.getParameter("payType");
 		String orderNum = request.getParameter("orderNum");
@@ -1243,6 +1252,7 @@ public class CashierDeskController {
 			return result;
 		}
 		
+		MemberPayType memberPayType = memberPayTypeList.get(0);
 		
 		Map<String,String> rtMap  = getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_SMZF,payTypeStr);
 		String routeCode = rtMap.get("routeCode");
@@ -1444,21 +1454,21 @@ public class CashierDeskController {
 		
 		
 		if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
-			result = eskScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
+			result = eskScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else if(RouteCodeConstant.FT_ROUTE_CODE.equals(routeCode)){
-			result = ftScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,aisleType,clientIp);
+			result = ftScanQrcodePay(platformType,payType,memberInfo, memberPayType,payMoney, orderNum, callbackUrl , merchantCode ,aisleType,clientIp);
 		}else if(RouteCodeConstant.YL_ROUTE_CODE.equals(routeCode)){
-			result = ylScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,aisleType);
+			result = ylScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,aisleType);
 		}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)){
-			result = eskScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
+			result = eskScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("0");
-			result = hlbScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
+			result = hlbScanQrcodePay(platformType,payType,memberInfo, memberPayType,payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else if(RouteCodeConstant.GRSM_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("1");
-			result = grsmScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
+			result = grsmScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
-			result = tlScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
+			result = tlScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else{
 			result = msScanQrcodePay(platformType,payType,memberInfo, payMoney, orderNum, callbackUrl);
 		}
@@ -1657,7 +1667,7 @@ public class CashierDeskController {
 	 * @param request
 	 * @return
 	 */
-	public JSONObject eskScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
+	public JSONObject eskScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
 		JSONObject result = new JSONObject();
 		try {
 			// 插入一条收款记录
@@ -1711,25 +1721,9 @@ public class CashierDeskController {
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT0TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT0TradeRate());
-				}else if("3".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getQqT0TradeRate());
-				}else if("5".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getJdT0TradeRate());
-				}
+				debitNote.setTradeRate(memberPayType.getT0TradeRate());
 			}else{
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT1TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT1TradeRate());
-				}else if("3".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getQqT1TradeRate());
-				}else if("5".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getJdT1TradeRate());
-				}
+				debitNote.setTradeRate(memberPayType.getT1TradeRate());
 			}
 			
 			
@@ -1933,7 +1927,7 @@ public class CashierDeskController {
 	 * @param request
 	 * @return
 	 */
-	public JSONObject ftScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String aisleType,String clientIp) {
+	public JSONObject ftScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,MemberPayType memberPayType, String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String aisleType,String clientIp) {
 		JSONObject result = new JSONObject();
 		try {
 			// 插入一条收款记录
@@ -1971,9 +1965,9 @@ public class CashierDeskController {
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				debitNote.setTradeRate(merchantCode.getT0TradeRate());
+				debitNote.setTradeRate(memberPayType.getT0TradeRate());
 			}else{
-				debitNote.setTradeRate(merchantCode.getT1TradeRate());
+				debitNote.setTradeRate(memberPayType.getT1TradeRate());
 			}
 			
 			debitNoteService.insertSelective(debitNote);
@@ -4632,6 +4626,14 @@ public class CashierDeskController {
 	public JSONObject orderQuery(HttpServletRequest request,HttpServletResponse response) {
 		JSONObject result = new JSONObject();
 		try {
+			Map<String,String> inparam = new HashMap<String, String>();
+			Enumeration<String> pNames=request.getParameterNames();
+			while(pNames.hasMoreElements()){
+			    String name=(String)pNames.nextElement();
+			    String value=request.getParameter(name);
+			    inparam.put(name, value);
+			}
+			logger.info("订单查询下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
 			String orderNum = request.getParameter("orderNum");
 			String memberCode = request.getParameter("memberCode");
 			String signStr = request.getParameter("signStr");
@@ -5412,6 +5414,87 @@ public class CashierDeskController {
 					result.put("returnCode", "0012");
 					result.put("returnMsg", "查询接口出参验签失败");
 				}
+			}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+				
+
+		    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return signReturn(result);
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        
+		        String serverUrl = TLConfig.msServerUrl;
+				
+				JSONObject reqData = new JSONObject();
+				reqData.put("ACTION_NAME", "QUERY_PAY_ORDER");
+				JSONObject reqBody = new JSONObject();
+				reqBody.put("COM_ID", merchantKey.getAppId());
+				reqBody.put("USER_INFO_ID", merchantKey.getMerchantCode());
+				reqBody.put("OUT_TRADE_NO", debitNote.getOrderCode());
+				reqBody.put("NONCE_STR", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+				
+				String srcStr1 = StringUtil.orderedKey(reqBody)+"&KEY="+merchantKey.getPrivateKey();
+				logger.info("Sign Before MD5: {}", srcStr1);
+				String sign = MD5Util.MD5Encode(srcStr1).toUpperCase();
+				reqBody.put("SIGN", sign);
+				
+				reqData.put("ACTION_INFO", reqBody.toString());
+				
+				logger.info("通联订单查询请求数据[{}]", new Object[] { reqData.toString() });
+				
+				String respStr = HttpUtil.sendPostRequest(serverUrl, reqData.toString());
+				
+				logger.info("通联订单查询返回报文[{}]", new Object[] { respStr });
+		        
+		        JSONObject jsonObject = JSONObject.fromObject(respStr);
+				
+				String returnCode = jsonObject.getString("ACTION_RETURN_CODE");
+				String resultMsg = "";
+				if ("000000".equals(returnCode)) {
+					JSONObject respJSONObject =  JSONObject.fromObject(jsonObject.get("ACTION_INFO"));
+					String signed = respJSONObject.getString("SIGN");
+					respJSONObject.remove("SIGN");
+					srcStr1 = StringUtil.orderedKeyObj(respJSONObject)+"&KEY="+merchantKey.getPrivateKey();
+					//logger.info("Sign Before MD5: {}", srcStr1);
+					sign = MD5Util.MD5Encode(srcStr1).toUpperCase();
+					if(!sign.equals(signed)){
+						result.put("returnCode", "0012");
+						result.put("returnMsg", "验签失败");
+					}else{
+						String resultcode = respJSONObject.getString("RESULT_CODE");
+						if("0".equals(resultcode)){
+							String status = respJSONObject.getString("TRADE_STATE");
+							if("SUCCESS".equals(status)){
+			        			result.put("oriRespType", "S");
+								result.put("oriRespCode", "000000");
+								result.put("oriRespMsg", "支付成功");
+								result.put("totalAmount", respJSONObject.getString("AMOUNT"));
+			        		}else if("NOTPAY".equals(status)){
+			        			result.put("oriRespType", "R");
+								result.put("oriRespCode", "000001");
+								result.put("oriRespMsg", "未支付");
+			        		}else{
+								result.put("oriRespType", "E");
+								result.put("oriRespCode", "000002");
+								result.put("oriRespMsg", "支付失败");
+							}
+						}else{
+							resultMsg = respJSONObject.getString("ERR_MSG");
+							result.put("returnCode", "0012");
+							result.put("returnMsg", resultMsg);
+						}
+					}
+				}else{
+					resultMsg = jsonObject.getString("MESSAGE");
+					result.put("returnCode", "0012");
+					result.put("returnMsg", resultMsg);
+				}
+			
 			}else{
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
@@ -5548,7 +5631,7 @@ public class CashierDeskController {
 	 * @param request
 	 * @return
 	 */
-	public JSONObject ylScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String aisleType) {
+	public JSONObject ylScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String aisleType) {
 		JSONObject result = new JSONObject();
 		JSONObject resData = new JSONObject();
 		try {
@@ -5587,25 +5670,9 @@ public class CashierDeskController {
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT0TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT0TradeRate());
-				}else if("3".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getQqT0TradeRate());
-				}else {
-					debitNote.setTradeRate(merchantCode.getT0TradeRate());
-				}
+				debitNote.setTradeRate(memberPayType.getT0TradeRate());
 			}else{
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT1TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT1TradeRate());
-				}else if("3".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getQqT1TradeRate());
-				}else {
-					debitNote.setTradeRate(merchantCode.getT1TradeRate());
-				}
+				debitNote.setTradeRate(memberPayType.getT1TradeRate());
 			}
 			
 			debitNoteService.insertSelective(debitNote);
@@ -6113,7 +6180,7 @@ public class CashierDeskController {
 	 * @param request
 	 * @return
 	 */
-	public JSONObject hlbScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
+	public JSONObject hlbScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
 		JSONObject result = new JSONObject();
 		try {
 			String payTypeStr = "";
@@ -6175,25 +6242,9 @@ public class CashierDeskController {
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT0TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT0TradeRate());
-				}else if("3".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getQqT0TradeRate());
-				}else if("5".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getJdT0TradeRate());
-				}
+				debitNote.setTradeRate(memberPayType.getT0TradeRate());
 			}else{
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT1TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT1TradeRate());
-				}else if("3".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getQqT1TradeRate());
-				}else if("5".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getJdT1TradeRate());
-				}
+				debitNote.setTradeRate(memberPayType.getT1TradeRate());
 			}
 			
 			
@@ -6614,7 +6665,7 @@ public class CashierDeskController {
 
 	}
 	//个人扫码支付
-	public JSONObject grsmScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
+	public JSONObject grsmScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
 		JSONObject result = new JSONObject();
 		try {
 			String payTypeStr = "";
@@ -6629,17 +6680,9 @@ public class CashierDeskController {
 				merCode = merchantCode.getZfbMerchantCode();
 			}
 			if("0".equals(memberInfo.getSettleType())){
-				if("1".equals(payType)){
-					tradeRate = merchantCode.getT0TradeRate();
-				}else if("2".equals(payType)){
-					tradeRate = merchantCode.getZfbT0TradeRate();
-				}
+				tradeRate = memberPayType.getT0TradeRate();
 			}else{
-				if("1".equals(payType)){
-					tradeRate = merchantCode.getT1TradeRate();
-				}else if("2".equals(payType)){
-					tradeRate = merchantCode.getZfbT1TradeRate();
-				}
+				tradeRate = memberPayType.getT1TradeRate();
 			}
 			
 			// 插入一条收款记录
@@ -7074,7 +7117,7 @@ public class CashierDeskController {
 	}
 	
 	
-	public JSONObject tlScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
+	public JSONObject tlScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
 		JSONObject result = new JSONObject();
 		try {
 			
@@ -7115,21 +7158,9 @@ public class CashierDeskController {
 			}
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT0TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT0TradeRate());
-				}else if("3".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getQqT0TradeRate());
-				}
+				debitNote.setTradeRate(memberPayType.getT0TradeRate());
 			}else{
-				if("1".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getT1TradeRate());
-				}else if("2".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getZfbT1TradeRate());
-				}else if("3".equals(payType)){
-					debitNote.setTradeRate(merchantCode.getQqT1TradeRate());
-				}
+				debitNote.setTradeRate(memberPayType.getT1TradeRate());
 			}
 			
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
@@ -7326,8 +7357,172 @@ public class CashierDeskController {
 		String respString = "SUCCESS";
 		try {
 			String responseStr = HttpUtil.getPostString(request);
-			//String responseStr = "{\"ret_code\":\"0\",\"ret_msg\":\"交易成功\",\"signature\":\"78C88192D3E53F78416232595A3841B2\",\"biz_content\":{\"create_time\":\"2018-01-31 10:59:34\",\"mch_id\":\"10003862\",\"order_no\":\"81020180131105934380692339712201\",\"order_status\":\"2\",\"out_order_no\":\"20180131105933809173\",\"pay_time\":\"2018-01-31 11:05:02\",\"payment_fee\":\"500\"}}";
+			//String responseStr = "{\"SIGN\":\"788E9DD49453D30A68213BE8CCC9A06C\",\"ACTION_INFO\":{\"NONCE_STR\":\"5ry9tfoh0q24146yq9indkrne81qegeu\",\"USER_INFO_ID\":\"10000028\",\"COM_ID\":\"10000013\",\"GMT_PAYMENT\":\"20180413162755\",\"TRANSACTION_ID\":\"2018041316250035801C\",\"PAY_RESULT\":\"0\",\"AMOUNT\":\"1.0\",\"OUT_TRADE_NO\":\"20180413162710444131\"},\"ACTION_NAME\":\"PAY_ORDER_NOTIFY\"}";
 			logger.info("tlPayNotify回调通知报文[{}]",  responseStr );
+			
+			JSONObject obj = JSONObject.fromObject(responseStr);
+			String sign = obj.getString("SIGN");
+			JSONObject respObj = JSONObject.fromObject(obj.getString("ACTION_INFO"));
+			
+			
+			String reqMsgId = respObj.getString("OUT_TRADE_NO");
+        	TradeDetailExample tradeDetailExample = new TradeDetailExample();
+        	tradeDetailExample.or().andOrderCodeEqualTo(reqMsgId);
+        	List<TradeDetail> tradeDetailList = tradeDetailService.selectByExample(tradeDetailExample);
+        	if(tradeDetailList!=null && tradeDetailList.size()>0){
+        		response.getWriter().write(respString);
+        		return;
+        	}
+        	
+        	DebitNoteExample debitNoteExample = new DebitNoteExample();
+			debitNoteExample.createCriteria().andOrderCodeEqualTo(reqMsgId);
+			List<DebitNote> debitNotes_tmp = debitNoteService.selectByExample(debitNoteExample);
+			if (debitNotes_tmp == null || debitNotes_tmp.size() == 0) {
+				respString = "fail";
+                logger.info("订单不存在");
+                response.getWriter().write(respString);
+        		return;
+				
+			}
+			DebitNote debitNote = debitNotes_tmp.get(0);
+        	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+            memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TL_ROUTE_CODE).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+            List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+            if(keyList == null || keyList.size()!=1){
+            	respString = "fail";
+                logger.info("商户私钥未配置");
+                response.getWriter().write(respString);
+        		return;
+            }
+            
+            String srcStr = StringUtil.orderedKeyObj(respObj)+"&KEY="+keyList.get(0).getPrivateKey();
+			logger.info("Sign Before MD5: {}", srcStr);
+			String mySign  = MD5Util.MD5Encode(srcStr).toUpperCase();
+            if (!sign.equals(mySign)){
+				respString = "fail";
+                logger.info("验证签名不通过");
+                response.getWriter().write(respString);
+        		return;
+            }
+            String result_code = respObj.getString("PAY_RESULT");
+            String result_message = "";
+            if(respObj.containsKey("PAY_INFO")){
+            	result_message = respObj.getString("PAY_INFO");
+            }
+        	MsResultNoticeExample msResultNoticeExample = new MsResultNoticeExample();
+			msResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
+			List<MsResultNotice> msResultNoticeList = msResultNoticeService.selectByExample(msResultNoticeExample);
+			if(null == msResultNoticeList || msResultNoticeList.size() == 0){
+				if (debitNote != null ) {
+					debitNote.setRespCode(result_code);
+					debitNote.setRespMsg(result_message);
+					
+					//新增一条交易明细记录
+					TradeDetail tradeDetail=new TradeDetail();
+					tradeDetail.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+					tradeDetail.setMemberId(debitNote.getMemberId());
+					tradeDetail.setMerchantCode(debitNote.getMerchantCode());
+					tradeDetail.setChannelNo(respObj.getString("TRANSACTION_ID"));
+					
+					tradeDetail.setMemberCode(debitNote.getMemberCode());
+					tradeDetail.setMoney(new BigDecimal(respObj.getString("AMOUNT")));
+					tradeDetail.setPayTime(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
+					tradeDetail.setPtSerialNo(debitNote.getOrderCode());
+					tradeDetail.setOrderCode(debitNote.getOrderCode());
+					tradeDetail.setReqDate(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
+					//tradeDetail.setRespCode(respJSONObject.get("respCode").toString());
+					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
+					tradeDetail.setRespMsg(result_message);
+					tradeDetail.setRouteId(debitNote.getRouteId());
+					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
+					tradeDetail.setTxnType(debitNote.getTxnType());
+					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
+					tradeDetail.setDelFlag("0");
+					tradeDetail.setCreateDate(new Date());
+					if ("0".equals(result_code)) {
+						debitNote.setStatus("1");
+						tradeDetail.setRespType("S");
+						tradeDetail.setRespCode("000000");
+					}else{
+						debitNote.setStatus("2");
+						tradeDetail.setRespType("E");
+						tradeDetail.setRespCode(result_code);
+					}
+					debitNote.setUpdateDate(new Date());
+					debitNoteService.updateByPrimaryKey(debitNote);
+					
+					MsResultNotice msResultNotice = new MsResultNotice();
+					msResultNotice.setMoney(new BigDecimal(respObj.getString("AMOUNT")));
+					msResultNotice.setOrderCode(reqMsgId);
+					msResultNotice.setPtSerialNo(respObj.getString("TRANSACTION_ID"));
+					
+					//SimpleDateFormat dateSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					msResultNotice.setRespDate(DateUtil.getDateTimeStr(new Date()));
+					msResultNotice.setRespType("");
+					msResultNotice.setRespCode(result_code);
+					msResultNotice.setRespMsg(result_message);
+					msResultNotice.setPayTime(DateUtil.getDateTimeStr(new Date()));
+					msResultNotice.setCreateDate(new Date());
+					msResultNotice.setUpdateDate(new Date());
+					msResultNoticeService.insertSelective(msResultNotice);
+					
+					if("0".equals(debitNote.getSettleType())){
+						tradeDetail.setSettleType("0");
+					}else{
+						tradeDetail.setSettleType("1");
+					}
+					PayResultNoticeExample payResultNoticeExample = new PayResultNoticeExample();
+					payResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
+					List<PayResultNotice> payResultNoticeList = payResultNoticeService.selectByExample(payResultNoticeExample);
+					PayResultNotice payResultNotice = null;
+					if(payResultNoticeList.size()>0){
+						payResultNotice = payResultNoticeList.get(0);
+						payResultNotice.setResultMessage(debitNote.getRespMsg());
+						payResultNotice.setStatus("2");
+						payResultNotice.setPayTime(msResultNotice.getPayTime());
+						payResultNotice.setUpdateDate(new Date());
+						if ("0".equals(result_code)) {
+							payResultNotice.setRespType("2");
+							payResultNotice.setResultCode("0000");
+							payResultNotice.setResultMessage("交易成功");
+						}else{
+							payResultNotice.setRespType("3");
+							payResultNotice.setResultCode("0003");   
+							payResultNotice.setResultMessage("交易失败："+result_message);
+						}
+						
+						tradeDetail.setInterfaceType(payResultNotice.getInterfaceType());
+						tradeDetail.setPlatformType(payResultNotice.getPlatformType());
+						tradeDetail.setOrderNumOuter(payResultNotice.getOrderNumOuter());
+					}
+					//更改逻辑  只有交易成功的记录才写进交易记录表  单独写在此处防止后面再次更改逻辑会不理解
+					if ("0".equals(result_code)) {
+						tradeDetail.setCardType(msResultNotice.getCardType());
+						tradeDetailService.insertSelective(tradeDetail);
+						
+						TradeDetailDaily tradeDetailDaily = new TradeDetailDaily();
+						
+						tradeDetailDaily.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+						tradeDetailDaily.setMemberId(debitNote.getMemberId());
+						tradeDetailDaily.setMerchantCode(debitNote.getMerchantCode());
+						tradeDetailDaily.setMoney(debitNote.getMoney());
+						tradeDetailDaily.setOrderCode(debitNote.getOrderCode());
+						tradeDetailDaily.setRouteId(debitNote.getRouteId());
+						tradeDetailDaily.setDelFlag("0");
+						tradeDetailDaily.setCreateDate(new Date());
+						tradeDetailDailyService.insertSelective(tradeDetailDaily);
+					}
+					
+					if(payResultNoticeList.size() > 0){
+						payResultNotifyService.notify(payResultNotice);
+					
+					}
+			
+			
+				}
+			}
+			
+			
 		}catch(Exception e){
 			
 		}
