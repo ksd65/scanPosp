@@ -30,6 +30,7 @@ import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.HLBConfig;
 import com.epay.scanposp.common.constant.RFConfig;
+import com.epay.scanposp.common.constant.TLConfig;
 import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
@@ -51,6 +52,7 @@ import com.epay.scanposp.common.utils.slf.SecurityUtil;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePay;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayQueryRequest;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayQueryResponse;
+import com.epay.scanposp.common.utils.tl.CertUtil;
 import com.epay.scanposp.common.utils.ys.SwpHashUtil;
 import com.epay.scanposp.common.utils.yzf.AESTool;
 import com.epay.scanposp.common.utils.yzf.Base64Utils;
@@ -624,6 +626,66 @@ public class QueryReceivePayResultNoticeTigger {
 			            draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 						draw.setUpdateDate(new Date());
 						routewayDrawService.updateByPrimaryKey(draw);
+					}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+				        if(keyList == null || keyList.size()!=1){
+				        	continue;
+				        }
+				        MemberMerchantKey merchantKey = keyList.get(0);
+						String serverUrl = TLConfig.msServerUrl;
+						JSONObject reqData = new JSONObject();
+						reqData.put("ACTION_NAME", "QUERY_SETTLE");
+						JSONObject reqBody = new JSONObject();
+						reqBody.put("COM_ID", TLConfig.agentId);
+						reqBody.put("ORDER_ID", draw.getChannelNo());
+						reqBody.put("NONCE_STR", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+						
+						String srcStr = StringUtil.orderedKey(reqBody);
+						
+						CertUtil util = new CertUtil();
+						String keyStorePath = util.getConfigPath()+TLConfig.keyStorePath;
+						String sign = CertUtil.sign(srcStr, keyStorePath, TLConfig.keyStorePassword, TLConfig.alias, TLConfig.aliasPassword);
+						reqBody.put("SIGN", sign);
+						
+						reqData.put("ACTION_INFO", reqBody.toString());
+						logger.info("通联代付查询请求数据[{}]", new Object[] { reqData.toString() });
+						String respStr = HttpUtil.sendPostRequest(serverUrl, reqData.toString());
+						logger.info("通联代付查询返回报文[{}]", new Object[] { respStr });
+						JSONObject resultObj = JSONObject.fromObject(respStr);
+						
+						String result_code = "";
+						if("000000".equals(resultObj.getString("ACTION_RETURN_CODE"))){
+							JSONObject respJSONObject =  JSONObject.fromObject(resultObj.get("ACTION_INFO"));
+							String signed = respJSONObject.getString("SIGN");
+							respJSONObject.remove("SIGN");
+							srcStr = StringUtil.orderedKeyObj(respJSONObject)+"&KEY="+merchantKey.getPrivateKey();
+							sign = MD5Util.MD5Encode(srcStr).toUpperCase();
+							
+							if(sign.equals(signed)){
+								result_code = respJSONObject.getString("STATUS");//0、待出款，2、出款失败；3、出款中；6、出款成功；
+								if("6".equals(result_code)){
+									draw.setRespType("S");
+									draw.setRespCode("000");
+								}else if("0".equals(result_code)||"3".equals(result_code)){
+									draw.setRespType("R");
+								}else{
+									draw.setRespType("E");
+									draw.setRespCode(result_code);
+								}
+								if(respJSONObject.containsKey("MSG")){
+									draw.setRespMsg(respJSONObject.getString("MSG"));
+								}
+								draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+								draw.setUpdateDate(new Date());
+								routewayDrawService.updateByPrimaryKey(draw);
+							}else{
+								logger.info("查询接口出参验签失败");
+							}
+						}else{
+							logger.info(resultObj.getString("MESSAGE"));
+						}
 					}
 				}
 			}

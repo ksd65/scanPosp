@@ -14,6 +14,8 @@ import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.entity.Account;
 import com.epay.scanposp.entity.AccountExample;
+import com.epay.scanposp.entity.MemberDrawRoute;
+import com.epay.scanposp.entity.MemberDrawRouteExample;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberMerchantCode;
@@ -22,6 +24,7 @@ import com.epay.scanposp.entity.RoutewayAccount;
 import com.epay.scanposp.entity.RoutewayAccountExample;
 import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.CommonService;
+import com.epay.scanposp.service.MemberDrawRouteService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
@@ -52,6 +55,9 @@ public class AccountBalanceTigger {
 	
 	@Autowired
 	private RoutewayAccountService routewayAccountService;
+	
+	@Autowired
+	private MemberDrawRouteService memberDrawRouteService;
 	
 	public void accountBalance(){
 		
@@ -623,6 +629,86 @@ public class AccountBalanceTigger {
 						routewayAccount.setMemberId(memberId);
 						routewayAccount.setRouteCode(routeCode);
 						routewayAccount.setBalance(new BigDecimal(balance));
+						routewayAccount.setCreateDate(new Date());
+						routewayAccount.setT1Balance(new BigDecimal(0));
+						routewayAccountService.insertSelective(routewayAccount);
+					}
+				
+				}
+				
+				routeCode = RouteCodeConstant.TL_ROUTE_CODE;
+				for(MemberInfo member:memberList){
+					Integer memberId = member.getId();
+					RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
+					routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+					List<RoutewayAccount> routewayAccountList = routewayAccountService.selectByExample(routewayAccountExample);
+					
+					RoutewayAccount routewayAccount = null;
+					Double balanceHis = 0d;
+					Double balanceT1 = 0d;
+					if(routewayAccountList != null && routewayAccountList.size()>0){
+						routewayAccount = routewayAccountList.get(0);
+						balanceHis = routewayAccount.getBalance().doubleValue();
+						balanceT1 = routewayAccount.getT1Balance().doubleValue();
+					}
+					
+					MemberDrawRouteExample memberDrawRouteExample = new MemberDrawRouteExample();
+					memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andPayTypeEqualTo("0").andDelFlagEqualTo("0");
+					List<MemberDrawRoute> routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
+					if(routeList==null||routeList.size()==0){
+						memberDrawRouteExample = new MemberDrawRouteExample();
+						memberDrawRouteExample.createCriteria().andMemberIdEqualTo(0).andRouteCodeEqualTo(routeCode).andPayTypeEqualTo("0").andDelFlagEqualTo("0");
+						routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
+					}
+					if(routeList==null||routeList.size()==0){
+						continue;
+					}
+					
+					MemberDrawRoute drawRoute = routeList.get(0);
+					
+					Map<String,Object> paramMap = new HashMap<String, Object>();
+					paramMap = new HashMap<String, Object>();
+					paramMap.put("memberId", memberId);
+					paramMap.put("routeId", routeCode);
+					paramMap.put("startDate", yesterday);
+					paramMap.put("endDate", yesterday);
+					paramMap.put("settleType", "0");//D0
+					Double tradeMoneyBalance = commonService.countTransactionRealMoneyByCondition(paramMap);
+					tradeMoneyBalance = tradeMoneyBalance == null ? 0 : tradeMoneyBalance;//昨天交易账户余额
+				
+					paramMap = new HashMap<String, Object>();
+					paramMap.put("memberId", memberId);
+					paramMap.put("routeCode", routeCode);
+					paramMap.put("respType", "S");
+					//前一天成功提现金额（包含代付）
+					paramMap.put("respDate", yesterday);
+					Double drawMoneyCountYesterDay = commonService.countDrawMoneyByCondition(paramMap);
+					drawMoneyCountYesterDay = drawMoneyCountYesterDay == null ? 0 : drawMoneyCountYesterDay;
+					
+					Double drawPercent = new BigDecimal(1).subtract(drawRoute.getT1Percent()).doubleValue();
+					int week = DateUtil.getWeek();
+					if(week == 6 || week == 0){//周六凌晨跑 周天凌晨跑
+						balanceHis = balanceHis + tradeMoneyBalance * drawPercent - drawMoneyCountYesterDay;
+						balanceT1 = balanceT1 + tradeMoneyBalance * (drawRoute.getT1Percent().doubleValue());
+					}else if(week == 1){//周一凌晨跑
+						balanceHis = balanceHis + balanceT1 + tradeMoneyBalance - drawMoneyCountYesterDay;
+						balanceT1 = 0d;
+					}else{
+						balanceHis = balanceHis + tradeMoneyBalance - drawMoneyCountYesterDay;
+					}
+					
+					Double balance = balanceHis + tradeMoneyBalance - drawMoneyCountYesterDay;
+					if(routewayAccount!=null){
+						routewayAccount.setBalance(new BigDecimal(balance));
+						routewayAccount.setT1Balance(new BigDecimal(balanceT1));
+						routewayAccount.setUpdateDate(new Date());
+						routewayAccountService.updateByPrimaryKey(routewayAccount);
+					}else{
+						routewayAccount = new RoutewayAccount();
+						routewayAccount.setMemberId(memberId);
+						routewayAccount.setRouteCode(routeCode);
+						routewayAccount.setBalance(new BigDecimal(balance));
+						routewayAccount.setT1Balance(new BigDecimal(balanceT1));
 						routewayAccount.setCreateDate(new Date());
 						routewayAccount.setT1Balance(new BigDecimal(0));
 						routewayAccountService.insertSelective(routewayAccount);

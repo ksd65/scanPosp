@@ -510,13 +510,11 @@ public class CertUtil {
 			configPath = new java.io.File(java.net.URLDecoder.decode(
 					CertUtil.class.getProtectionDomain().getCodeSource().getLocation().getFile(),
 					"utf-8")).getParentFile().getAbsolutePath()+ File.separator+"config"+File.separator;
-			System.out.println(configPath);
 			if(!new File(configPath).exists()){
 				File file = new File((this.getClass().getClassLoader().getResource("").getPath()));
 				String p = file.getParent();
 				if(p.endsWith(File.separator))configPath = p+"classes"+File.separator+EnvironmentUtil.propertyPath+"tlkey"+File.separator;
 				else configPath = p +File.separator+"classes"+File.separator+EnvironmentUtil.propertyPath+"tlkey"+File.separator;
-				System.out.println(configPath);
 			}
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
