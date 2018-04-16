@@ -626,7 +626,7 @@ public class QueryReceivePayResultNoticeTigger {
 			            draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 						draw.setUpdateDate(new Date());
 						routewayDrawService.updateByPrimaryKey(draw);
-					}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+					}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLH5_ROUTE_CODE.equals(routeCode)){
 						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
 				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);

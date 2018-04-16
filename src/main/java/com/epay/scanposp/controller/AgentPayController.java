@@ -1387,6 +1387,7 @@ public class AgentPayController {
 		String memberCode = request.getParameter("memberCode");
 		String orderNum = request.getParameter("orderNum");
 		String payMethod = request.getParameter("payMethod");
+		String payType = request.getParameter("payType");
 		String payMoney = request.getParameter("payMoney");
 		String tel = request.getParameter("tel");
 		
@@ -1457,6 +1458,13 @@ public class AgentPayController {
 		}
 		srcStr.append("&payMoney="+payMoney);
 		
+		if(payType != null && !"".equals(payType)){
+			srcStr.append("&payType="+payType);
+		}else{
+			payType = "0";
+		}
+		
+		
 		if(tel == null || "".equals(tel)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "手机号缺失");
@@ -1469,12 +1477,12 @@ public class AgentPayController {
 			result.put("returnMsg", "缺少签名信息");
 			return signReturn(result);
 		}
-		result = validMemberInfoForAgentApply(memberCode, orderNum, payMoney,payMethod, bankCode,accountName,bankAccount,certNo,tel,  srcStr.toString(), signStr);
+		result = validMemberInfoForAgentApply(memberCode, orderNum, payMoney,payMethod,payType, bankCode,accountName,bankAccount,certNo,tel,  srcStr.toString(), signStr);
 		
 		return signReturn(result);
 	}
 	
-	public JSONObject validMemberInfoForAgentApply(String memberCode,String orderNum,String payMoney,String payMethod,String bankCode,String accountName,String bankAccount,String certNo ,String tel,String signOrginalStr,String signedStr){
+	public JSONObject validMemberInfoForAgentApply(String memberCode,String orderNum,String payMoney,String payMethod,String payType,String bankCode,String accountName,String bankAccount,String certNo ,String tel,String signOrginalStr,String signedStr){
 		JSONObject result = new JSONObject();
 		try{
 			MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -1538,11 +1546,11 @@ public class AgentPayController {
 			}
 		
 			MemberDrawRouteExample memberDrawRouteExample = new MemberDrawRouteExample();
-			memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(payMethod).andPayTypeEqualTo("0").andDelFlagEqualTo("0");
+			memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
 			List<MemberDrawRoute> routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
 			if(routeList==null||routeList.size()==0){
 				memberDrawRouteExample = new MemberDrawRouteExample();
-				memberDrawRouteExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andPayTypeEqualTo("0").andDelFlagEqualTo("0");
+				memberDrawRouteExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
 				routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
 			}
 			if(routeList==null||routeList.size()==0){
@@ -1575,7 +1583,7 @@ public class AgentPayController {
 			}
 			
 			double  drawFee = 0 ;
-			if(routeCode.equals(RouteCodeConstant.TL_ROUTE_CODE)){
+			if(routeCode.equals(RouteCodeConstant.TL_ROUTE_CODE)||routeCode.equals(RouteCodeConstant.TLH5_ROUTE_CODE)){
 				drawFee = drawRoute.getDrawFee().doubleValue();
 			}
 			
@@ -1617,7 +1625,7 @@ public class AgentPayController {
 			paramMap.put("routeId", routeCode);
 			paramMap.put("startDate", df.format(begin));
 			paramMap.put("endDate", df.format(end));
-			if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+			if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||routeCode.equals(RouteCodeConstant.TLH5_ROUTE_CODE)){
 				paramMap.put("settleType", "0");//D0
 			}else{
 				paramMap.put("settleType", "1");//D1
@@ -1709,6 +1717,7 @@ public class AgentPayController {
 			
 			String memberCode = request.getParameter("memberCode");
 			String payMethod = request.getParameter("payMethod");
+			String payType = request.getParameter("payType");
 			String signStr = request.getParameter("signStr");
 			
 			//待签名字符串
@@ -1725,7 +1734,13 @@ public class AgentPayController {
 				result.put("returnMsg", "交易方式[payMethod]缺失");
 				return CommonUtil.signReturn(result);
 			}
-			params.put("&payMethod", payMethod);
+			params.put("payMethod", payMethod);
+			
+			if(payType != null && !"".equals(payType)){
+				params.put("payType", payType);
+			}else{
+				payType = "0";
+			}
 			
 			if(signStr == null || "".equals(signStr)){
 				result.put("returnCode", "0007");
@@ -1785,11 +1800,11 @@ public class AgentPayController {
 			}
 			
 			MemberDrawRouteExample memberDrawRouteExample = new MemberDrawRouteExample();
-			memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(payMethod).andPayTypeEqualTo("0").andDelFlagEqualTo("0");
+			memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
 			List<MemberDrawRoute> routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
 			if(routeList==null||routeList.size()==0){
 				memberDrawRouteExample = new MemberDrawRouteExample();
-				memberDrawRouteExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andPayTypeEqualTo("0").andDelFlagEqualTo("0");
+				memberDrawRouteExample.createCriteria().andMemberIdEqualTo(0).andPayMethodEqualTo(payMethod).andPayTypeEqualTo(payType).andDelFlagEqualTo("0");
 				routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
 			}
 			if(routeList==null||routeList.size()==0){
@@ -1838,7 +1853,7 @@ public class AgentPayController {
 			paramMap.put("routeId", routeCode);
 			paramMap.put("startDate", df.format(begin));
 			paramMap.put("endDate", df.format(end));
-			if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+			if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLH5_ROUTE_CODE.equals(routeCode)){
 				paramMap.put("settleType", "0");//D0
 			}else{
 				paramMap.put("settleType", "1");//D1

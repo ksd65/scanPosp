@@ -1226,7 +1226,7 @@ public class BankPayController {
 				obj = receivePayEskHlb(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayCJ(memberId, String.valueOf(draw.getMoney()), draw);
-			}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+			}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLH5_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayTL(memberId, String.valueOf(draw.getMoney()), draw);
 			}
 			
@@ -2638,7 +2638,7 @@ public class BankPayController {
 		            draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 					draw.setUpdateDate(new Date());
 					routewayDrawService.updateByPrimaryKey(draw);
-			    }else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+			    }else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLH5_ROUTE_CODE.equals(routeCode)){
 			    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 			        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
 			        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
@@ -3858,6 +3858,9 @@ public class BankPayController {
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
 			String merCode = merchantCode.getWxMerchantCode();
+			if(RouteCodeConstant.TLH5_ROUTE_CODE.equals(draw.getRouteCode())){
+				merCode = merchantCode.getQqMerchantCode();
+			}
 			
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
