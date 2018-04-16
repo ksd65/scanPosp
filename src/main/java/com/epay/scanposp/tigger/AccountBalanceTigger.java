@@ -639,7 +639,7 @@ public class AccountBalanceTigger {
 				routeCode = RouteCodeConstant.TL_ROUTE_CODE;
 				for(MemberInfo member:memberList){
 					Integer memberId = member.getId();
-					RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
+				    RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
 					routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 					List<RoutewayAccount> routewayAccountList = routewayAccountService.selectByExample(routewayAccountExample);
 					
@@ -697,9 +697,9 @@ public class AccountBalanceTigger {
 						balanceHis = balanceHis + tradeMoneyBalance - drawMoneyCountYesterDay;
 					}
 					
-					Double balance = balanceHis + tradeMoneyBalance - drawMoneyCountYesterDay;
+					//Double balance = balanceHis + tradeMoneyBalance - drawMoneyCountYesterDay;
 					if(routewayAccount!=null){
-						routewayAccount.setBalance(new BigDecimal(balance));
+						routewayAccount.setBalance(new BigDecimal(balanceHis));
 						routewayAccount.setT1Balance(new BigDecimal(balanceT1));
 						routewayAccount.setUpdateDate(new Date());
 						routewayAccountService.updateByPrimaryKey(routewayAccount);
@@ -707,7 +707,7 @@ public class AccountBalanceTigger {
 						routewayAccount = new RoutewayAccount();
 						routewayAccount.setMemberId(memberId);
 						routewayAccount.setRouteCode(routeCode);
-						routewayAccount.setBalance(new BigDecimal(balance));
+						routewayAccount.setBalance(new BigDecimal(balanceHis));
 						routewayAccount.setT1Balance(new BigDecimal(balanceT1));
 						routewayAccount.setCreateDate(new Date());
 						routewayAccount.setT1Balance(new BigDecimal(0));
