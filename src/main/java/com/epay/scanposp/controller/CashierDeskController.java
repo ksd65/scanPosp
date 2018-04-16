@@ -5415,7 +5415,7 @@ public class CashierDeskController {
 					result.put("returnCode", "0012");
 					result.put("returnMsg", "查询接口出参验签失败");
 				}
-			}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)){
+			}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLH5_ROUTE_CODE.equals(routeCode)){
 				
 
 		    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
@@ -7387,7 +7387,7 @@ public class CashierDeskController {
 			}
 			DebitNote debitNote = debitNotes_tmp.get(0);
         	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
-            memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TL_ROUTE_CODE).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+            memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(debitNote.getRouteId()).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
             List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
             if(keyList == null || keyList.size()!=1){
             	respString = "fail";
