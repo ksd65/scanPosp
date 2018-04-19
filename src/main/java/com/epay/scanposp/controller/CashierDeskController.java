@@ -2,6 +2,7 @@ package com.epay.scanposp.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -5627,11 +5628,7 @@ public class CashierDeskController {
 		return result;
 	}
 	
-	public static void main(String[] args) {
-		String payMoney = "1.01";
-		int aa =(int)((new BigDecimal(payMoney)).floatValue()*100);
-		System.out.println(String.valueOf((int)((new BigDecimal(payMoney)).floatValue()*100)));
-	}
+	
 	
 	
 	/**
@@ -7776,14 +7773,22 @@ public class CashierDeskController {
 		String respString = "OK";
 		try {
 			String responseStr = HttpUtil.getPostString(request);
-			//String responseStr = "{\"SIGN\":\"788E9DD49453D30A68213BE8CCC9A06C\",\"ACTION_INFO\":{\"NONCE_STR\":\"5ry9tfoh0q24146yq9indkrne81qegeu\",\"USER_INFO_ID\":\"10000028\",\"COM_ID\":\"10000013\",\"GMT_PAYMENT\":\"20180413162755\",\"TRANSACTION_ID\":\"2018041316250035801C\",\"PAY_RESULT\":\"0\",\"AMOUNT\":\"1.0\",\"OUT_TRADE_NO\":\"20180413162710444131\"},\"ACTION_NAME\":\"PAY_ORDER_NOTIFY\"}";
+			//String responseStr = "versionId=001&businessType=1100&transChanlName=0002&orderId=20180419192601508479&transDate=20180419192639&ksPayOrderId=2018041921502413&transAmount=10&refcode=00&refMsg=%25BD%25BB%25D2%25D7%25B3%25C9%25B9%25A6&orderDesc=%25B8%25A3%25D6%25DD%25CC%25A8%25BD%25AD%25D0%25A1%25B3%25D4%25B5%25EA%25CA%25D5%25BF%25EE&signData=BCBCAD4307B42EB0028446FC28B421B2";
 			logger.info("tlWdPayNotify回调通知报文[{}]",  responseStr );
-			
-			JSONObject respObj = JSONObject.fromObject(responseStr);
-			String sign = respObj.getString("signData");
+			String[] arr = responseStr.split("&");
+			Map<String,String> respObj = new HashMap<String, String>();
+			for(int i=0;i<arr.length;i++){
+				String str = arr[i];
+				String[] arr1 = str.split("=");
+				if(arr1.length==2){
+					respObj.put(arr1[0], URLDecoder.decode(arr1[1], "GBK"));
+				}
+			}
+			//JSONObject respObj = JSONObject.fromObject(responseStr);
+			String sign = respObj.get("signData");
 			respObj.remove("signData");
 			
-			String reqMsgId = respObj.getString("orderId");
+			String reqMsgId = respObj.get("orderId");
         	TradeDetailExample tradeDetailExample = new TradeDetailExample();
         	tradeDetailExample.or().andOrderCodeEqualTo(reqMsgId);
         	List<TradeDetail> tradeDetailList = tradeDetailService.selectByExample(tradeDetailExample);
@@ -7813,19 +7818,19 @@ public class CashierDeskController {
         		return;
             }
             
-            String srcStr = StringUtil.orderedKeyObj(respObj)+"&key="+keyList.get(0).getPrivateKey();
+            String srcStr = StringUtil.orderedKey(respObj)+"&key="+keyList.get(0).getPrivateKey();
 			logger.info("Sign Before MD5: {}", srcStr);
 			String mySign  = MD5Util.MD5Encode(srcStr).toUpperCase();
-            if (!sign.equals(mySign)){
+        /*    if (!sign.equals(mySign)){
 				respString = "fail";
                 logger.info("验证签名不通过");
                 response.getWriter().write(respString);
         		return;
-            }
-            String result_code = respObj.getString("refcode");
+            }*/
+            String result_code = respObj.get("refcode");
             String result_message = "";
             if(respObj.containsKey("refMsg")){
-            	result_message = URLDecoder.decode(respObj.getString("refMsg"));
+            	result_message = URLDecoder.decode(respObj.get("refMsg"));
             }
         	MsResultNoticeExample msResultNoticeExample = new MsResultNoticeExample();
 			msResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
@@ -7840,10 +7845,10 @@ public class CashierDeskController {
 					tradeDetail.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
 					tradeDetail.setMemberId(debitNote.getMemberId());
 					tradeDetail.setMerchantCode(debitNote.getMerchantCode());
-					tradeDetail.setChannelNo(respObj.getString("ksPayOrderId"));
+					tradeDetail.setChannelNo(respObj.get("ksPayOrderId"));
 					
 					tradeDetail.setMemberCode(debitNote.getMemberCode());
-					tradeDetail.setMoney(new BigDecimal(respObj.getString("transAmount")));
+					tradeDetail.setMoney(new BigDecimal(respObj.get("transAmount")));
 					tradeDetail.setPayTime(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
 					tradeDetail.setPtSerialNo(debitNote.getOrderCode());
 					tradeDetail.setOrderCode(debitNote.getOrderCode());
@@ -7870,9 +7875,9 @@ public class CashierDeskController {
 					debitNoteService.updateByPrimaryKey(debitNote);
 					
 					MsResultNotice msResultNotice = new MsResultNotice();
-					msResultNotice.setMoney(new BigDecimal(respObj.getString("transAmount")));
+					msResultNotice.setMoney(new BigDecimal(respObj.get("transAmount")));
 					msResultNotice.setOrderCode(reqMsgId);
-					msResultNotice.setPtSerialNo(respObj.getString("ksPayOrderId"));
+					msResultNotice.setPtSerialNo(respObj.get("ksPayOrderId"));
 					
 					//SimpleDateFormat dateSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					msResultNotice.setRespDate(DateUtil.getDateTimeStr(new Date()));
@@ -7948,6 +7953,20 @@ public class CashierDeskController {
 			logger.error(e.getMessage());
 		}
 	}
-	
+	public static void main(String[] args) {
+		String srcStr = "versionId=001&businessType=1100&transChanlName=0002&orderId=20180419192601508479&transDate=20180419192639&ksPayOrderId=2018041921502413&transAmount=10&refcode=00&refMsg=%25BD%25BB%25D2%25D7%25B3%25C9%25B9%25A6&orderDesc=%25B8%25A3%25D6%25DD%25CC%25A8%25BD%25AD%25D0%25A1%25B3%25D4%25B5%25EA%25CA%25D5%25BF%25EE&key=08A788C4893F244B";
+		String s = MD5Util.MD5Encode(srcStr).toUpperCase();
+		System.out.println(s);
+		
+		String str = "2222222";
+		String str2 = "%25B8%25A3%25D6%25DD%25CC%25A8%25BD%25AD%25D0%25A1%25B3%25D4%25B5%25EA%25CA%25D5%25BF%25EE";
+		try {
+			String str1 = URLDecoder.decode(str, "GBK");
+			System.out.println(str1);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 }
