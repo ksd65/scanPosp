@@ -16,6 +16,7 @@ public class TLConfig {
 	public static String keyStorePassword;
 	public static String alias;
 	public static String aliasPassword;
+	public static String msServerUrlNew;
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "tl_config");
@@ -25,5 +26,6 @@ public class TLConfig {
 		keyStorePassword = bundle.getString("keyStorePassword");
 		alias = bundle.getString("alias");
 		aliasPassword = bundle.getString("aliasPassword");
+		msServerUrlNew = bundle.getString("msServerUrlNew");
 	}
 }
