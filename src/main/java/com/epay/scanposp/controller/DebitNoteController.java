@@ -9361,13 +9361,13 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 						result.put("returnMsg", "成功");
 						flag = true;
 					}else{
-						result_message = URLDecoder.decode(jsonObject.getString("refMsg"));
+						result_message = URLDecoder.decode(jsonObject.getString("refMsg"), "GBK");
 					}
 				}else{
 					result_message = "出参签名验证失败";
 				}
 			}else{
-				result_message = URLDecoder.decode(jsonObject.getString("refMsg"));
+				result_message = URLDecoder.decode(jsonObject.getString("refMsg"), "GBK");
 			}
 			
 			if(!flag){

@@ -5114,7 +5114,7 @@ public class CashierDeskController {
 		        	result.put("returnCode", "0012");
 					result.put("returnMsg", result_msg);
 		        }
-		    }else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.GRSM_ROUTE_CODE.equals(routeCode)){
+		    }else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.GRSM_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)){
 
 		    	TradeDetailExample tradeDetailExample = new TradeDetailExample();
 				tradeDetailExample.createCriteria().andOrderCodeEqualTo(debitNote.getOrderCode());
@@ -7717,13 +7717,13 @@ public class CashierDeskController {
 						result.put("returnMsg", "成功");
 						flag = true;
 					}else{
-						result_message = URLDecoder.decode(jsonObject.getString("refMsg"));
+						result_message = URLDecoder.decode(jsonObject.getString("refMsg"), "GBK");
 					}
 				}else{
 					result_message = "出参签名验证失败";
 				}
 			}else{
-				result_message = URLDecoder.decode(jsonObject.getString("refMsg"));
+				result_message = URLDecoder.decode(jsonObject.getString("refMsg"), "GBK");
 			}
 
 			if (!flag) {
@@ -7830,7 +7830,7 @@ public class CashierDeskController {
             String result_code = respObj.get("refcode");
             String result_message = "";
             if(respObj.containsKey("refMsg")){
-            	result_message = URLDecoder.decode(respObj.get("refMsg"));
+            	result_message = URLDecoder.decode(respObj.get("refMsg"), "GBK");
             }
         	MsResultNoticeExample msResultNoticeExample = new MsResultNoticeExample();
 			msResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
