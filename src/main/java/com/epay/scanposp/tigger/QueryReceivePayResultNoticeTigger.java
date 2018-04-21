@@ -1,7 +1,10 @@
 package com.epay.scanposp.tigger;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -67,6 +70,8 @@ import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberMerchantKeyService;
 import com.epay.scanposp.service.RoutewayDrawService;
+import com.kspay.cert.CertVerify;
+import com.kspay.cert.LoadKeyFromPKCS12;
 
 public class QueryReceivePayResultNoticeTigger {
 	
@@ -686,7 +691,74 @@ public class QueryReceivePayResultNoticeTigger {
 						}else{
 							logger.info(resultObj.getString("MESSAGE"));
 						}
-					}
+					}else if(RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)){
+						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+				        if(keyList == null || keyList.size()!=1){
+				        	continue;
+				        }
+				        MemberMerchantKey merchantKey = keyList.get(0);
+				        
+				        
+				        String serverUrl = TLConfig.agentPayUrl;
+				        JSONObject transData = new JSONObject(); 
+			            transData.put("orderId", draw.getOrderCode()); // 订单号  
+			            transData.put("transDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())); // 交易日期
+			            logger.info("新通联代付查询未加密数据[{}]", new Object[] { transData.toString() });
+			            
+			            CertUtil util = new CertUtil();
+						PrivateKey privateKey = LoadKeyFromPKCS12.initPrivateKey(util.getConfigPath()+TLConfig.pfxFileName, TLConfig.pfxPassword);
+						String  transBody=LoadKeyFromPKCS12.PrivateSign(transData.toString(),privateKey);
+				        
+				        JSONObject reqData = new JSONObject();
+						reqData.put("versionId", "001");
+						reqData.put("businessType", "460000");
+						reqData.put("merId", draw.getMerchantCode());
+						reqData.put("transBody", transBody);
+						
+						String srcStr = StringUtil.orderedKey(reqData)+"&key="+merchantKey.getPrivateKey();
+						String sign = MD5Util.MD5Encode(srcStr).toUpperCase();
+						reqData.put("signData", sign); 
+						reqData.put("signType", "MD5"); 
+						
+						logger.info("新通联代付查询请求数据[{}]", new Object[] { reqData.toString() });
+						String respStr = HttpUtil.sendPostRequest(serverUrl, reqData.toString(),"GBK");
+						logger.info("新通联代付查询返回报文[{}]", new Object[] { respStr });
+				        
+				        JSONObject resultObj = JSONObject.fromObject(respStr);
+				        
+				        String result_message = "";
+						String result_code = "";
+						if("00".equals(resultObj.getString("status"))&&resultObj.containsKey("resBody")){
+							String data = resultObj.getString("resBody");
+							byte[]signByte=LoadKeyFromPKCS12.encryptBASE64(data);
+							PublicKey publicKey = CertVerify.initPublicKey(util.getConfigPath()+TLConfig.cerFileName);
+							byte[] str1=CertVerify.publicKeyDecrypt(signByte,publicKey);
+							JSONObject respJSONObject =  JSONObject.fromObject(new  String(str1));
+							logger.info("新通联代付查询返回报文解密[{}]", new Object[] { respJSONObject.toString() });
+							result_code = respJSONObject.getString("refCode");//1:成功 2:失败 3:未知，继续轮询  4:交易不存在
+							if("1".equals(result_code)){
+								draw.setRespType("S");
+								draw.setRespCode("000");
+							}else if("3".equals(result_code)){
+								draw.setRespType("R");
+							}else{
+								draw.setRespType("E");
+								draw.setRespCode(result_code);
+							}
+							if(respJSONObject.containsKey("refMsg")){
+								draw.setRespMsg(URLDecoder.decode(respJSONObject.getString("refMsg"),"GBK"));
+							}
+							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+							draw.setUpdateDate(new Date());
+							routewayDrawService.updateByPrimaryKey(draw);
+						}else{
+							result_message = URLDecoder.decode(resultObj.getString("refMsg"), "GBK");
+							result_code = resultObj.getString("refCode");
+							logger.info(result_message);
+						}
+				    }
 				}
 			}
 		}catch(Exception e){

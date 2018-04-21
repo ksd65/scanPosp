@@ -1542,11 +1542,11 @@ public class AgentPayController {
 			}
 			
 			SysOffice sysOffice = sysOfficeList.get(0);
-		/*	if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
+			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), signOrginalStr, signedStr)){//by linxf 测试屏蔽
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 				return result;
-			}*/
+			}
 		
 			MemberDrawRouteExample memberDrawRouteExample = new MemberDrawRouteExample();
 			memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
@@ -1786,11 +1786,11 @@ public class AgentPayController {
 			
 			SysOffice sysOffice = sysOfficeList.get(0);
 			
-		/*	if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr, signStr)){//by linxf 测试屏蔽
+			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr, signStr)){//by linxf 测试屏蔽
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 				return CommonUtil.signReturn(result);
-			}*/
+			}
 			
 			MemberDrawRouteExample memberDrawRouteExample = new MemberDrawRouteExample();
 			memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
