@@ -17,6 +17,10 @@ public class TLConfig {
 	public static String alias;
 	public static String aliasPassword;
 	public static String msServerUrlNew;
+	public static String agentPayUrl;
+	public static String pfxFileName;
+	public static String pfxPassword;
+	public static String cerFileName;
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "tl_config");
@@ -27,5 +31,9 @@ public class TLConfig {
 		alias = bundle.getString("alias");
 		aliasPassword = bundle.getString("aliasPassword");
 		msServerUrlNew = bundle.getString("msServerUrlNew");
+		agentPayUrl = bundle.getString("agentPayUrl");
+		pfxFileName = bundle.getString("pfxFileName");
+		pfxPassword = bundle.getString("pfxPassword");
+		cerFileName = bundle.getString("cerFileName");
 	}
 }

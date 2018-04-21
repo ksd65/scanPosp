@@ -280,4 +280,74 @@ public class HttpUtil {
 		return buffer.toString();
 
 	}
+	
+	
+	public static String sendPostRequest(String requestUrl, String content ,String chartSet) {
+
+		StringBuffer buffer = new StringBuffer();
+		try {
+
+			URL url = null;
+			if (requestUrl.contains("https")) {
+				url = new URL(null, requestUrl, new sun.net.www.protocol.https.Handler());
+			} else {
+				url = new URL(requestUrl);
+			}
+			HttpURLConnection httpUrlConn = (HttpURLConnection) url.openConnection();
+
+			httpUrlConn.setDoOutput(true);
+			httpUrlConn.setDoInput(true);
+			httpUrlConn.setUseCaches(false);
+			// 设置请求方式（GET/POST）
+			httpUrlConn.setRequestMethod("POST");
+			httpUrlConn.setConnectTimeout(10000);
+			httpUrlConn.setReadTimeout(60000);
+			// httpUrlConn.setRequestProperty( "Cookie",
+			// "JSESSIONID=62A1A46FD933C9EDC6FCB16E7E4214E9");
+
+			
+			
+				httpUrlConn.connect();
+				OutputStream outputStream = httpUrlConn.getOutputStream();
+				// 当有数据需要提交时
+				if (null != content) {
+					// 注意编码格式，防止中文乱码
+					outputStream.write(content.getBytes(chartSet));
+					// outputStream.write(URLEncoder.encode(content,
+					// "utf-8").getBytes());
+					outputStream.flush();
+					
+				}
+				outputStream.close();
+				int responseCode = httpUrlConn.getResponseCode();
+				if (responseCode == 200) {
+					logger.debug("response code -----" + responseCode + "-------------");
+				// 将返回的输入流转换成字符串
+				InputStream inputStream = httpUrlConn.getInputStream();
+				InputStreamReader inputStreamReader = new InputStreamReader(inputStream, chartSet);
+				BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+				String str = null;
+				while ((str = bufferedReader.readLine()) != null) {
+					buffer.append(str);
+				}
+				bufferedReader.close();
+				inputStreamReader.close();
+				// 释放资源
+				inputStream.close();
+				inputStream = null;
+			} else {
+				logger.error("Error code -----" + responseCode + "-------------");
+			}
+
+			httpUrlConn.disconnect();
+			return buffer.toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+			return e.getMessage();
+		}
+		//return buffer.toString();
+
+	}
 }

@@ -3,8 +3,11 @@ package com.epay.scanposp.controller;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -141,6 +144,8 @@ import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
 import com.epay.scanposp.service.TradeDetailDailyService;
 import com.epay.scanposp.service.TradeDetailService;
+import com.kspay.cert.CertVerify;
+import com.kspay.cert.LoadKeyFromPKCS12;
 
 @Controller
 public class BankPayController {
@@ -1228,6 +1233,8 @@ public class BankPayController {
 				obj = receivePayCJ(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLH5_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayTL(memberId, String.valueOf(draw.getMoney()), draw);
+			}else if(RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)){
+				obj = receivePayTLWd(memberId, String.valueOf(draw.getMoney()), draw);
 			}
 			
 			if("0000".equals(obj.getString("returnCode"))){
@@ -4012,6 +4019,205 @@ public class BankPayController {
 			}else{
 				result_message = resultObj.getString("MESSAGE");
 			}
+			if(!flag){
+				result.put("returnCode", "0001");
+				result.put("returnMsg", result_message);
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	
+	//通联代付新
+	public JSONObject receivePayTLWd(String memberId,String payMoney,RoutewayDraw draw){
+		JSONObject result = new JSONObject();
+		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
+			result.put("returnCode", "0005");
+			result.put("returnMsg", "支付金额输入不正确");
+			return result;
+		}
+		
+		if(memberId == null || "".equals(memberId)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "商户Id缺失");
+			return result;
+		}
+		
+		try{
+			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(Integer.parseInt(memberId));
+			if(memberInfo == null){
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户不存在");
+				return result;
+			}
+			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
+			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(draw.getRouteCode()).andDelFlagEqualTo("0");
+			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
+			if (merchantCodes == null || merchantCodes.size() != 1) {
+				result.put("returnCode", "0008");
+				result.put("returnMsg", "对不起，商户编码不存在");
+				return result;
+			}
+			MemberMerchantCode merchantCode = merchantCodes.get(0);
+			String merCode = merchantCode.getWxMerchantCode();
+			if(StringUtil.isEmpty(merCode)){
+				merCode = merchantCode.getZfbMerchantCode();
+			}
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0003");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        
+	        MemberMerchantKey merchantKey = keyList.get(0);
+	        
+	        Double balance = 0d;
+	        JSONObject balanceObj = tlBalanceWd(merchantKey);
+	        if(!"0000".equals(balanceObj.getString("returnCode"))){
+	        	return balanceObj;
+	        }
+	        balance = Double.valueOf(balanceObj.getString("balance"));
+	        if(Double.valueOf(payMoney)>balance){
+				result.put("returnCode", "0005");
+				result.put("returnMsg", "代付金额大于账户余额");
+				return result;
+			}
+	        
+			Double drawFee = draw.getDrawfee().doubleValue();
+	        double amount = (new BigDecimal(payMoney).subtract(new BigDecimal(drawFee))).doubleValue();
+			String orderCode = CommonUtil.getOrderCode();
+	        String serverUrl = TLConfig.agentPayUrl;
+	        JSONObject transData = new JSONObject(); 
+            //交易
+            transData.put("accName", URLEncoder.encode(draw.getAccountName(),"GBK")); // 收款人姓名
+            transData.put("accNo", draw.getBankAccount()); // 收款人账号  
+            transData.put("orderId", orderCode); // 订单号  
+            transData.put("transAmount", String.valueOf(amount)); // 交易金额
+            transData.put("transDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())); // 交易日期
+            logger.info("新通联代付请求未加密数据[{}]", new Object[] { transData.toString() });
+            
+            CertUtil util = new CertUtil();
+			PrivateKey privateKey = LoadKeyFromPKCS12.initPrivateKey(util.getConfigPath()+TLConfig.pfxFileName, TLConfig.pfxPassword);
+			String  transBody=LoadKeyFromPKCS12.PrivateSign(transData.toString(),privateKey);
+	        
+	        JSONObject reqData = new JSONObject();
+			reqData.put("versionId", "001");
+			reqData.put("businessType", "470000");
+			reqData.put("merId", merCode);
+			reqData.put("transBody", transBody);
+			
+			String srcStr = StringUtil.orderedKey(reqData)+"&key="+merchantKey.getPrivateKey();
+			String sign = MD5Util.MD5Encode(srcStr).toUpperCase();
+			reqData.put("signData", sign); 
+			reqData.put("signType", "MD5"); 
+			
+			logger.info("新通联代付请求数据[{}]", new Object[] { reqData.toString() });
+			String respStr = HttpUtil.sendPostRequest(serverUrl, reqData.toString(),"GBK");
+			logger.info("新通联代付返回报文[{}]", new Object[] { respStr });
+	        
+	        JSONObject resultObj = JSONObject.fromObject(respStr);
+	        
+	        String result_message = "";
+			String result_code = "";
+			boolean flag = false;
+			if("00".equals(resultObj.getString("status"))&&resultObj.containsKey("resBody")){
+				String data = resultObj.getString("resBody");
+				byte[]signByte=LoadKeyFromPKCS12.encryptBASE64(data);
+				PublicKey publicKey = CertVerify.initPublicKey(util.getConfigPath()+TLConfig.cerFileName);
+				byte[] str1=CertVerify.publicKeyDecrypt(signByte,publicKey);
+				JSONObject respJSONObject =  JSONObject.fromObject(new  String(str1));
+				logger.info("新通联代付返回报文解密[{}]", new Object[] { respJSONObject.toString() });
+				result_code = respJSONObject.getString("refCode");//00：交易已受理 61：超出金额限制
+				if("00".equals(result_code)){
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "请求成功");
+					flag = true;
+				}else{
+					result_message = URLDecoder.decode(respJSONObject.getString("refMsg"),"GBK");
+				}
+			}else{
+				result_message = URLDecoder.decode(resultObj.getString("refMsg"), "GBK");
+				result_code = resultObj.getString("refCode");
+			}
+
+	        String reqDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			
+			if(!flag){
+				result.put("returnCode", "0001");
+				result.put("returnMsg", result_message);
+				result.put("respCode", result_code);
+				result.put("respMsg", result_message);
+			}
+			result.put("orderCode", orderCode);
+			result.put("merchantCode", merCode);
+			result.put("reqDate", reqDate);
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
+	
+	private JSONObject tlBalanceWd(MemberMerchantKey merchantKey){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = TLConfig.agentPayUrl;
+			JSONObject transData = new JSONObject(); 
+            transData.put("transDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())); 
+            //私钥证书加密
+			CertUtil util = new CertUtil();
+			PrivateKey privateKey = LoadKeyFromPKCS12.initPrivateKey(util.getConfigPath()+TLConfig.pfxFileName, TLConfig.pfxPassword);
+			String  transBody=LoadKeyFromPKCS12.PrivateSign(transData.toString(),privateKey);
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("transBody", transBody);
+            reqData.put("businessType", "450000"); 
+            reqData.put("merId", merchantKey.getMerchantCode()); 
+            reqData.put("versionId", "001"); 
+            String srcStr = StringUtil.orderedKey(reqData)+"&key="+merchantKey.getPrivateKey();
+			String sign = MD5Util.MD5Encode(srcStr).toUpperCase();
+            reqData.put("signData", sign); 
+			reqData.put("signType", "MD5");  
+
+			logger.info("新通联余额查询请求数据[{}]", new Object[] { reqData.toString() });
+			String respStr = HttpUtil.sendPostRequest(serverUrl, reqData.toString(),"GBK");
+			logger.info("新通联余额查询返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject resultObj = JSONObject.fromObject(respStr);
+	        
+	        String result_message = "";
+			String result_code = "";
+			boolean flag = false;
+			if("00".equals(resultObj.getString("status"))&&resultObj.containsKey("resBody")){
+				String data = resultObj.getString("resBody");
+				byte[]signByte=LoadKeyFromPKCS12.encryptBASE64(data);
+				PublicKey publicKey = CertVerify.initPublicKey(util.getConfigPath()+TLConfig.cerFileName);
+				byte[] str1=CertVerify.publicKeyDecrypt(signByte,publicKey);
+				JSONObject respJSONObject =  JSONObject.fromObject(new  String(str1));
+				logger.info("新通联余额查询返回报文解密[{}]", new Object[] { respJSONObject.toString() });
+				result_code = respJSONObject.getString("refCode");//
+				if("1".equals(result_code)){
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "请求成功");
+					result.put("balance", respJSONObject.getString("balance"));
+					flag = true;
+				}else{
+					result_message = URLDecoder.decode(respJSONObject.getString("refMsg"),"GBK");
+				}
+			}else{
+				result_message = URLDecoder.decode(resultObj.getString("refMsg"), "GBK");
+				result_code = resultObj.getString("refCode");
+			}
+			
 			if(!flag){
 				result.put("returnCode", "0001");
 				result.put("returnMsg", result_message);
