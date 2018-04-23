@@ -472,4 +472,35 @@ public class CommonUtilService {
 		return null;
 	}
 
+	public JSONObject checkLimitMerchantMoney(String routeId,String merchantCode,String payType){
+		
+		JSONObject result = new JSONObject();
+		String configName = "LIMIT_MERCHANT_"+routeId+"_"+merchantCode+"_"+payType;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			BigDecimal merchantLimit = new BigDecimal(value);
+			if (null != merchantLimit && merchantLimit.compareTo(BigDecimal.ZERO) > 0){
+				Map<String,Object> param = new HashMap<String, Object>();
+				param.put("merchantCode", merchantCode);
+				param.put("routeId", routeId);
+				param.put("txnDate", DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+				String txnType = transPayType(payType);
+				param.put("txnType", txnType);
+				Double count = tradeDetailDailyService.countTradeDetailDaily(param);
+				count = count == null ? 0 : count;
+				if (new BigDecimal(count).compareTo(merchantLimit) >= 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "已超过商户当日交易总金额，无法交易");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
 }

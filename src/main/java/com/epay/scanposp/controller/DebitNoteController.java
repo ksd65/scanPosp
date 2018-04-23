@@ -9286,6 +9286,13 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return mResult;
 			}
 			
+			JSONObject mResult1 = commonUtilService.checkLimitMerchantMoney(routeCode,merCode,payTypeStr);
+			if(null != mResult1){
+				debitNote.setStatus("7");
+				debitNoteService.insertSelective(debitNote);
+				return mResult1;
+			}
+			
 			JSONObject tResult = checkLimitCounts(routeCode);
 			if(null != tResult){
 				debitNote.setStatus("8");

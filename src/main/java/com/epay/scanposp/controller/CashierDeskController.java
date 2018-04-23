@@ -7643,6 +7643,12 @@ public class CashierDeskController {
 				return mResult;
 			}
 			
+			JSONObject mResult1 = commonUtilService.checkLimitMerchantMoney(routeCode,merCode,payTypeStr);
+			if(null != mResult1){
+				debitNote.setStatus("7");
+				debitNoteService.insertSelective(debitNote);
+				return mResult1;
+			}
 			
 			debitNoteService.insertSelective(debitNote);
 			
@@ -7931,6 +7937,8 @@ public class CashierDeskController {
 						tradeDetailDaily.setMoney(debitNote.getMoney());
 						tradeDetailDaily.setOrderCode(debitNote.getOrderCode());
 						tradeDetailDaily.setRouteId(debitNote.getRouteId());
+						tradeDetailDaily.setTxnMethod(debitNote.getTxnMethod());
+						tradeDetailDaily.setTxnType(debitNote.getTxnType());
 						tradeDetailDaily.setDelFlag("0");
 						tradeDetailDaily.setCreateDate(new Date());
 						tradeDetailDailyService.insertSelective(tradeDetailDaily);

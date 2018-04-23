@@ -9,6 +9,8 @@
     <result column="money" property="money" jdbcType="DECIMAL" />
     <result column="order_code" property="orderCode" jdbcType="VARCHAR" />
     <result column="route_id" property="routeId" jdbcType="VARCHAR" />
+    <result column="txn_method" jdbcType="VARCHAR" property="txnMethod" />
+    <result column="txn_type" property="txnType" jdbcType="CHAR" />
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
     <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
     <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
@@ -75,7 +77,7 @@
   </sql>
   <sql id="Base_Column_List" >
     id, txn_date, member_id, merchant_code, money,order_code, 
-    route_id,create_by, create_date, update_by, update_date,del_flag
+    route_id,txn_method,txn_type,create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.TradeDetailDailyExample" >
     select
@@ -150,6 +152,13 @@
         route_id,
       </if>
       
+      <if test="txnMethod != null">
+        txn_method,
+      </if>
+      <if test="txnType != null" >
+        txn_type,
+      </if>
+      
       <if test="createBy != null" >
         create_by,
       </if>
@@ -187,6 +196,13 @@
       
       <if test="routeId != null" >
         #{routeId,jdbcType=VARCHAR},
+      </if>
+      
+      <if test="txnMethod != null">
+        #{txnMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="txnType != null" >
+        #{txnType,jdbcType=CHAR},
       </if>
       
       <if test="createBy != null" >
@@ -227,6 +243,9 @@
       	</if>
       	<if test="routeId != null" >
         	AND route_id = #{routeId}
+      	</if>
+      	<if test="txnType != null" >
+        	AND txn_type = #{txnType}
       	</if>
   	</select>
   
