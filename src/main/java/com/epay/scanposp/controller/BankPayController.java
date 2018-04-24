@@ -4196,7 +4196,7 @@ public class BankPayController {
 	        String result_message = "";
 			String result_code = "";
 			boolean flag = false;
-			if("00".equals(resultObj.getString("status"))&&resultObj.containsKey("resBody")){
+			if(resultObj.containsKey("resBody")){
 				String data = resultObj.getString("resBody");
 				byte[]signByte=LoadKeyFromPKCS12.encryptBASE64(data);
 				PublicKey publicKey = CertVerify.initPublicKey(util.getConfigPath()+TLConfig.cerFileName);
@@ -4204,7 +4204,7 @@ public class BankPayController {
 				JSONObject respJSONObject =  JSONObject.fromObject(new  String(str1));
 				logger.info("新通联代付返回报文解密[{}]", new Object[] { respJSONObject.toString() });
 				result_code = respJSONObject.getString("refCode");//00：交易已受理 61：超出金额限制
-				if("00".equals(result_code)){
+				if("00".equals(resultObj.getString("status"))&&"00".equals(result_code)){
 					result.put("returnCode", "0000");
 					result.put("returnMsg", "请求成功");
 					flag = true;

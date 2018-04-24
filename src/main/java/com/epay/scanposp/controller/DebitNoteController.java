@@ -9539,7 +9539,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			}
 			payResultNoticeService.insertSelective(payResultNotice);
 			
-			String serverUrl = SDConfig.msServerUrl;
+			String serverUrl = SDConfig.msServerUrl+"/order/pay";
 			
 			
 			String callBack = SysConfig.serverUrl + "/debitNote/sdPayNotify";
@@ -9548,7 +9548,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			CertUtil.init("classpath:"+EnvironmentUtil.propertyPath + "sdkey/" + merchantKey.getPublicKey(), 
 					"classpath:"+EnvironmentUtil.propertyPath + "sdkey/" + merchantKey.getPrivateKey(), merchantKey.getPrivateKeyPassword());
-			
+		//	CertUtil.init("classpath:johuPro/sdkey/sand.cer", "classpath:johuPro/sdkey/privatekey.pfx", "666666");
 			SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 			
 			SandpayRequestHead head = new SandpayRequestHead();
@@ -9564,9 +9564,12 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			body.setTotalAmount("000000000101");
 			body.setSubject( memberInfo.getName() + " 收款");
 			body.setBody( memberInfo.getName() + " 收款");
+		//	body.setSubject( "test");
+		//	body.setBody( "test");
 			body.setPayMode("sand_wxh5");
 			JSONObject payExtra = new JSONObject();
 			payExtra.put("ip", ip);
+		//	payExtra.put("sceneInfo", "test");
 			payExtra.put("sceneInfo", sceneInfo);
 			body.setPayExtra(payExtra.toString());
 			body.setClientIp(ip);
@@ -9578,16 +9581,12 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				body.setClearCycle("0");
 			}
 			
+			
 			SandOrderPayResponse res =  SandpayClient.execute(req, serverUrl);
 			
 			SandpayResponseHead respHead = res.getHead();
 			
 			logger.info(respHead.getRespCode()+"====="+respHead.getRespMsg());
-			
-			
-			
-			
-			
 			
 			
 			try{
@@ -9613,4 +9612,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}
 		return result;
 	}
+	
+	
+	
 }
