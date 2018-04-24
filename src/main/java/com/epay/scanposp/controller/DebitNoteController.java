@@ -9432,7 +9432,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				payTypeStr = PayTypeConstant.PAY_TYPE_WX;
 			}
 			
-		/*	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.SD_ROUTE_CODE).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
 	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
 	        if(keyList == null || keyList.size()!=1){
@@ -9440,7 +9440,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				result.put("returnMsg", "商户私钥未配置");
 				return result;
 	        }
-	        MemberMerchantKey merchantKey = keyList.get(0);*/
+	        MemberMerchantKey merchantKey = keyList.get(0);
 			// 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
 			
@@ -9546,8 +9546,8 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			String frontUrl = SysConfig.frontUrl + "/debitNote/sdResult";
 			String charset = "utf-8";
 			
-			CertUtil.init("classpath:"+EnvironmentUtil.propertyPath + "sdkey/cd-qz-gs.cer", 
-					"classpath:"+EnvironmentUtil.propertyPath + "sdkey/cd-qz-ss.pfx", "123654");
+			CertUtil.init("classpath:"+EnvironmentUtil.propertyPath + "sdkey/" + merchantKey.getPublicKey(), 
+					"classpath:"+EnvironmentUtil.propertyPath + "sdkey/" + merchantKey.getPrivateKey(), merchantKey.getPrivateKeyPassword());
 			
 			SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 			
@@ -9582,7 +9582,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			SandpayResponseHead respHead = res.getHead();
 			
-			System.out.println(respHead.getRespCode()+"====="+respHead.getRespMsg());
+			logger.info(respHead.getRespCode()+"====="+respHead.getRespMsg());
 			
 			
 			
