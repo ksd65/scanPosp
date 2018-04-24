@@ -34,9 +34,8 @@ public class SandpayClient {
 	    Map reqMap = new HashMap();
 
 	    String reqData = JSON.toJSONString(request);
-
-	    String reqSign = new String(Base64.encodeBase64(CryptoUtil.digitalSign(reqData.getBytes(), CertUtil.getPrivateKey(), "SHA1WithRSA")));
-
+	    
+	    String reqSign = new String(Base64.encodeBase64(CryptoUtil.digitalSign(reqData.getBytes("UTF-8"), CertUtil.getPrivateKey(), "SHA1WithRSA")));
 	    reqMap.put("charset", "UTF-8");
 	    reqMap.put("data", reqData);
 	    reqMap.put("signType", "01");
