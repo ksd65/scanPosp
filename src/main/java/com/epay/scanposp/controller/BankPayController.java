@@ -116,6 +116,8 @@ import com.epay.scanposp.entity.PayType;
 import com.epay.scanposp.entity.PayTypeExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
+import com.epay.scanposp.entity.RoutewayDrawLog;
+import com.epay.scanposp.entity.RoutewayDrawLogExample;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
@@ -138,6 +140,7 @@ import com.epay.scanposp.service.MsResultNoticeService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.PayTypeService;
+import com.epay.scanposp.service.RoutewayDrawLogService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeExtendService;
@@ -217,6 +220,9 @@ public class BankPayController {
 	
 	@Autowired
 	private MemberPayTypeService memberPayTypeService;
+	
+	@Autowired
+	private RoutewayDrawLogService routewayDrawLogService;
 	
 	@ResponseBody
 	@RequestMapping("/api/bankPay/toPay")
@@ -4187,10 +4193,37 @@ public class BankPayController {
 			reqData.put("signData", sign); 
 			reqData.put("signType", "MD5"); 
 			
+			try{
+				RoutewayDrawLog routewayDrawLog = new RoutewayDrawLog();
+				routewayDrawLog.setDrawId(draw.getId());
+				routewayDrawLog.setOrderCode(orderCode);
+				routewayDrawLog.setOrderNumOuter(draw.getOrderNumOuter());
+				String inparam = reqData.toString();
+				routewayDrawLog.setInParam(inparam.length()>1000?inparam.substring(0, 1000):inparam);
+				routewayDrawLog.setCreateDate(new Date());
+				routewayDrawLogService.insert(routewayDrawLog);
+			}catch(Exception e){
+				logger.info("代付入日志异常", e);
+			}
+			
 			logger.info("新通联代付请求数据[{}]", new Object[] { reqData.toString() });
 			String respStr = HttpUtil.sendPostRequest(serverUrl, reqData.toString(),"GBK");
 			logger.info("新通联代付返回报文[{}]", new Object[] { respStr });
-	        
+			
+			try{
+				RoutewayDrawLogExample routewayDrawLogExample = new RoutewayDrawLogExample();
+				routewayDrawLogExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<RoutewayDrawLog> logList = routewayDrawLogService.selectByExample(routewayDrawLogExample);
+				if(logList != null && logList.size()>0){
+					RoutewayDrawLog routewayDrawLog1 = logList.get(0);
+					routewayDrawLog1.setOutParam(respStr.length()>1000?respStr.substring(0, 1000):respStr);
+					routewayDrawLog1.setUpdateDate(new Date());
+					routewayDrawLogService.updateByPrimaryKey(routewayDrawLog1);
+				}
+			}catch(Exception e){
+				logger.info("代付更新日志异常", e);
+			}
+			
 	        JSONObject resultObj = JSONObject.fromObject(respStr);
 	        
 	        String result_message = "";
