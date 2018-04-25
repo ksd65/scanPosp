@@ -16,7 +16,7 @@ public class PacketTool {
 	    head.setSubMidName("");
 	    head.setSubMidAddr("");
 
-	    head.setChannelType("07");
+	    head.setChannelType("08");
 	    head.setReqTime(DateUtil.getCurrentDate14());
 	  }
 
