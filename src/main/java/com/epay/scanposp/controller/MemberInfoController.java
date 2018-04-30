@@ -57,6 +57,8 @@ import com.epay.scanposp.entity.MemberBankExample;
 import com.epay.scanposp.entity.MemberBindAcc;
 import com.epay.scanposp.entity.MemberBindAccDtl;
 import com.epay.scanposp.entity.MemberBindAccExample;
+import com.epay.scanposp.entity.MemberDrawRoute;
+import com.epay.scanposp.entity.MemberDrawRouteExample;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberInfoMore;
@@ -94,6 +96,7 @@ import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberBindAccDtlService;
 import com.epay.scanposp.service.MemberBindAccService;
+import com.epay.scanposp.service.MemberDrawRouteService;
 import com.epay.scanposp.service.MemberInfoMoreService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
@@ -194,6 +197,9 @@ public class MemberInfoController {
 	
 	@Autowired
 	private MemberMerchantCodeService memberMerchantCodeService;
+	
+	@Autowired
+	private MemberDrawRouteService memberDrawRouteService;
 	
 	@Resource
 	ThreadPoolTaskExecutor threadPoolTaskExecutor;
@@ -374,6 +380,22 @@ public class MemberInfoController {
 			// 今天未提现总额
 			Double unDrawMoneyCount = tradeMoneyCountToday - drawMoneyCount;
 			*/
+			
+			MemberDrawRouteExample memberDrawRouteExample = new MemberDrawRouteExample();
+			memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+			List<MemberDrawRoute> routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
+			if(routeList==null||routeList.size()==0){
+				memberDrawRouteExample = new MemberDrawRouteExample();
+				memberDrawRouteExample.createCriteria().andMemberIdEqualTo(0).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+				routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
+			}
+			if(routeList==null||routeList.size()==0){
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "该通道暂不支持代付");
+				return result.toString();
+			}
+			
+			MemberDrawRoute drawRoute = routeList.get(0);
 			
 			paramMap = new HashMap<String, Object>();
 			paramMap.put("memberId", memberId);
@@ -592,11 +614,7 @@ public class MemberInfoController {
 				}else if(RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){// 易收款先锋 微信h5 
 					drawFee = merchantCode.getT0DrawFee().doubleValue();
 				}else{
-					if("0".equals(memberInfo.getSettleType())){
-						drawFee = merchantCode.getT0DrawFee().doubleValue();
-					}else{
-						drawFee = merchantCode.getT1DrawFee().doubleValue();
-					}
+					drawFee = drawRoute.getDrawFee().doubleValue();
 				}
 				paramMap = new HashMap<String, Object>();
 				paramMap.put("memberId", reqDataJson.getInt("memberId"));
@@ -607,18 +625,21 @@ public class MemberInfoController {
 				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
 				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
 				
-				Double canDrawToday = balanceToday;//当天可提现的金额
-				
+				//Double canDrawToday = balanceToday;//当天可提现的金额
+				Double canDrawToday = new BigDecimal(balanceToday.doubleValue()).multiply(drawRoute.getD0Percent()).doubleValue();//当天可提现的金额
+
 				Double balanceHis = 0d;
+				Double balanceT1 = 0d;
 				RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
 				routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 				List<RoutewayAccount> accountList = routewayAccountService.selectByExample(routewayAccountExample);
 				if(accountList != null && accountList.size()>0){
 					RoutewayAccount account = accountList.get(0);
 					balanceHis = account.getBalance().doubleValue();
+					balanceT1 = account.getT1Balance().doubleValue();
 				}
 				
-				Double balance = balanceHis + balanceToday - drawMoneyCountToday;//总账户余额
+				Double balance = balanceHis + balanceT1 + balanceToday - drawMoneyCountToday;//总账户余额
 				
 				//可提现总额
 				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
@@ -816,6 +837,22 @@ public class MemberInfoController {
 					return result.toString();
 				}
 			}
+			
+			MemberDrawRouteExample memberDrawRouteExample = new MemberDrawRouteExample();
+			memberDrawRouteExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+			List<MemberDrawRoute> routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
+			if(routeList==null||routeList.size()==0){
+				memberDrawRouteExample = new MemberDrawRouteExample();
+				memberDrawRouteExample.createCriteria().andMemberIdEqualTo(0).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
+				routeList = memberDrawRouteService.selectByExample(memberDrawRouteExample);
+			}
+			if(routeList==null||routeList.size()==0){
+				result.put("returnCode", "0003");
+				result.put("returnMsg", "该通道暂不支持代付");
+				return result.toString();
+			}
+			MemberDrawRoute drawRoute = routeList.get(0);
+			
 			MemberMerchantCodeExample memberMerchantCodeExample = new MemberMerchantCodeExample();
 			memberMerchantCodeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 			List<MemberMerchantCode> merchantCodes = memberMerchantCodeService.selectByExample(memberMerchantCodeExample);
@@ -861,11 +898,7 @@ public class MemberInfoController {
 				drawFee = merchantCode.getWyT0DrawFee().doubleValue();
 				drawFee = Double.parseDouble(drawMoney)*drawRate + drawFee;
 			}else{
-				if("0".equals(memberInfo.getSettleType())){
-					drawFee = merchantCode.getT0DrawFee().doubleValue();
-				}else{
-					drawFee = merchantCode.getT1DrawFee().doubleValue();
-				}
+				drawFee = drawRoute.getDrawFee().doubleValue();
 			}
 			if(Double.parseDouble(drawMoney)<=drawFee){
 				result.put("returnCode", "4004");
@@ -963,6 +996,8 @@ public class MemberInfoController {
 					canDrawToday = 0d;
 				}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 					canDrawToday = balanceToday * 0.8;
+				}else{
+					canDrawToday = new BigDecimal(balanceToday.doubleValue()).multiply(drawRoute.getD0Percent()).doubleValue();//当天可提现的金额
 				}
 				
 				Double balanceHis = 0d;
