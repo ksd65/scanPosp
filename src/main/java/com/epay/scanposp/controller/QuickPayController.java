@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.HXConfig;
+import com.epay.scanposp.common.constant.MLConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.YSConfig;
@@ -52,6 +54,7 @@ import com.epay.scanposp.common.utils.cj.entity.MessageRequestEntity;
 import com.epay.scanposp.common.utils.cj.util.Bean2QueryStrUtil;
 import com.epay.scanposp.common.utils.cj.util.BeanToMapUtil;
 import com.epay.scanposp.common.utils.cj.util.HttpURLConection;
+import com.epay.scanposp.common.utils.cj.util.MD5Util;
 import com.epay.scanposp.common.utils.cj.util.SignatureUtil;
 import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
@@ -1144,6 +1147,7 @@ public class QuickPayController {
 	@RequestMapping("/quickPay/toPay")
 	public JSONObject toQuickPay(HttpServletRequest request,HttpServletResponse response){
 		String accountName = request.getParameter("accountName");
+		String accountType = request.getParameter("accountType");
 		String bankAccount = request.getParameter("bankAccount");
 		String bankCvv = request.getParameter("bankCvv");
 		String bankYxq = request.getParameter("bankYxq");
@@ -1166,6 +1170,13 @@ public class QuickPayController {
 			return CommonUtil.signReturn(result);
 		}
 		srcStr.append("accountName="+accountName);
+		
+		if(accountType == null || "".equals(accountType)){
+			result.put("returnCode", "0007");
+			result.put("returnMsg", "账户类型缺失");
+			return CommonUtil.signReturn(result);
+		}
+		srcStr.append("&accountType="+accountType);
 		
 		if(bankAccount == null || "".equals(bankAccount)){
 			result.put("returnCode", "0007");
@@ -1238,13 +1249,13 @@ public class QuickPayController {
 			result.put("returnMsg", "缺少签名信息");
 			return CommonUtil.signReturn(result);
 		}
-		result = validMemberInfoForQuickPay(memberCode, orderNum, payMoney, accountName,bankAccount,bankCvv,bankYxq, certNo,tel,goodsName,callbackUrl,  srcStr.toString(), signStr);
+		result = validMemberInfoForQuickPay(memberCode, orderNum, payMoney, accountType,accountName,bankAccount,bankCvv,bankYxq, certNo,tel,goodsName,callbackUrl,  srcStr.toString(), signStr);
 		
 		return CommonUtil.signReturn(result);
 	}
 	
 	
-	public JSONObject validMemberInfoForQuickPay(String memberCode,String orderNum,String payMoney,String accountName,String bankAccount,String bankCvv,String bankYxq,String certNo ,String tel,String goodsName,String callbackUrl,String signOrginalStr,String signedStr){
+	public JSONObject validMemberInfoForQuickPay(String memberCode,String orderNum,String payMoney,String accountType,String accountName,String bankAccount,String bankCvv,String bankYxq,String certNo ,String tel,String goodsName,String callbackUrl,String signOrginalStr,String signedStr){
 		JSONObject result = new JSONObject();
 		try{
 			MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -1297,6 +1308,8 @@ public class QuickPayController {
 				return result;
 			}
 			
+			MemberPayType memberPayType = memberPayTypeList.get(0);
+			
 			Map<String,String> rtMap  = commonUtilService.getRouteCodeAndAisleType(memberInfo.getId(),PayTypeConstant.PAY_METHOD_YL,PayTypeConstant.PAY_TYPE_KJ);
 			String routeCode = rtMap.get("routeCode");
 			String aisleType = rtMap.get("aisleType");
@@ -1348,6 +1361,10 @@ public class QuickPayController {
 			}else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)){
 				memberInfo.setSettleType("1");
 				result = quickPayHx("3",memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, "" ,goodsName);
+				result.put("routeCode", routeCode);
+			}else if(RouteCodeConstant.ML_ROUTE_CODE.equals(routeCode)){
+				memberInfo.setSettleType("1");
+				result = mlQuickPay("3",memberInfo,merchantCode,memberPayType,payMoney,orderNum,accountType,accountName,bankAccount,bankCvv,bankYxq,certNo,tel,callbackUrl,goodsName,routeCode,aisleType);
 				result.put("routeCode", routeCode);
 			}
 			
@@ -2832,6 +2849,26 @@ public class QuickPayController {
 			signStr = reqDataJson.getString("signStr");
 		}
 		
+		String accountName = "";
+		if(reqDataJson.containsKey("accountName")){
+			accountName = reqDataJson.getString("accountName");
+		}
+		
+		String bankAccount = "";
+		if(reqDataJson.containsKey("bankAccount")){
+			bankAccount = reqDataJson.getString("bankAccount");
+		}
+		
+		String certNo = "";
+		if(reqDataJson.containsKey("certNo")){
+			certNo = reqDataJson.getString("certNo");
+		}
+		
+		String tel = "";
+		if(reqDataJson.containsKey("tel")){
+			tel = reqDataJson.getString("tel");
+		}
+		
 		StringBuilder srcStr = new StringBuilder();
 		JSONObject result = new JSONObject();
 		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
@@ -2840,12 +2877,24 @@ public class QuickPayController {
 			return result;
 		}
 		
+		if(accountName!=null && !"".equals(accountName)){
+			srcStr.append("accountName="+accountName+"&");
+		}
+		
+		if(bankAccount!=null && !"".equals(bankAccount)){
+			srcStr.append("bankAccount="+bankAccount+"&");
+		}
+		
 		if(callbackUrl == null || "".equals(callbackUrl)){
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "平台支付结果通知回调地址缺失");
 			return result;
 		}
 		srcStr.append("callbackUrl="+callbackUrl);
+		
+		if(certNo!=null && !"".equals(certNo)){
+			srcStr.append("&certNo="+certNo);
+		}
 		
 		if(goodsName == null || "".equals(goodsName)){
 			result.put("returnCode", "0007");
@@ -2875,13 +2924,17 @@ public class QuickPayController {
 		srcStr.append("&orderNum="+orderNum);
 		srcStr.append("&payMoney="+payMoney);
 		
+		if(tel!=null && !"".equals(tel)){
+			srcStr.append("&tel="+tel);
+		}
+		
 		if(signStr == null || "".equals(signStr)){ 
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "缺少签名信息");
 			return result;
 		}
 		
-		result = validMemberInfoForQuickPay(memberCode, orderNum, payMoney, "", "", "", "", "", "", goodsName, callbackUrl, srcStr.toString(), signStr);
+		result = validMemberInfoForQuickPay(memberCode, orderNum, payMoney, "",accountName, bankAccount, "", "", certNo, tel, goodsName, callbackUrl, srcStr.toString(), signStr);
 		return result;
 	}
 	
@@ -2977,5 +3030,334 @@ public class QuickPayController {
 			return result;
 		}
 		return result;
+	}
+	
+	
+	
+	
+	public JSONObject mlQuickPay(String platformType,MemberInfo memberInfo,MemberMerchantCode merchantCode,MemberPayType memberPayType,String payMoney,String orderNumOuter,String accountType,String accountName,String bankAccount,String bankCvv,String bankYxq,String certNo,String tel,String callbackUrl,String goodsName,String routeCode,String aisleType) {
+		JSONObject result = new JSONObject();
+		try {
+			String payType = "9";
+			String payTypeStr = PayTypeConstant.PAY_TYPE_KJ;
+			String payMethod = PayTypeConstant.PAY_METHOD_YL;
+			String merCode = merchantCode.getKjMerchantCode();
+			
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+			// 插入一条收款记录
+			String orderCode = CommonUtil.getOrderCode();
+			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(payMoney));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setOrderNumOuter(orderNumOuter);
+			debitNote.setRouteId(routeCode);
+			debitNote.setStatus("0");
+			debitNote.setTxnMethod(payMethod);
+			debitNote.setTxnType(payType);
+			debitNote.setMerchantCode(merCode);
+			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setSettleType(memberInfo.getSettleType());
+			if("0".equals(memberInfo.getSettleType())){
+				debitNote.setTradeRate(memberPayType.getT0TradeRate());
+			}else{
+				debitNote.setTradeRate(memberPayType.getT1TradeRate());
+			}
+			
+			
+			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_"+payMethod+"_"+payTypeStr;
+			JSONObject memResult = commonUtilService.checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != memResult){
+				debitNote.setStatus("9");
+				debitNoteService.insertSelective(debitNote);
+				return memResult;
+			} 
+			
+			configName = "SINGLE_MIN_"+routeCode+"_"+payMethod+"_"+payTypeStr;
+			JSONObject checkResult = commonUtilService.checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payTypeStr;
+			JSONObject limitResult = commonUtilService.checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+			debitNoteService.insertSelective(debitNote);
+			
+			PayResultNotice payResultNotice = new PayResultNotice();
+			payResultNotice.setOrderCode(debitNote.getOrderCode());
+			payResultNotice.setOrderNumOuter(orderNumOuter);
+			payResultNotice.setPayMoney(debitNote.getMoney());
+			payResultNotice.setMemberCode(memberInfo.getCode());
+			payResultNotice.setPayType(payType);
+			payResultNotice.setReturnUrl(callbackUrl);
+			payResultNotice.setStatus("1");
+			payResultNotice.setCreateDate(new Date());
+			payResultNotice.setPlatformType(platformType);
+			if("3".equals(platformType)){
+				payResultNotice.setInterfaceType("2");
+			}else{
+				payResultNotice.setInterfaceType("1");
+			}
+			payResultNoticeService.insertSelective(payResultNotice);
+			
+			String callBack = SysConfig.serverUrl + "/quickPay/mlPayNotify";
+			
+			String serverUrl = MLConfig.payServerUrl;
+			
+			String[] obj = merchantKey.getPrivateKeyPassword().split("#");
+			
+			Map<String,String> contextjson = new HashMap<String, String>();
+	     	String amount = new DecimalFormat("0.00").format(Double.valueOf(payMoney));
+	     	String orderTime = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			contextjson.put("ORDER_ID",orderCode);//订单流水号
+	     	contextjson.put("ORDER_TIME",orderTime);//
+	     	contextjson.put("ORDER_AMT",amount);//消费金额
+	     	contextjson.put("USER_TYPE", "02");
+	     	contextjson.put("USER_ID", merCode);
+	     	contextjson.put("SIGN_TYPE", "03");
+	     	contextjson.put("BUS_CODE", "5015");
+	     	contextjson.put("PAY_TYPE", "13");
+	     	contextjson.put("CCT", "CNY");
+	     	contextjson.put("ADD1",bankAccount);//银行卡号
+	    
+	     	contextjson.put("ID_NO",obj[2]);//绑定身份证号
+	     	contextjson.put("PHONE_NO",tel);//绑定手机号码
+	     	contextjson.put("BG_URL",callBack);//异步通知地址
+	     	contextjson.put("PAGE_URL", SysConfig.frontUrl+"/payment/quickPayMlNotify");
+	     	contextjson.put("SETT_ACCT_NO", obj[0]);//结算卡号
+	     	contextjson.put("CARD_INST_NAME", obj[1]);//结算银行
+	     	contextjson.put("NAME", obj[3]);
+	     	//contextjson.put("goodsName",goodsName);//商品名称
+	     	
+	     	String srcStr = orderCode+amount+orderTime+"13"+"02"+merCode+"5015";
+	     	//String srcStr = StringUtil.orderedKey(contextjson)+"&key="+merchantKey.getPrivateKey();
+	     	System.out.println("加密源串："+srcStr);
+			String sign1 = com.epay.scanposp.common.utils.ml.EncryptUtil.MD5(srcStr, 1).toUpperCase();
+			System.out.println("第一次加密结果："+sign1);
+			String sign = com.epay.scanposp.common.utils.ml.EncryptUtil.MD5(sign1+merchantKey.getPrivateKey(), 0).toUpperCase();
+			System.out.println("第二次加密结果："+sign);
+			contextjson.put("SIGN", sign); 
+			
+            List<String> keys = new ArrayList<String>(contextjson.keySet());
+			for (int i = 0; i < keys.size(); i++) {
+				String name=(String) keys.get(i);
+				String value=(String) contextjson.get(name);
+				result.put(name, value);
+			}
+            
+            
+            
+			logger.info("米联快捷请求数据[{}]", new Object[] { contextjson.toString() });
+			
+			result.put("payUrl", serverUrl);
+			result.put("returnCode", "0000");
+			result.put("returnMsg", "成功");
+	     	
+	   } catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
+	
+	/**
+	 * 米联支付回调
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping("/quickPay/mlPayNotify")
+	public void mlPayNotify(HttpServletRequest request,HttpServletResponse response) {
+		try {
+			Map<String,String> param = new HashMap<String, String>();
+			Enumeration pNames=request.getParameterNames();
+			while(pNames.hasMoreElements()){
+			    String name=(String)pNames.nextElement();
+			    String value=request.getParameter(name);
+			    param.put(name, value);
+			}
+			logger.info("mlPayNotify回调返回报文[{}]",  JSONObject.fromObject(param).toString() );
+			String out_trade_no = param.get("out_trade_no");
+			String sys_trade_no = param.get("sys_trade_no");
+			String trade_state = param.get("trade_state");
+			String total_fee = param.get("total_fee");
+			String sign = param.get("sign");
+			param.remove("sign");
+			String privateKey = YSConfig.privateKey;
+			String srcStr = StringUtil.orderedKey(param)+"&key="+privateKey;
+			if(!sign.equals(SwpHashUtil.getSign(srcStr, privateKey, "SHA256"))){
+				logger.info("验证签名不通过");
+                response.getWriter().write("FAIL");
+        		return;
+			}
+			
+			String reqMsgId = out_trade_no;
+        	
+        	TradeDetailExample tradeDetailExample = new TradeDetailExample();
+        	tradeDetailExample.or().andOrderCodeEqualTo(reqMsgId);
+        	List<TradeDetail> tradeDetailList = tradeDetailService.selectByExample(tradeDetailExample);
+        	if(tradeDetailList!=null && tradeDetailList.size()>0){
+        		response.getWriter().write("SUCCESS");
+        		return;
+        	}
+        	
+        	DebitNoteExample debitNoteExample = new DebitNoteExample();
+			debitNoteExample.createCriteria().andOrderCodeEqualTo(reqMsgId);
+			List<DebitNote> debitNotes_tmp = debitNoteService.selectByExample(debitNoteExample);
+			if (debitNotes_tmp == null || debitNotes_tmp.size() == 0) {
+				logger.info("订单不存在");
+                response.getWriter().write("FAIL");
+        		return;
+				
+			}
+			DebitNote debitNote = debitNotes_tmp.get(0);
+        	
+			
+        	
+        	String result_message = "";
+        	MsResultNoticeExample msResultNoticeExample = new MsResultNoticeExample();
+			msResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
+			List<MsResultNotice> msResultNoticeList = msResultNoticeService.selectByExample(msResultNoticeExample);
+			if(null == msResultNoticeList || msResultNoticeList.size() == 0){
+				if (debitNote != null ) {
+					debitNote.setRespCode(trade_state);
+					debitNote.setRespMsg(result_message);
+					
+					//新增一条交易明细记录
+					TradeDetail tradeDetail=new TradeDetail();
+					tradeDetail.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+					tradeDetail.setMemberId(debitNote.getMemberId());
+					tradeDetail.setMerchantCode(debitNote.getMerchantCode());
+					
+					tradeDetail.setMemberCode(debitNote.getMemberCode());
+					tradeDetail.setMoney(debitNote.getMoney());
+					tradeDetail.setPayTime(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
+					tradeDetail.setPtSerialNo(debitNote.getOrderCode());
+					tradeDetail.setOrderCode(debitNote.getOrderCode());
+					tradeDetail.setChannelNo(sys_trade_no);
+					tradeDetail.setReqDate(DateUtil.getDateTimeStr(debitNote.getCreateDate()));
+					//tradeDetail.setRespCode(respJSONObject.get("respCode").toString());
+					tradeDetail.setRespDate(DateUtil.getDateTimeStr(new Date()));
+					tradeDetail.setRespMsg(result_message);
+					tradeDetail.setRouteId(debitNote.getRouteId());
+					tradeDetail.setTxnMethod(debitNote.getTxnMethod());
+					tradeDetail.setTxnType(debitNote.getTxnType());
+					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
+					tradeDetail.setDelFlag("0");
+					tradeDetail.setCreateDate(new Date());
+					if ("SUCCESS".equals(trade_state)) {
+						debitNote.setStatus("1");
+						tradeDetail.setRespType("S");
+						tradeDetail.setRespCode("000000");
+					}else{
+						debitNote.setStatus("2");
+						tradeDetail.setRespType("E");
+						tradeDetail.setRespCode(trade_state);
+					}
+					debitNote.setUpdateDate(new Date());
+					debitNoteService.updateByPrimaryKey(debitNote);
+					
+					MsResultNotice msResultNotice = new MsResultNotice();
+					msResultNotice.setMoney(new BigDecimal(total_fee).divide(new BigDecimal(100)));
+					msResultNotice.setOrderCode(reqMsgId);
+					msResultNotice.setPtSerialNo(sys_trade_no);
+					
+					//SimpleDateFormat dateSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					msResultNotice.setRespDate(DateUtil.getDateTimeStr(new Date()));
+					msResultNotice.setRespType("");
+					msResultNotice.setRespCode(trade_state);
+					msResultNotice.setRespMsg(result_message);
+					msResultNotice.setPayTime(DateUtil.getDateTimeStr(new Date()));
+					msResultNotice.setCreateDate(new Date());
+					msResultNotice.setUpdateDate(new Date());
+					msResultNoticeService.insertSelective(msResultNotice);
+					
+					if("0".equals(debitNote.getSettleType())){
+						tradeDetail.setSettleType("0");
+					}else{
+						tradeDetail.setSettleType("1");
+					}
+					PayResultNoticeExample payResultNoticeExample = new PayResultNoticeExample();
+					payResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
+					List<PayResultNotice> payResultNoticeList = payResultNoticeService.selectByExample(payResultNoticeExample);
+					PayResultNotice payResultNotice = null;
+					if(payResultNoticeList.size()>0){
+						payResultNotice = payResultNoticeList.get(0);
+						payResultNotice.setResultMessage(debitNote.getRespMsg());
+						payResultNotice.setStatus("2");
+						payResultNotice.setPayTime(msResultNotice.getPayTime());
+						payResultNotice.setUpdateDate(new Date());
+						if ("SUCCESS".equals(trade_state)) {
+							payResultNotice.setRespType("2");
+							payResultNotice.setResultCode("0000");
+							payResultNotice.setResultMessage("交易成功");
+						}else{
+							payResultNotice.setRespType("3");
+							payResultNotice.setResultCode("0003");   
+							payResultNotice.setResultMessage("交易失败："+result_message);
+						}
+						
+						tradeDetail.setInterfaceType(payResultNotice.getInterfaceType());
+						tradeDetail.setPlatformType(payResultNotice.getPlatformType());
+						tradeDetail.setOrderNumOuter(payResultNotice.getOrderNumOuter());
+					}
+					//更改逻辑  只有交易成功的记录才写进交易记录表  单独写在此处防止后面再次更改逻辑会不理解
+					if ("SUCCESS".equals(trade_state)) {
+						tradeDetail.setCardType(msResultNotice.getCardType());
+						tradeDetailService.insertSelective(tradeDetail);
+						
+						
+						TradeDetailDaily tradeDetailDaily = new TradeDetailDaily();
+						
+						tradeDetailDaily.setTxnDate(DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+						tradeDetailDaily.setMemberId(debitNote.getMemberId());
+						tradeDetailDaily.setMerchantCode(debitNote.getMerchantCode());
+						tradeDetailDaily.setMoney(debitNote.getMoney());
+						tradeDetailDaily.setOrderCode(debitNote.getOrderCode());
+						tradeDetailDaily.setRouteId(debitNote.getRouteId());
+						tradeDetailDaily.setDelFlag("0");
+						tradeDetailDaily.setCreateDate(new Date());
+						tradeDetailDailyService.insertSelective(tradeDetailDaily);
+					}
+					
+					if(payResultNoticeList.size() > 0){
+						payResultNotifyService.notify(payResultNotice);
+						
+					}
+					
+				}
+			}	
+            
+        } catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+		try {
+			response.getWriter().write("SUCCESS");
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+
 	}
 }

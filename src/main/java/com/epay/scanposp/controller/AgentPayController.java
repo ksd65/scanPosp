@@ -42,6 +42,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.epay.scanposp.common.constant.MLConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.TLConfig;
 import com.epay.scanposp.common.constant.WWConfig;
@@ -1983,6 +1984,112 @@ public class AgentPayController {
 		}
 		return CommonUtil.signReturn(result);
 	}
+	
+	
+	
+	
+	@ResponseBody
+	@RequestMapping("/memberInfo/queryKey")
+	public JSONObject queryKey(HttpServletRequest request,HttpServletResponse response){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = "http://222.76.210.177:9006/ChannelPay/merchBaseInfo/queryMerchKey";
+			
+			Map<String,String> reqData = new HashMap<String, String>();           
+	            
+	        reqData.put("orderId", "C"+CommonUtil.getOrderCode());
+            reqData.put("merchId", "C20180427692065"); 
+            reqData.put("parent", MLConfig.orgNo); 
+            String srcStr = StringUtil.orderedKey(reqData)+"&key="+MLConfig.privateKey;
+			String sign = MD5Util.MD5Encode(srcStr).toUpperCase();
+            reqData.put("sign", sign); 
+			
+            
+            List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			List<String> keys = new ArrayList<String>(reqData.keySet());
+			for (int i = 0; i < keys.size(); i++) {
+				String name=(String) keys.get(i);
+				String value=(String) reqData.get(name);
+				if(value!=null && !"".equals(value)){
+					nvps.add(new BasicNameValuePair(name, value));
+				}
+			}
+            
+            
+            
+			logger.info("新通联余额查询请求数据[{}]", new Object[] { reqData.toString() });
+			
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, "UTF-8");
+			
+			logger.info("新通联余额查询返回报文[{}]", new Object[] { respStr });
+		        
+		        
+		        
+	   
+	          
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return CommonUtil.signReturn(result);
+		}
+		return CommonUtil.signReturn(result);
+	}
+	
+	@ResponseBody
+	@RequestMapping("/memberInfo/modifyRate")
+	public JSONObject modifyRate(HttpServletRequest request,HttpServletResponse response){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = "http://222.76.210.177:9006/ChannelPay/merchBaseInfo/merchInterface";
+			
+			Map<String,String> reqData = new HashMap<String, String>();           
+			reqData.put("debitRate", "0.004");    
+			reqData.put("handleType", "M");
+			reqData.put("orderId", "C"+CommonUtil.getOrderCode());
+	        reqData.put("parent", MLConfig.orgNo); 
+            
+            String srcStr = StringUtil.orderedKey(reqData)+"&key="+MLConfig.privateKey;
+			String sign = MD5Util.MD5Encode(srcStr).toUpperCase();
+            reqData.put("sign", sign); 
+            reqData.put("merchId", "C20180427692065"); 
+            reqData.put("changeType", "M03");
+            reqData.put("countFeeT0", "100");
+            
+            List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			List<String> keys = new ArrayList<String>(reqData.keySet());
+			for (int i = 0; i < keys.size(); i++) {
+				String name=(String) keys.get(i);
+				String value=(String) reqData.get(name);
+				if(value!=null && !"".equals(value)){
+					nvps.add(new BasicNameValuePair(name, value));
+				}
+			}
+            
+            
+            
+			logger.info("新通联余额查询请求数据[{}]", new Object[] { reqData.toString() });
+			
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, "UTF-8");
+			
+			logger.info("新通联余额查询返回报文[{}]", new Object[] { respStr });
+		        
+		        
+		        
+	   
+	          
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return CommonUtil.signReturn(result);
+		}
+		return CommonUtil.signReturn(result);
+	}
+	
+	
 	
 	
 }
