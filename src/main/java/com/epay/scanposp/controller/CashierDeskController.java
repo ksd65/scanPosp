@@ -8265,8 +8265,8 @@ public class CashierDeskController {
 	public void znyPayNotify(HttpServletRequest request,HttpServletResponse response) {
 		String respString = "success";
 		try {
-		//	String responseStr = HttpUtil.getPostString(request);
-			String responseStr = "uid=57752125&ordno=A075133792402286&orderid=20180501105833992524&price=1.00&realprice=1.00&orderuid=%E7%A6%8F%E5%B7%9E%E5%8F%B0%E6%B1%9F%E4%B8%87%E8%BE%BE%E5%B0%8F%E5%90%83%E5%BA%97%E6%94%B6%E6%AC%BE&key=cabaacf8ac518c51f04f4367b7b9df01";
+			String responseStr = HttpUtil.getPostString(request);
+		//	String responseStr = "uid=57752125&ordno=A075133792402286&orderid=20180501105833992524&price=1.00&realprice=1.00&orderuid=%E7%A6%8F%E5%B7%9E%E5%8F%B0%E6%B1%9F%E4%B8%87%E8%BE%BE%E5%B0%8F%E5%90%83%E5%BA%97%E6%94%B6%E6%AC%BE&key=cabaacf8ac518c51f04f4367b7b9df01";
 			logger.info("znyPayNotify回调通知报文[{}]",  responseStr );
 			String[] arr = responseStr.split("&");
 			Map<String,String> respObj = new HashMap<String, String>();

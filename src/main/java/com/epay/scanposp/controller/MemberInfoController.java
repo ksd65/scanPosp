@@ -863,6 +863,17 @@ public class MemberInfoController {
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
 			
+			String platDrawFee = "";
+			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo("PLAT_DRAW_FEE_"+routeCode);
+			List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig.size() == 0) {
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "平台提现费用配置缺失，请与管理员联系");
+				return result.toString();
+			}
+			platDrawFee = sysCommonConfig.get(0).getValue();
+			
 			double tradeRate = 0 , drawFee = 0 ,drawRate = 0;
 			
 			if(RouteCodeConstant.RF_ROUTE_CODE.equals(routeCode)){//瑞付  网银，微信h5
@@ -1065,7 +1076,7 @@ public class MemberInfoController {
 			if(reqDataJson.containsKey("city")){
 				routewayDraw.setCity(reqDataJson.getString("city"));
 			}
-			
+			routewayDraw.setDrawProfit(new BigDecimal(drawFee).subtract(new BigDecimal(platDrawFee)));
 			routewayDrawService.insertSelective(routewayDraw);
 			result.put("returnCode", "0000");
 			result.put("returnMsg", "提交成功");

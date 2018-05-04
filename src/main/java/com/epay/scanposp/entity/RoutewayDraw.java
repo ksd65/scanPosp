@@ -41,6 +41,8 @@ public class RoutewayDraw {
     private BigDecimal drawRate;
 
     private BigDecimal tradefee;
+    
+    private BigDecimal drawProfit;
 
     private String settleDate;
 
@@ -423,6 +425,14 @@ public class RoutewayDraw {
 
 	public void setBatchNo(String batchNo) {
 		this.batchNo = batchNo;
+	}
+
+	public BigDecimal getDrawProfit() {
+		return drawProfit;
+	}
+
+	public void setDrawProfit(BigDecimal drawProfit) {
+		this.drawProfit = drawProfit;
 	}
     
 	

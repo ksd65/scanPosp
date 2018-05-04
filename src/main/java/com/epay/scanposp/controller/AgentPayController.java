@@ -81,6 +81,8 @@ import com.epay.scanposp.entity.RoutewayAccount;
 import com.epay.scanposp.entity.RoutewayAccountExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
+import com.epay.scanposp.entity.SysCommonConfig;
+import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
 import com.epay.scanposp.entity.SysOfficeExample;
 import com.epay.scanposp.service.AccountService;
@@ -1575,6 +1577,17 @@ public class AgentPayController {
 				return result;
 			}
 			
+			String platDrawFee = "";
+			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo("PLAT_DRAW_FEE_"+routeCode);
+			List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig.size() == 0) {
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "平台代付手续费配置缺失，请与管理员联系");
+				return result;
+			}
+			platDrawFee = sysCommonConfig.get(0).getValue();
+			
 			SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
 			SimpleDateFormat dateFormatLong = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			SimpleDateFormat dateFormatShort = new SimpleDateFormat("yyyy-MM-dd");
@@ -1682,7 +1695,7 @@ public class AgentPayController {
 			routewayDraw.setBankCode(bankCode);
 			routewayDraw.setCertNo(certNo);
 			routewayDraw.setTel(tel);
-			
+			routewayDraw.setDrawProfit(new BigDecimal(drawFee).subtract(new BigDecimal(platDrawFee)));
 			routewayDrawService.insertSelective(routewayDraw);
 			
 			result.put("returnCode", "0000");
