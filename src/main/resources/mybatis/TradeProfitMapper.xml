@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.epay.scanposp.dao.TradeProfitMapper" >
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.TradeProfit" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="member_id" property="memberId" jdbcType="INTEGER" />
+    <result column="txn_date" property="txnDate" jdbcType="VARCHAR" />
+    <result column="txn_method" property="txnMethod" jdbcType="VARCHAR" />
+    <result column="txn_type" property="txnType" jdbcType="VARCHAR" />
+    <result column="route_code" property="routeCode" jdbcType="VARCHAR" />
+    <result column="merchant_code" property="merchantCode" jdbcType="VARCHAR" />
+    <result column="trade_money" property="tradeMoney" jdbcType="DECIMAL" />
+    <result column="member_trade_rate" property="memberTradeRate" jdbcType="DECIMAL" />
+    <result column="plat_trade_rate" property="platTradeRate" jdbcType="DECIMAL" />
+    <result column="agent_trade_rate" property="agentTradeRate" jdbcType="DECIMAL" />
+    <result column="plat_cost" property="platCost" jdbcType="DECIMAL" />
+    <result column="agent_cost" property="agentCost" jdbcType="DECIMAL" />
+    <result column="member_cost" property="memberCost" jdbcType="DECIMAL" />
+    <result column="draw_per" property="drawPer" jdbcType="DECIMAL" />
+    <result column="agent_profit" property="agentProfit" jdbcType="DECIMAL" />
+    <result column="agent_profit_d1" property="agentProfitD1" jdbcType="DECIMAL" />
+    <result column="agent_office_id" property="agentOfficeId" jdbcType="VARCHAR" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, member_id, txn_date,txn_method,txn_type, route_code, merchant_code,trade_money,
+    plat_trade_rate,agent_trade_rate,member_trade_rate,plat_cost,agent_cost,member_cost,draw_per,
+    agent_profit,agent_profit_d1,agent_office_id, create_by, create_date, update_by, 
+    update_date, del_flag
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.TradeProfitExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_trade_profit
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart>=0" >
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from bu_trade_profit
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from bu_trade_profit
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.TradeProfitExample" >
+    delete from bu_trade_profit
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.epay.scanposp.entity.TradeProfit" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_trade_profit (member_id,txn_date,txn_method,txn_type,route_code, trade_money, plat_cost, 
+     agent_cost,member_cost,draw_per,agent_office_id,create_by, create_date, 
+      update_by, update_date, del_flag
+      )
+    values (#{memberId,jdbcType=INTEGER},#{txnDate,jdbcType=VARCHAR},#{txnMethod,jdbcType=VARCHAR},
+     #{txnType,jdbcType=VARCHAR},#{routeCode,jdbcType=VARCHAR},
+     #{tradeMoney,jdbcType=DECIMAL}, #{platCost,jdbcType=DECIMAL}, #{agentCost,jdbcType=DECIMAL}, 
+     #{memberCost,jdbcType=DECIMAL}, #{drawPer,jdbcType=DECIMAL}, #{agentOfficeId,jdbcType=VARCHAR}, 
+      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, 
+      #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{delFlag,jdbcType=CHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.epay.scanposp.entity.TradeProfit" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
+    insert into bu_trade_profit
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="memberId != null" >
+        member_id,
+      </if>
+      <if test="txnDate != null" >
+        txn_date,
+      </if>
+      <if test="txnMethod != null" >
+        txn_method,
+      </if>
+      <if test="txnType != null" >
+        txn_type,
+      </if>
+      <if test="routeCode != null" >
+        route_code,
+      </if>
+      <if test="merchantCode != null" >
+        merchant_code,
+      </if>
+      <if test="tradeMoney != null" >
+        trade_money,
+      </if>
+      
+       <if test="platTradeRate != null" >
+        plat_trade_rate,
+      </if>
+      <if test="agentTradeRate != null" >
+        agent_trade_rate,
+      </if>
+      <if test="memberTradeRate != null" >
+        member_trade_rate,
+      </if>
+      
+      <if test="platCost != null" >
+        plat_cost,
+      </if>
+      <if test="agentCost != null" >
+        agent_cost,
+      </if>
+      <if test="memberCost != null" >
+        member_cost,
+      </if>
+      <if test="drawPer != null" >
+        draw_per,
+      </if>
+      
+      <if test="agentProfit != null" >
+        agent_profit,
+      </if>
+      <if test="agentProfitD1 != null" >
+        agent_profit_d1,
+      </if>
+      
+      <if test="agentOfficeId != null" >
+        agent_office_id,
+      </if>
+      
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="memberId != null" >
+        #{memberId,jdbcType=INTEGER},
+      </if>
+      <if test="txnDate != null" >
+        #{txnDate,jdbcType=VARCHAR},
+      </if>
+      <if test="txnMethod != null" >
+        #{txnMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="txnType != null" >
+        #{txnType,jdbcType=VARCHAR},
+      </if>
+      <if test="routeCode != null" >
+        #{routeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantCode != null" >
+        #{merchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeMoney != null" >
+        #{tradeMoney,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="platTradeRate != null" >
+        #{platTradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="agentTradeRate != null" >
+        #{agentTradeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="memberTradeRate != null" >
+        #{memberTradeRate,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="platCost != null" >
+        #{platCost,jdbcType=DECIMAL},
+      </if>
+      <if test="agentCost != null" >
+        #{agentCost,jdbcType=DECIMAL},
+      </if>
+      <if test="memberCost != null" >
+        #{memberCost,jdbcType=DECIMAL},
+      </if>
+      <if test="drawPer != null" >
+        #{drawPer,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="agentProfit != null" >
+        #{agentProfit,jdbcType=DECIMAL},
+      </if>
+      <if test="agentProfitD1 != null" >
+        #{agentProfitD1,jdbcType=DECIMAL},
+      </if>
+      
+      <if test="agentOfficeId != null" >
+        #{agentOfficeId,jdbcType=VARCHAR},
+      </if>
+      
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.TradeProfitExample" resultType="java.lang.Integer" >
+    select count(*) from bu_trade_profit
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.TradeProfit" >
+    update bu_trade_profit
+    set member_id = #{memberId,jdbcType=INTEGER},
+      txn_date = #{txnDate,jdbcType=VARCHAR},
+      txn_method = #{txnMethod,jdbcType=VARCHAR},
+      txn_type = #{txnType,jdbcType=VARCHAR},
+      route_code = #{routeCode,jdbcType=VARCHAR},
+      trade_money = #{tradeMoney,jdbcType=DECIMAL},
+      plat_cost = #{platCost,jdbcType=DECIMAL},
+      agent_cost = #{agentCost,jdbcType=DECIMAL},
+      member_cost = #{memberCost,jdbcType=DECIMAL},
+      draw_per = #{drawPer,jdbcType=DECIMAL},
+      agent_profit = #{agentProfit,jdbcType=DECIMAL},
+      agent_profit_d1 = #{agentProfitD1,jdbcType=DECIMAL},
+      agent_office_id = #{agentOfficeId,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      del_flag = #{delFlag,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+  <select id="getTradeList" parameterType="java.util.Map" resultType="java.util.Map">
+  	SELECT t.member_id, t.route_id,t.merchant_code,t.txn_method,t.txn_type,SUM(t.money) trade_money,SUM(t.money*t.member_trade_rate) member_cost FROM bu_trade_detail t 
+  	where t.txn_date=#{txnDate} GROUP BY t.member_id, t.route_id,t.merchant_code,t.txn_method,t.txn_type
+  	
+  </select>
+  
+  
+</mapper>
