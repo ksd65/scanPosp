@@ -725,7 +725,7 @@ public class DebitNoteController {
 					throw new ArgException("备注信息超出限制");
 				}
 			}
-
+			String ip = reqDataJson.getString("ip");
 			AccountExample accountExample = new AccountExample();
 			accountExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andDelFlagEqualTo("0");
 			List<Account> accounts = accountService.selectByExample(accountExample);
@@ -792,6 +792,7 @@ public class DebitNoteController {
 			reqData.put("PayType", "1");
 			reqData.put("callback", callBack);
 			reqData.put("desc", memberInfo.getName() + " 收款");
+			reqData.put("terminalId", ip);
 			reqData.put("subAppid", ESKConfig.subAppid);
 			System.out.println("待加密数据: "+reqData);
 			
