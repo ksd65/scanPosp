@@ -9275,6 +9275,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
 			if(null != timeResult){
 				debitNote.setStatus("12");
+				debitNote.setRespMsg(timeResult.getString("returnMsg"));
 				debitNoteService.insertSelective(debitNote);
 				return timeResult;
 			}

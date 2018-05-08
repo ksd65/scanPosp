@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.utils.DateUtil;
+import com.epay.scanposp.entity.IpBlackList;
+import com.epay.scanposp.entity.IpBlackListExample;
 import com.epay.scanposp.entity.MemberIpRule;
 import com.epay.scanposp.entity.MemberIpRuleExample;
 import com.epay.scanposp.entity.MemberIpWhiteList;
@@ -69,6 +71,9 @@ public class CommonUtilService {
 	
 	@Resource
 	private DebitNoteService debitNoteService;
+	
+	@Resource
+	private IpBlackListService ipBlackListService;
 	
 	public JSONObject checkLimitMoney(String configName, BigDecimal tradeMoney){
 		
@@ -158,6 +163,15 @@ public class CommonUtilService {
 	 */
 	public JSONObject checkLimitIpFail(String payMethod, String payType, int memberId, String ip){
 		JSONObject result = new JSONObject();
+		String txnType = transPayType(payType);
+		IpBlackListExample ipBlackListExample = new IpBlackListExample();
+		ipBlackListExample.createCriteria().andTxnMethodEqualTo(payMethod).andTxnTypeEqualTo(txnType).andIpEqualTo(ip).andDelFlagEqualTo("0");
+		List<IpBlackList> ipList = ipBlackListService.selectByExample(ipBlackListExample);
+		if(ipList!=null && ipList.size()>0){
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "IP"+ip+"无支付权限");
+			return result;
+		}
 		String configName = "LIMIT_FAIL_TIMES_"+payMethod+"_"+payType;
 		String value = "";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
@@ -166,18 +180,32 @@ public class CommonUtilService {
 		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
 			value = sysCommonConfig.get(0).getValue();
 		}
-		if(!"".equals(value)){
+		configName = "LIMIT_FAIL_COUNT_"+payMethod+"_"+payType;
+		String count = "";
+		sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			count = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)&&!"".equals(count)){
 			Map<String,Object> param = new HashMap<String, Object>();
-			param.put("memberId", memberId);
 			param.put("ip", ip);
 			param.put("txnMethod", payMethod);
-			param.put("txnType", transPayType(payType));
+			param.put("txnType", txnType);
 			param.put("seconds", value);
-			int count = debitNoteService.selectFailCountsWithinTime(param);
-			if(count>0){
-				logger.info("该IP支付失败，限制请求，规则："+value+"秒");
+			int counts = debitNoteService.selectFailCountsWithinTime(param);
+			if(counts>Integer.parseInt(count)){
+				IpBlackList ipBlackList = new IpBlackList();
+				ipBlackList.setTxnType(txnType);
+				ipBlackList.setTxnMethod(payMethod);
+				ipBlackList.setIp(ip);
+				ipBlackList.setMemberId(memberId);
+				ipBlackList.setCreateDate(new Date());
+				ipBlackList.setDelFlag("0");
+				ipBlackListService.insertSelective(ipBlackList);
 				result.put("returnCode", "4004");
-				result.put("returnMsg", "支付失败，请稍后再试");
+				result.put("returnMsg", "IP"+ip+"无支付权限");
 				return result;
 			}
 		}
