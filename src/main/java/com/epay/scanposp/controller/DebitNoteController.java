@@ -103,6 +103,7 @@ import com.epay.scanposp.entity.EskNotice;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberInfoExample.Criteria;
+import com.epay.scanposp.entity.DebitNoteSub;
 import com.epay.scanposp.entity.MemberIpRule;
 import com.epay.scanposp.entity.MemberIpRuleExample;
 import com.epay.scanposp.entity.MemberIpWhiteList;
@@ -130,6 +131,9 @@ import com.epay.scanposp.entity.PayTypeRuleExample;
 import com.epay.scanposp.entity.Payee;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
+import com.epay.scanposp.entity.SubMerchantCode;
+import com.epay.scanposp.entity.SubMerchantTotal;
+import com.epay.scanposp.entity.SubMerchantTotalExample;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
@@ -149,6 +153,7 @@ import com.epay.scanposp.service.BusinessCategoryService;
 import com.epay.scanposp.service.CommonUtilService;
 import com.epay.scanposp.service.DebitNoteIpService;
 import com.epay.scanposp.service.DebitNoteService;
+import com.epay.scanposp.service.DebitNoteSubService;
 import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.EskNoticeService;
 import com.epay.scanposp.service.MemberInfoService;
@@ -172,6 +177,7 @@ import com.epay.scanposp.service.PayTypeRuleService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.PayeeService;
 import com.epay.scanposp.service.RoutewayDrawService;
+import com.epay.scanposp.service.SubMerchantTotalService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeConfigOemService;
 import com.epay.scanposp.service.SysOfficeExtendService;
@@ -271,6 +277,9 @@ public class DebitNoteController {
 	private DebitNoteIpService debitNoteIpService;
 	
 	@Resource
+	private DebitNoteSubService debitNoteSubService;
+	
+	@Resource
 	private MemberIpWhiteListService memberIpWhiteListService;
 	
 	@Resource
@@ -293,6 +302,9 @@ public class DebitNoteController {
 	
 	@Autowired
 	private MemberPayTypeService memberPayTypeService;
+	
+	@Autowired
+	private SubMerchantTotalService subMerchantTotalService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -9308,7 +9320,26 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return tResult;
 			}
 			
+			List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode);
+			if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "交易权限不足");
+				debitNote.setStatus("13");
+				debitNoteService.insertSelective(debitNote);
+				return result;
+			}
+			String subMerchantCode = subMerchantCodeList.get(0).getSubMerchantCode();
+			debitNote.setSubMerchantCode(subMerchantCode);
+			
 			debitNoteService.insertSelective(debitNote);
+			
+			DebitNoteSub debitNoteSub = new DebitNoteSub();
+			debitNoteSub.setRouteId(routeCode);
+			debitNoteSub.setMerchantCode(merCode);
+			debitNoteSub.setSubMerchantCode(subMerchantCode);
+			debitNoteSub.setOrderCode(orderCode);
+			debitNoteSub.setCreateDate(debitNote.getCreateDate());
+			debitNoteSubService.insertSelective(debitNoteSub);
 			
 			PayResultNotice payResultNotice = new PayResultNotice();
 			payResultNotice.setOrderCode(debitNote.getOrderCode());
@@ -9344,6 +9375,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			reqData.put("transDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 			reqData.put("transAmount", payMoney);
 			reqData.put("backNotifyUrl", callBack);
+			reqData.put("srcMerid", subMerchantCode);
 			reqData.put("orderDesc", URLEncoder.encode(orderDesc,"GBK"));
 			
 			String srcStr = StringUtil.orderedKey(reqData)+"&key="+merchantKey.getPrivateKey();
@@ -9402,6 +9434,26 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				}
 			}
 			try{
+				String tradeDate  = new SimpleDateFormat("yyyyMMdd").format(new Date());
+				SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
+				subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(tradeDate).andDelFlagEqualTo("0");
+	            List<SubMerchantTotal> mtList = subMerchantTotalService.selectByExample(subMerchantTotalExample);
+	            if(mtList==null||mtList.size()==0){
+	            	SubMerchantTotal subMerchantTotal = new SubMerchantTotal();
+	            	subMerchantTotal.setRouteId(routeCode);
+	            	subMerchantTotal.setSubMerchantCode(subMerchantCode);
+	            	subMerchantTotal.setTradeDate(tradeDate);
+	            	subMerchantTotal.setCounts(1);
+	            	subMerchantTotal.setTotalMoney(new BigDecimal(0));
+	            	subMerchantTotal.setCreateDate(new Date());
+	            	subMerchantTotalService.insertSelective(subMerchantTotal);
+	            }else{
+	            	SubMerchantTotal subMerchantTotal = mtList.get(0);
+	            	subMerchantTotal.setCounts(subMerchantTotal.getCounts()+1);
+	            	subMerchantTotal.setUpdateDate(new Date());
+	            	subMerchantTotalService.updateByPrimaryKey(subMerchantTotal);
+	            }
+	            
 		        DebitNoteIp debitNoteIp = new DebitNoteIp();
 		        debitNoteIp.setMemberId(memberInfo.getId());
 		        debitNoteIp.setMerchantCode(merCode);

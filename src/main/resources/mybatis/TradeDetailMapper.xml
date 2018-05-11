@@ -47,6 +47,7 @@
     <result column="remarks" property="remarks" jdbcType="VARCHAR" />
     <result column="del_flag" property="delFlag" jdbcType="CHAR" />
     <result column="pre_type" jdbcType="VARCHAR" property="preType" />
+    <result column="sub_merchant_code" jdbcType="VARCHAR" property="subMerchantCode" />
   </resultMap>
   <sql id="Example_Where_Clause" >
     <where >
@@ -113,7 +114,7 @@
     order_num_outer,txn_method, txn_type, pt_serial_no, req_date, resp_date, resp_type, resp_code, 
     resp_msg, card_type, route_id, pay_time, balance_date, channel_no, settle_type, interface_type, 
     platform_type, settle_cancel_flag, create_by, create_date, update_by, update_date, 
-    remarks, del_flag,pre_type
+    remarks, del_flag,pre_type,sub_merchant_code
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.TradeDetailExample" >
     select
@@ -319,6 +320,9 @@
       <if test="preType != null">
         pre_type,
       </if>
+      <if test="subMerchantCode != null">
+        sub_merchant_code,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="txnDate != null" >
@@ -452,6 +456,9 @@
       </if>
       <if test="preType != null">
         #{preType,jdbcType=VARCHAR},
+      </if>
+      <if test="subMerchantCode != null">
+        #{subMerchantCode,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>

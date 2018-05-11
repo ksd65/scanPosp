@@ -31,6 +31,7 @@ import com.epay.scanposp.entity.PrePayMember;
 import com.epay.scanposp.entity.PrePayMemberExample;
 import com.epay.scanposp.entity.PrePayStatistics;
 import com.epay.scanposp.entity.PrePayStatisticsExample;
+import com.epay.scanposp.entity.SubMerchantCode;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 
@@ -71,6 +72,9 @@ public class CommonUtilService {
 	
 	@Resource
 	private DebitNoteService debitNoteService;
+	
+	@Resource
+	private SubMerchantCodeService subMerchantCodeService;
 	
 	@Resource
 	private IpBlackListService ipBlackListService;
@@ -195,7 +199,7 @@ public class CommonUtilService {
 			param.put("txnType", txnType);
 			param.put("seconds", value);
 			int counts = debitNoteService.selectFailCountsWithinTime(param);
-			if(counts>Integer.parseInt(count)){
+			if(counts>=Integer.parseInt(count)){
 				IpBlackList ipBlackList = new IpBlackList();
 				ipBlackList.setTxnType(txnType);
 				ipBlackList.setTxnMethod(payMethod);
@@ -528,6 +532,30 @@ public class CommonUtilService {
 					return result;
 				}
 			}
+		}
+		return null;
+	}
+	
+	
+	public List<SubMerchantCode> getSubMerchantCodeList( String routeCode){
+		
+		String value = "60";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo("SUB_MERCHANT_CODE_TIME_"+routeCode).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value) && !"0".equals(value)){
+			String tradeDate = DateUtil.getDateFormat(new Date(), "yyyyMMdd");
+			String nowTime = DateUtil.getDateFormat(new Date(), "HHmmss");
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("routeCode", routeCode);
+			param.put("nowTime", nowTime);
+			param.put("tradeDate", tradeDate);
+			param.put("seconds", value);
+			List<SubMerchantCode> list = subMerchantCodeService.selectByMap(param);
+			return list;
 		}
 		return null;
 	}

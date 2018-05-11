@@ -115,6 +115,7 @@ import com.epay.scanposp.entity.BusinessCategoryExample;
 import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 import com.epay.scanposp.entity.DebitNoteIp;
+import com.epay.scanposp.entity.DebitNoteSub;
 import com.epay.scanposp.entity.DrawResultNotice;
 import com.epay.scanposp.entity.DrawResultNoticeExample;
 import com.epay.scanposp.entity.DrawResultNoticeExample.Criteria;
@@ -161,6 +162,9 @@ import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.StTradeDetail;
 import com.epay.scanposp.entity.StTradeDetailAll;
 import com.epay.scanposp.entity.StTradeDetailExample;
+import com.epay.scanposp.entity.SubMerchantCode;
+import com.epay.scanposp.entity.SubMerchantTotal;
+import com.epay.scanposp.entity.SubMerchantTotalExample;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
@@ -177,6 +181,7 @@ import com.epay.scanposp.service.CommonService;
 import com.epay.scanposp.service.CommonUtilService;
 import com.epay.scanposp.service.DebitNoteIpService;
 import com.epay.scanposp.service.DebitNoteService;
+import com.epay.scanposp.service.DebitNoteSubService;
 import com.epay.scanposp.service.DrawResultNoticeService;
 import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.KbinService;
@@ -204,6 +209,7 @@ import com.epay.scanposp.service.RouteWayService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.StTradeDetailAllService;
 import com.epay.scanposp.service.StTradeDetailService;
+import com.epay.scanposp.service.SubMerchantTotalService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
@@ -322,6 +328,9 @@ public class CashierDeskController {
 	private DebitNoteIpService debitNoteIpService;
 	
 	@Resource
+	private DebitNoteSubService debitNoteSubService;
+	
+	@Resource
 	private MemberIpWhiteListService memberIpWhiteListService;
 	
 	@Resource
@@ -345,6 +354,9 @@ public class CashierDeskController {
 	
 	@Autowired
 	private MemberPayTypeService memberPayTypeService;
+	
+	@Autowired
+	private SubMerchantTotalService subMerchantTotalService;
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/getQrcodePay")
@@ -7720,7 +7732,29 @@ public class CashierDeskController {
 				return mResult1;
 			}
 			
+			
+			
+			List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode);
+			if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "交易权限不足");
+				debitNote.setStatus("13");
+				debitNoteService.insertSelective(debitNote);
+				return result;
+			}
+			String subMerchantCode = subMerchantCodeList.get(0).getSubMerchantCode();
+			debitNote.setSubMerchantCode(subMerchantCode);
+			
 			debitNoteService.insertSelective(debitNote);
+			
+			DebitNoteSub debitNoteSub = new DebitNoteSub();
+			debitNoteSub.setRouteId(routeCode);
+			debitNoteSub.setMerchantCode(merCode);
+			debitNoteSub.setSubMerchantCode(subMerchantCode);
+			debitNoteSub.setOrderCode(orderCode);
+			debitNoteSub.setCreateDate(debitNote.getCreateDate());
+			debitNoteSubService.insertSelective(debitNoteSub);
+			
 			
 			PayResultNotice payResultNotice = new PayResultNotice();
 			payResultNotice.setOrderCode(debitNote.getOrderCode());
@@ -7760,6 +7794,7 @@ public class CashierDeskController {
 			reqData.put("transDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 			reqData.put("transAmount", payMoney);
 			reqData.put("backNotifyUrl", callBack);
+			reqData.put("srcMerid", subMerchantCode);
 			reqData.put("orderDesc", URLEncoder.encode(orderDesc,"GBK"));
 			
 			String srcStr = StringUtil.orderedKey(reqData)+"&key="+merchantKey.getPrivateKey();
@@ -7831,7 +7866,28 @@ public class CashierDeskController {
 		        debitNoteIp.setIp(ip);
 		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
 				debitNoteIpService.insertSelective(debitNoteIp);
-	        }catch(Exception ex){
+				
+				
+				String tradeDate  = new SimpleDateFormat("yyyyMMdd").format(new Date());
+				SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
+				subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(tradeDate).andDelFlagEqualTo("0");
+	            List<SubMerchantTotal> mtList = subMerchantTotalService.selectByExample(subMerchantTotalExample);
+	            if(mtList==null||mtList.size()==0){
+	            	SubMerchantTotal subMerchantTotal = new SubMerchantTotal();
+	            	subMerchantTotal.setRouteId(routeCode);
+	            	subMerchantTotal.setSubMerchantCode(subMerchantCode);
+	            	subMerchantTotal.setTradeDate(tradeDate);
+	            	subMerchantTotal.setCounts(1);
+	            	subMerchantTotal.setTotalMoney(new BigDecimal(0));
+	            	subMerchantTotal.setCreateDate(new Date());
+	            	subMerchantTotalService.insertSelective(subMerchantTotal);
+	            }else{
+	            	SubMerchantTotal subMerchantTotal = mtList.get(0);
+	            	subMerchantTotal.setCounts(subMerchantTotal.getCounts()+1);
+	            	subMerchantTotal.setUpdateDate(new Date());
+	            	subMerchantTotalService.updateByPrimaryKey(subMerchantTotal);
+	            }
+			}catch(Exception ex){
 	        	logger.error(ex.getMessage());
 	        }
 		} catch (Exception e) {
@@ -7938,6 +7994,7 @@ public class CashierDeskController {
 					tradeDetail.setMemberTradeRate(debitNote.getTradeRate());
 					tradeDetail.setDelFlag("0");
 					tradeDetail.setCreateDate(new Date());
+					tradeDetail.setSubMerchantCode(debitNote.getSubMerchantCode());
 					if ("00".equals(result_code)) {
 						debitNote.setStatus("1");
 						tradeDetail.setRespType("S");

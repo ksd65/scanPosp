@@ -32,6 +32,8 @@
     <result column="payee_id" jdbcType="INTEGER" property="payeeId" />
     <result column="qrorder_deal_status" jdbcType="VARCHAR" property="qrorderDealStatus" />
     <result column="pre_type" jdbcType="VARCHAR" property="preType" />
+    <result column="sub_merchant_code" jdbcType="VARCHAR" property="subMerchantCode" />
+    
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -94,7 +96,7 @@
   <sql id="Base_Column_List">
     id, money, member_id, member_code, merchant_code, order_code, order_num_outer,settle_type,txn_method, txn_type, trade_rate,
     status, route_id, resp_code, resp_msg, create_by, create_date, update_by, update_date, 
-    remarks,ip,user_agent,browser,device_info,pay_qr_code_id,pay_account,pay_user_name,payee_id,qrorder_deal_status,pre_type
+    remarks,ip,user_agent,browser,device_info,pay_qr_code_id,pay_account,pay_user_name,payee_id,qrorder_deal_status,pre_type,sub_merchant_code
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.DebitNoteExample" resultMap="BaseResultMap">
     select
@@ -236,6 +238,9 @@
       <if test="preType != null">
         pre_type,
       </if>
+      <if test="subMerchantCode != null">
+        sub_merchant_code,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="money != null">
@@ -321,6 +326,9 @@
       </if>
       <if test="preType != null">
         #{preType,jdbcType=VARCHAR},
+      </if>
+      <if test="subMerchantCode != null">
+        #{subMerchantCode,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>
@@ -487,7 +495,8 @@
       update_by = #{updateBy,jdbcType=VARCHAR},
       update_date = #{updateDate,jdbcType=TIMESTAMP},
       remarks = #{remarks,jdbcType=VARCHAR},
-      qrorder_deal_status = #{qrorderDealStatus,jdbcType=VARCHAR}
+      qrorder_deal_status = #{qrorderDealStatus,jdbcType=VARCHAR},
+      sub_merchant_code = #{subMerchantCode,jdbcType=VARCHAR}
     where id = #{id,jdbcType=INTEGER}
   </update>
   

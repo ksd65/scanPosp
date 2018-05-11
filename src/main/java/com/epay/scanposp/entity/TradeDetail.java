@@ -93,6 +93,8 @@ public class TradeDetail {
     private String delFlag;
     
     private String preType;
+    
+    private String subMerchantCode;
 
     public Integer getId() {
         return id;
@@ -455,6 +457,14 @@ public class TradeDetail {
 
 	public void setPreType(String preType) {
 		this.preType = preType;
+	}
+
+	public String getSubMerchantCode() {
+		return subMerchantCode;
+	}
+
+	public void setSubMerchantCode(String subMerchantCode) {
+		this.subMerchantCode = subMerchantCode;
 	}
     
     

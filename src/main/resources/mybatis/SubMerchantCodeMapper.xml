@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.SubMerchantCodeMapper">
+  <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.SubMerchantCode">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="begin_time" jdbcType="VARCHAR" property="beginTime" />
+    <result column="end_time" jdbcType="VARCHAR" property="endTime" />
+    <result column="route_code" jdbcType="VARCHAR" property="routeCode" />
+    <result column="sub_merchant_code" jdbcType="VARCHAR" property="subMerchantCode" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id,route_code,begin_time,end_time, sub_merchant_code,
+    create_by, create_date, update_by, update_date,del_flag
+  </sql>
+  <select id="selectByExample" parameterType="com.epay.scanposp.entity.SubMerchantCodeExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from bu_sub_merchant_code
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limitStart != null and limitStart&gt;=0">
+      limit #{limitStart} , #{limitSize}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from bu_sub_merchant_code
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from bu_sub_merchant_code
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.epay.scanposp.entity.SubMerchantCodeExample">
+    delete from bu_sub_merchant_code
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  
+  
+  <select id="countByExample" parameterType="com.epay.scanposp.entity.SubMerchantCodeExample" resultType="java.lang.Integer">
+    select count(*) from bu_sub_merchant_code
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  
+  
+  <select id="selectByMap"  parameterType="java.util.Map" resultMap="BaseResultMap">
+  	<![CDATA[
+  	SELECT k.id,k.sub_merchant_code FROM(
+		SELECT c.id, c.sub_merchant_code,IFNULL(s.counts,0) counts1 FROM(
+			SELECT m.id, m.sub_merchant_code FROM bu_sub_merchant_code m 
+				where m.del_flag='0' and m.route_code=#{routeCode,jdbcType=VARCHAR} 
+				and m.begin_time<=#{nowTime,jdbcType=VARCHAR} and m.end_time>=#{nowTime,jdbcType=VARCHAR} 
+				and NOT  EXISTS(
+				SELECT 1 FROM bu_debit_note_sub t where t.sub_merchant_code=m.sub_merchant_code and  t.create_date >= DATE_SUB(
+				SYSDATE(),INTERVAL #{seconds,jdbcType=INTEGER}   SECOND
+			)) ) c 
+		LEFT JOIN bu_sub_merchant_counts s ON c.sub_merchant_code=s.sub_merchant_code AND s.trade_date=#{tradeDate,jdbcType=VARCHAR} 
+	)k ORDER BY k.counts1,k.id 
+  	
+  ]]>
+  </select>
+  
+  
+  
+</mapper>
