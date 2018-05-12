@@ -132,6 +132,7 @@ import com.epay.scanposp.entity.Payee;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.SubMerchantCode;
+import com.epay.scanposp.entity.SubMerchantCodeTemp;
 import com.epay.scanposp.entity.SubMerchantTotal;
 import com.epay.scanposp.entity.SubMerchantTotalExample;
 import com.epay.scanposp.entity.SysCommonConfig;
@@ -177,6 +178,7 @@ import com.epay.scanposp.service.PayTypeRuleService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.PayeeService;
 import com.epay.scanposp.service.RoutewayDrawService;
+import com.epay.scanposp.service.SubMerchantCodeTempService;
 import com.epay.scanposp.service.SubMerchantTotalService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeConfigOemService;
@@ -305,6 +307,9 @@ public class DebitNoteController {
 	
 	@Autowired
 	private SubMerchantTotalService subMerchantTotalService;
+	
+	@Autowired
+	private SubMerchantCodeTempService subMerchantCodeTempService;
 	
 	@ResponseBody
 	@RequestMapping("/api/debitNote/pay")
@@ -9328,7 +9333,30 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNoteService.insertSelective(debitNote);
 				return result;
 			}
-			String subMerchantCode = subMerchantCodeList.get(0).getSubMerchantCode();
+			
+			String subMerchantCode = "";
+			for(int i=0;i<subMerchantCodeList.size()&&i<10;i++){
+				SubMerchantCode smCode = subMerchantCodeList.get(i);
+				try{
+					SubMerchantCodeTemp subMerchantCodeTemp = new SubMerchantCodeTemp();
+					subMerchantCodeTemp.setSubMerchantCode(smCode.getSubMerchantCode());
+					subMerchantCodeTemp.setCreateDate(new Date());
+					subMerchantCodeTempService.insertSelective(subMerchantCodeTemp);
+					subMerchantCode = smCode.getSubMerchantCode();
+					break;
+				}catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+			
+			if("".equals(subMerchantCode)){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "交易权限不足");
+				debitNote.setStatus("14");
+				debitNoteService.insertSelective(debitNote);
+				return result;
+			}
+			
 			debitNote.setSubMerchantCode(subMerchantCode);
 			
 			debitNoteService.insertSelective(debitNote);
@@ -9434,6 +9462,10 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				}
 			}
 			try{
+				SubMerchantCodeTemp smTemp = new SubMerchantCodeTemp();
+				smTemp.setSubMerchantCode(subMerchantCode);
+				subMerchantCodeTempService.delete(smTemp);
+				
 				String tradeDate  = new SimpleDateFormat("yyyyMMdd").format(new Date());
 				SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
 				subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(tradeDate).andDelFlagEqualTo("0");

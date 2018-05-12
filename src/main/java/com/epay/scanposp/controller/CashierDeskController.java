@@ -163,6 +163,7 @@ import com.epay.scanposp.entity.StTradeDetail;
 import com.epay.scanposp.entity.StTradeDetailAll;
 import com.epay.scanposp.entity.StTradeDetailExample;
 import com.epay.scanposp.entity.SubMerchantCode;
+import com.epay.scanposp.entity.SubMerchantCodeTemp;
 import com.epay.scanposp.entity.SubMerchantTotal;
 import com.epay.scanposp.entity.SubMerchantTotalExample;
 import com.epay.scanposp.entity.SysCommonConfig;
@@ -209,6 +210,7 @@ import com.epay.scanposp.service.RouteWayService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.StTradeDetailAllService;
 import com.epay.scanposp.service.StTradeDetailService;
+import com.epay.scanposp.service.SubMerchantCodeTempService;
 import com.epay.scanposp.service.SubMerchantTotalService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeExtendService;
@@ -357,6 +359,9 @@ public class CashierDeskController {
 	
 	@Autowired
 	private SubMerchantTotalService subMerchantTotalService;
+	
+	@Autowired
+	private SubMerchantCodeTempService subMerchantCodeTempService;
 	
 	@ResponseBody
 	@RequestMapping("/api/cashierDesk/getQrcodePay")
@@ -7742,9 +7747,30 @@ public class CashierDeskController {
 				debitNoteService.insertSelective(debitNote);
 				return result;
 			}
-			String subMerchantCode = subMerchantCodeList.get(0).getSubMerchantCode();
-			debitNote.setSubMerchantCode(subMerchantCode);
+			String subMerchantCode = "";
+			for(int i=0;i<subMerchantCodeList.size()&&i<10;i++){
+				SubMerchantCode smCode = subMerchantCodeList.get(i);
+				try{
+					SubMerchantCodeTemp subMerchantCodeTemp = new SubMerchantCodeTemp();
+					subMerchantCodeTemp.setSubMerchantCode(smCode.getSubMerchantCode());
+					subMerchantCodeTemp.setCreateDate(new Date());
+					subMerchantCodeTempService.insertSelective(subMerchantCodeTemp);
+					subMerchantCode = smCode.getSubMerchantCode();
+					break;
+				}catch(Exception e){
+					e.printStackTrace();
+				}
+			}
 			
+			if("".equals(subMerchantCode)){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "交易权限不足");
+				debitNote.setStatus("14");
+				debitNoteService.insertSelective(debitNote);
+				return result;
+			}
+			
+			debitNote.setSubMerchantCode(subMerchantCode);
 			debitNoteService.insertSelective(debitNote);
 			
 			DebitNoteSub debitNoteSub = new DebitNoteSub();
@@ -7856,6 +7882,10 @@ public class CashierDeskController {
 				}
 			}
 			try{
+				SubMerchantCodeTemp smTemp = new SubMerchantCodeTemp();
+				smTemp.setSubMerchantCode(subMerchantCode);
+				subMerchantCodeTempService.delete(smTemp);
+				
 		        DebitNoteIp debitNoteIp = new DebitNoteIp();
 		        debitNoteIp.setMemberId(memberInfo.getId());
 		        debitNoteIp.setMerchantCode(merCode);
