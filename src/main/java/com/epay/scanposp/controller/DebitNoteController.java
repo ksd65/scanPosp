@@ -4883,7 +4883,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			}
 		}else if(RouteCodeConstant.WW_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("0");
-			if("1".equals(payType)||"3".equals(payType)){
+			if("1".equals(payType)||"3".equals(payType)||"2".equals(payType)){
 				result = wwH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,payType);
 			}
 		}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
@@ -7890,6 +7890,9 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			}else if("3".equals(payType)){
 				merCode = merchantCode.getQqMerchantCode();
 				payTypeStr = "QQ";
+			}else if("2".equals(payType)){
+				merCode = merchantCode.getZfbMerchantCode();
+				payTypeStr = "ZFB";
 			}
 			String routeCode = RouteCodeConstant.WW_ROUTE_CODE;
 			
@@ -7921,6 +7924,9 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNote.setTradeRate(memberPayType.getT0TradeRate());
 			}else if("3".equals(payType)){
 				debitNote.setMemberCode(memberInfo.getQqMemberCode());
+				debitNote.setTradeRate(memberPayType.getT0TradeRate());
+			}else if("2".equals(payType)){
+				debitNote.setMemberCode(memberInfo.getZfbMemberCode());
 				debitNote.setTradeRate(memberPayType.getT0TradeRate());
 			}
 			debitNote.setMerchantCode(merCode);
