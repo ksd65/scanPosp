@@ -8,6 +8,8 @@ public class DebitNoteIp {
     private Integer memberId;
 
     private String merchantCode;
+    
+    private String subMerchantCode;
 
     private String orderCode;
     
@@ -16,6 +18,8 @@ public class DebitNoteIp {
     private String txnMethod;
 
     private String txnType;
+    
+    private String status;
 
     private String createBy;
 
@@ -121,6 +125,22 @@ public class DebitNoteIp {
 
 	public void setTxnType(String txnType) {
 		this.txnType = txnType;
+	}
+
+	public String getSubMerchantCode() {
+		return subMerchantCode;
+	}
+
+	public void setSubMerchantCode(String subMerchantCode) {
+		this.subMerchantCode = subMerchantCode;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
     
     

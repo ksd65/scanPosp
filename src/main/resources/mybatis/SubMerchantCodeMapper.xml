@@ -7,6 +7,7 @@
     <result column="end_time" jdbcType="VARCHAR" property="endTime" />
     <result column="route_code" jdbcType="VARCHAR" property="routeCode" />
     <result column="sub_merchant_code" jdbcType="VARCHAR" property="subMerchantCode" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
@@ -72,7 +73,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id,route_code,begin_time,end_time, sub_merchant_code,
+    id,route_code,begin_time,end_time, sub_merchant_code,name,
     create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.SubMerchantCodeExample" resultMap="BaseResultMap">
@@ -120,9 +121,9 @@
   
   <select id="selectByMap"  parameterType="java.util.Map" resultMap="BaseResultMap">
   	<![CDATA[
-  	SELECT k.id,k.sub_merchant_code FROM(
-		SELECT c.id, c.sub_merchant_code,IFNULL(s.counts,0) counts1 FROM(
-			SELECT m.id, m.sub_merchant_code FROM bu_sub_merchant_code m 
+  	SELECT k.id,k.sub_merchant_code,k.name FROM(
+		SELECT c.id, c.sub_merchant_code,c.name,IFNULL(s.counts,0) counts1 FROM(
+			SELECT m.id, m.sub_merchant_code,m.name FROM bu_sub_merchant_code m 
 				where m.del_flag='0' and m.route_code=#{routeCode,jdbcType=VARCHAR} 
 				and m.begin_time<=#{nowTime,jdbcType=VARCHAR} and m.end_time>=#{nowTime,jdbcType=VARCHAR} 
 				and NOT  EXISTS(
@@ -130,7 +131,7 @@
 				SYSDATE(),INTERVAL #{seconds,jdbcType=INTEGER}   SECOND
 			)) ) c 
 		LEFT JOIN bu_sub_merchant_counts s ON c.sub_merchant_code=s.sub_merchant_code AND s.trade_date=#{tradeDate,jdbcType=VARCHAR} 
-	)k ORDER BY k.counts1,k.id 
+	)k ORDER BY k.counts1
   	
   ]]>
   </select>

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.utils.DateUtil;
+import com.epay.scanposp.entity.DebitNoteIp;
 import com.epay.scanposp.entity.IpBlackList;
 import com.epay.scanposp.entity.IpBlackListExample;
 import com.epay.scanposp.entity.MemberIpRule;
@@ -32,6 +33,7 @@ import com.epay.scanposp.entity.PrePayMemberExample;
 import com.epay.scanposp.entity.PrePayStatistics;
 import com.epay.scanposp.entity.PrePayStatisticsExample;
 import com.epay.scanposp.entity.SubMerchantCode;
+import com.epay.scanposp.entity.SubMerchantCodeExample;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 
@@ -556,6 +558,79 @@ public class CommonUtilService {
 			param.put("seconds", value);
 			List<SubMerchantCode> list = subMerchantCodeService.selectByMap(param);
 			return list;
+		}
+		return null;
+	}
+	
+	public JSONObject getIpSubMerchant(String payMethod, String payType, Integer memberId ,String routeCode, String ip){
+		JSONObject result = new JSONObject();
+		String txnType = transPayType(payType);
+		IpBlackListExample ipBlackListExample = new IpBlackListExample();
+		ipBlackListExample.createCriteria().andIpEqualTo(ip).andDelFlagEqualTo("0");
+		List<IpBlackList> ipList = ipBlackListService.selectByExample(ipBlackListExample);
+		if(ipList!=null && ipList.size()>0){
+			result.put("returnCode", "4004");
+			result.put("returnMsg", "IP"+ip+"无支付权限");
+			return result;
+		}
+		String configName = "LIMIT_CONTINUE_FAIL_COUNTS_"+routeCode;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			String subMerchantCode = "";
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("ip", ip);
+			param.put("routeId", routeCode);
+			param.put("createDate", DateUtil.getDateFormat(new Date(), "yyyy-MM-dd")+" 00:00:00");
+			List<DebitNoteIp> debitNoteIpList = debitNoteIpService.selectByIp(param);
+			int count = 0;
+			if(debitNoteIpList!=null&&debitNoteIpList.size()>0){
+				DebitNoteIp debitNoteIp = debitNoteIpList.get(0);
+				if("1".equals(debitNoteIp.getStatus())){//成功
+					return null;
+				}
+				for(int i=0;i<debitNoteIpList.size();i++){
+					debitNoteIp = debitNoteIpList.get(i);
+					if("1".equals(debitNoteIp.getStatus())){//成功
+						break;
+					}
+					if("0".equals(debitNoteIp.getStatus())||"2".equals(debitNoteIp.getStatus())){
+						subMerchantCode = debitNoteIp.getSubMerchantCode();
+						count++;
+					}
+					
+				}
+			}else{
+				return null;
+			}
+			if(count>=Integer.parseInt(value)){
+				IpBlackList ipBlackList = new IpBlackList();
+				ipBlackList.setTxnType(txnType);
+				ipBlackList.setTxnMethod(payMethod);
+				ipBlackList.setIp(ip);
+				ipBlackList.setMemberId(memberId);
+				ipBlackList.setCreateDate(new Date());
+				ipBlackList.setDelFlag("0");
+				ipBlackListService.insertSelective(ipBlackList);
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "IP"+ip+"无支付权限");
+				return result;
+			}else if(!"".equals(subMerchantCode)){
+				SubMerchantCodeExample subMerchantCodeExample = new SubMerchantCodeExample();
+				subMerchantCodeExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andDelFlagEqualTo("0");
+				List<SubMerchantCode> subList = subMerchantCodeService.selectByExample(subMerchantCodeExample);
+				if(subList!=null && subList.size()>0){
+					result.put("returnCode", "0000");
+					result.put("subMerchantCode", subMerchantCode);
+					result.put("name", subList.get(0).getName());
+					return result;
+				}
+			}
 		}
 		return null;
 	}

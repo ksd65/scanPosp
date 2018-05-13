@@ -115,6 +115,7 @@ import com.epay.scanposp.entity.BusinessCategoryExample;
 import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 import com.epay.scanposp.entity.DebitNoteIp;
+import com.epay.scanposp.entity.DebitNoteIpExample;
 import com.epay.scanposp.entity.DebitNoteSub;
 import com.epay.scanposp.entity.DrawResultNotice;
 import com.epay.scanposp.entity.DrawResultNoticeExample;
@@ -7736,32 +7737,45 @@ public class CashierDeskController {
 				debitNoteService.insertSelective(debitNote);
 				return mResult1;
 			}
+			String subMerchantCode = "",subMerchantName = "";
 			
-			
-			
-			List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode);
-			if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
-				result.put("returnCode", "4004");
-				result.put("returnMsg", "交易权限不足");
-				debitNote.setStatus("13");
-				debitNoteService.insertSelective(debitNote);
-				return result;
+			JSONObject subResult = commonUtilService.getIpSubMerchant(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, ip);
+			if(null != subResult){
+				if("4004".equals(subResult.getString("returnCode"))){
+					debitNote.setStatus("12");
+					debitNote.setRespMsg(subResult.getString("returnMsg"));
+					debitNoteService.insertSelective(debitNote);
+					return subResult;
+				}
+				subMerchantCode = subResult.getString("subMerchantCode");
+				subMerchantName = subResult.getString("name");
 			}
-			String subMerchantCode = "";
-			for(int i=0;i<subMerchantCodeList.size()&&i<10;i++){
-				SubMerchantCode smCode = subMerchantCodeList.get(i);
-				try{
-					SubMerchantCodeTemp subMerchantCodeTemp = new SubMerchantCodeTemp();
-					subMerchantCodeTemp.setSubMerchantCode(smCode.getSubMerchantCode());
-					subMerchantCodeTemp.setCreateDate(new Date());
-					subMerchantCodeTempService.insertSelective(subMerchantCodeTemp);
-					subMerchantCode = smCode.getSubMerchantCode();
-					break;
-				}catch(Exception e){
-					e.printStackTrace();
+			
+			if("".equals(subMerchantCode)){
+				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode);
+				if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "交易权限不足");
+					debitNote.setStatus("13");
+					debitNoteService.insertSelective(debitNote);
+					return result;
+				}
+				
+				for(int i=0;i<subMerchantCodeList.size()&&i<10;i++){
+					SubMerchantCode smCode = subMerchantCodeList.get(i);
+					try{
+						SubMerchantCodeTemp subMerchantCodeTemp = new SubMerchantCodeTemp();
+						subMerchantCodeTemp.setSubMerchantCode(smCode.getSubMerchantCode());
+						subMerchantCodeTemp.setCreateDate(new Date());
+						subMerchantCodeTempService.insertSelective(subMerchantCodeTemp);
+						subMerchantCode = smCode.getSubMerchantCode();
+						subMerchantName = smCode.getName();
+						break;
+					}catch(Exception e){
+						e.printStackTrace();
+					}
 				}
 			}
-			
 			if("".equals(subMerchantCode)){
 				result.put("returnCode", "4004");
 				result.put("returnMsg", "交易权限不足");
@@ -7808,7 +7822,7 @@ public class CashierDeskController {
 			}else if("3".equals(payType)){
 				eskPayType="0001";
 			}
-			String orderDesc = memberInfo.getName() + "收款";
+			String orderDesc = subMerchantName + "收款";
 			String serverUrl = TLConfig.msServerUrlNew;
 			
 			JSONObject reqData = new JSONObject();
@@ -7895,6 +7909,12 @@ public class CashierDeskController {
 		        debitNoteIp.setTxnType(payType);
 		        debitNoteIp.setIp(ip);
 		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
+		        debitNoteIp.setSubMerchantCode(subMerchantCode);
+		        if(!flag){
+		        	debitNoteIp.setStatus("2");
+		        }else{
+		        	debitNoteIp.setStatus("0");
+		        }
 				debitNoteIpService.insertSelective(debitNoteIp);
 				
 				
@@ -8036,6 +8056,16 @@ public class CashierDeskController {
 					}
 					debitNote.setUpdateDate(new Date());
 					debitNoteService.updateByPrimaryKey(debitNote);
+					
+					DebitNoteIpExample debitNoteIpExample = new DebitNoteIpExample();
+					debitNoteIpExample.createCriteria().andOrderCodeEqualTo(reqMsgId);
+					List<DebitNoteIp> noteIpList =  debitNoteIpService.selectByExample(debitNoteIpExample);
+					if(noteIpList!=null&&noteIpList.size()>0){
+						DebitNoteIp debitNoteIp = noteIpList.get(0);
+						debitNoteIp.setStatus("1");
+						debitNoteIp.setUpdateDate(new Date());
+						debitNoteIpService.updateByPrimaryKey(debitNoteIp);
+					}
 					
 					MsResultNotice msResultNotice = new MsResultNotice();
 					msResultNotice.setMoney(new BigDecimal(respObj.get("transAmount")));

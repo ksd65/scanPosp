@@ -10,6 +10,8 @@ public class SubMerchantCode {
 	
 	private String subMerchantCode;
 	
+	private String name;
+	
 	private String delFlag;
 	
 	private String createBy;
@@ -105,6 +107,14 @@ public class SubMerchantCode {
 
 	public void setSubMerchantCode(String subMerchantCode) {
 		this.subMerchantCode = subMerchantCode;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
     
 	

@@ -9331,29 +9331,45 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return tResult;
 			}
 			
-			List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode);
-			if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
-				result.put("returnCode", "4004");
-				result.put("returnMsg", "交易权限不足");
-				debitNote.setStatus("13");
-				debitNoteService.insertSelective(debitNote);
-				return result;
+			String subMerchantCode = "",subMerchantName = "";
+			
+			JSONObject subResult = commonUtilService.getIpSubMerchant(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), routeCode, ip);
+			if(null != subResult){
+				if("4004".equals(subResult.getString("returnCode"))){
+					debitNote.setStatus("12");
+					debitNote.setRespMsg(subResult.getString("returnMsg"));
+					debitNoteService.insertSelective(debitNote);
+					return subResult;
+				}
+				subMerchantCode = subResult.getString("subMerchantCode");
+				subMerchantName = subResult.getString("name");
 			}
 			
-			String subMerchantCode = "";
-			for(int i=0;i<subMerchantCodeList.size()&&i<10;i++){
-				SubMerchantCode smCode = subMerchantCodeList.get(i);
-				try{
-					SubMerchantCodeTemp subMerchantCodeTemp = new SubMerchantCodeTemp();
-					subMerchantCodeTemp.setSubMerchantCode(smCode.getSubMerchantCode());
-					subMerchantCodeTemp.setCreateDate(new Date());
-					subMerchantCodeTempService.insertSelective(subMerchantCodeTemp);
-					subMerchantCode = smCode.getSubMerchantCode();
-					break;
-				}catch(Exception e){
-					e.printStackTrace();
+			if("".equals(subMerchantCode)){
+				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode);
+				if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "交易权限不足");
+					debitNote.setStatus("13");
+					debitNoteService.insertSelective(debitNote);
+					return result;
+				}
+				for(int i=0;i<subMerchantCodeList.size()&&i<10;i++){
+					SubMerchantCode smCode = subMerchantCodeList.get(i);
+					try{
+						SubMerchantCodeTemp subMerchantCodeTemp = new SubMerchantCodeTemp();
+						subMerchantCodeTemp.setSubMerchantCode(smCode.getSubMerchantCode());
+						subMerchantCodeTemp.setCreateDate(new Date());
+						subMerchantCodeTempService.insertSelective(subMerchantCodeTemp);
+						subMerchantCode = smCode.getSubMerchantCode();
+						subMerchantName = smCode.getName();
+						break;
+					}catch(Exception e){
+						e.printStackTrace();
+					}
 				}
 			}
+			
 			
 			if("".equals(subMerchantCode)){
 				result.put("returnCode", "4004");
@@ -9397,7 +9413,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			String callBack = SysConfig.serverUrl + "/cashierDesk/tlWdPayNotify";
 			// 调用支付通道
-			String orderDesc = memberInfo.getName() + "收款";
+			String orderDesc = subMerchantName + "收款";
 			String serverUrl = TLConfig.msServerUrlNew;
 			
 			JSONObject reqData = new JSONObject();
@@ -9501,6 +9517,12 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		        debitNoteIp.setTxnType(payType);
 		        debitNoteIp.setIp(ip);
 		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
+		        debitNoteIp.setSubMerchantCode(subMerchantCode);
+		        if(!flag){
+		        	debitNoteIp.setStatus("2");
+		        }else{
+		        	debitNoteIp.setStatus("0");
+		        }
 				debitNoteIpService.insertSelective(debitNoteIp);
 	        }catch(Exception ex){
 	        	logger.error(ex.getMessage());

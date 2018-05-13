@@ -1,5 +1,6 @@
 package com.epay.scanposp.service;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,5 +26,9 @@ public class DebitNoteIpService extends BaseService<DebitNoteIp,DebitNoteIpExamp
 	
 	public Integer countDebitNoteIpByCondition(Map<String,Object> paramMap) {
 		return debitNoteIpMapper.countDebitNoteIpByCondition(paramMap);
+	}
+	
+	public List<DebitNoteIp> selectByIp(Map<String,Object> paramMap) {
+		return debitNoteIpMapper.selectByIp(paramMap);
 	}
 }

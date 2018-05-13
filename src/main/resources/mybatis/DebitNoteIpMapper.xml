@@ -14,6 +14,9 @@
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
     <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
     <result column="ip" jdbcType="VARCHAR" property="ip" />
+    <result column="sub_merchant_code" jdbcType="VARCHAR" property="subMerchantCode" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -75,7 +78,7 @@
   </sql>
   <sql id="Base_Column_List">
     id, member_id, merchant_code, order_code, 
-    route_id,txn_method, txn_type,create_by, create_date, update_by, update_date, ip
+    route_id,txn_method, txn_type,create_by, create_date, update_by, update_date, ip,sub_merchant_code,status
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.DebitNoteIpExample" resultMap="BaseResultMap">
     select
@@ -150,6 +153,12 @@
       <if test="ip != null">
         ip,
       </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="subMerchantCode != null">
+        sub_merchant_code,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="memberId != null">
@@ -184,6 +193,12 @@
       </if>
       <if test="ip != null">
         #{ip,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="subMerchantCode != null">
+        #{subMerchantCode,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>
@@ -224,6 +239,21 @@
 			INTERVAL #{seconds,jdbcType=INTEGER}  SECOND
 		)
   		]]>
+  </select>
+  
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.DebitNoteIp">
+    update bu_debit_note_ip
+    set status = #{status,jdbcType=CHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+  <select id="selectByIp" parameterType="java.util.Map" resultMap="BaseResultMap">
+  	 select
+    	<include refid="Base_Column_List" />
+    FROM bu_debit_note_ip t where t.ip=#{ip,jdbcType=VARCHAR} 
+     and t.route_id=#{routeId,jdbcType=VARCHAR} 
+     and t.create_date>=#{createDate,jdbcType=VARCHAR} ORDER BY t.create_date DESC
   </select>
   
 </mapper>

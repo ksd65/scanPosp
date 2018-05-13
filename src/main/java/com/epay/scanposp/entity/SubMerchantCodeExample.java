@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import com.epay.scanposp.entity.SubMerchantTotalExample.Criteria;
+
 public class SubMerchantCodeExample {
     protected String orderByClause;
 
@@ -284,6 +286,76 @@ public class SubMerchantCodeExample {
 
         public Criteria andRouteCodeNotBetween(String value1, String value2) {
             addCriterion("route_code not between", value1, value2, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeIsNull() {
+            addCriterion("sub_merchant_code is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeIsNotNull() {
+            addCriterion("sub_merchant_code is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeEqualTo(String value) {
+            addCriterion("sub_merchant_code =", value, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeNotEqualTo(String value) {
+            addCriterion("sub_merchant_code <>", value, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeGreaterThan(String value) {
+            addCriterion("sub_merchant_code >", value, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeGreaterThanOrEqualTo(String value) {
+            addCriterion("sub_merchant_code >=", value, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeLessThan(String value) {
+            addCriterion("sub_merchant_code <", value, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeLessThanOrEqualTo(String value) {
+            addCriterion("sub_merchant_code <=", value, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeLike(String value) {
+            addCriterion("sub_merchant_code like", value, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeNotLike(String value) {
+            addCriterion("sub_merchant_code not like", value, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeIn(List<String> values) {
+            addCriterion("sub_merchant_code in", values, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeNotIn(List<String> values) {
+            addCriterion("sub_merchant_code not in", values, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeBetween(String value1, String value2) {
+            addCriterion("sub_merchant_code between", value1, value2, "subMerchantCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andSubMerchantCodeNotBetween(String value1, String value2) {
+            addCriterion("sub_merchant_code not between", value1, value2, "subMerchantCode");
             return (Criteria) this;
         }
 

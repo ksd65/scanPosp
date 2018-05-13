@@ -20,4 +20,6 @@ public interface DebitNoteIpMapper extends BaseDao<DebitNoteIp, DebitNoteIpExamp
     DebitNoteIp selectByPrimaryKey(Integer id);
 
     public Integer countDebitNoteIpByCondition(Map<String, Object> paramMap);
+    
+    List<DebitNoteIp> selectByIp(Map<String, Object> paramMap);
 }
