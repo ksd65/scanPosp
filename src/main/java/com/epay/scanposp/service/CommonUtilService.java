@@ -1,6 +1,7 @@
 package com.epay.scanposp.service;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +33,12 @@ import com.epay.scanposp.entity.PrePayMember;
 import com.epay.scanposp.entity.PrePayMemberExample;
 import com.epay.scanposp.entity.PrePayStatistics;
 import com.epay.scanposp.entity.PrePayStatisticsExample;
+import com.epay.scanposp.entity.SubMerchantBlackList;
+import com.epay.scanposp.entity.SubMerchantBlackListExample;
 import com.epay.scanposp.entity.SubMerchantCode;
 import com.epay.scanposp.entity.SubMerchantCodeExample;
+import com.epay.scanposp.entity.SubMerchantTotal;
+import com.epay.scanposp.entity.SubMerchantTotalExample;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 
@@ -80,6 +85,12 @@ public class CommonUtilService {
 	
 	@Resource
 	private IpBlackListService ipBlackListService;
+	
+	@Resource
+	private SubMerchantBlackListService subMerchantBlackListService;
+	
+	@Resource
+	private SubMerchantTotalService subMerchantTotalService;
 	
 	public JSONObject checkLimitMoney(String configName, BigDecimal tradeMoney){
 		
@@ -571,7 +582,7 @@ public class CommonUtilService {
 		}
 		return null;
 	}
-	
+	//IP取子商户
 	public JSONObject getIpSubMerchant(String payMethod, String payType, Integer memberId ,String routeCode, String ip){
 		JSONObject result = new JSONObject();
 		String txnType = transPayType(payType);
@@ -638,6 +649,55 @@ public class CommonUtilService {
 					result.put("returnCode", "0000");
 					result.put("subMerchantCode", subMerchantCode);
 					result.put("name", subList.get(0).getName());
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	//判断子商户黑名单
+	public JSONObject checkSubMerchantBlackList(String subMerchantCode){
+		JSONObject result = new JSONObject();
+		
+		SubMerchantBlackListExample subMerchantBlackListExample = new SubMerchantBlackListExample();
+		subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("2").andSubMerchantCodeEqualTo(subMerchantCode).andDelFlagEqualTo("0");
+		List<SubMerchantBlackList> bllist = subMerchantBlackListService.selectByExample(subMerchantBlackListExample);
+		if(bllist !=null && bllist.size()>0){//商户永久黑名单
+			result.put("returnCode", "4001");
+			result.put("returnMsg", "交易权限不足");
+			return result;
+		}
+		
+		subMerchantBlackListExample = new SubMerchantBlackListExample();
+		subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("1").andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(new SimpleDateFormat("yyyyMMdd").format(new Date())).andDelFlagEqualTo("0");
+		bllist = subMerchantBlackListService.selectByExample(subMerchantBlackListExample);
+		if(bllist !=null && bllist.size()>0){//商户临时黑名单
+			result.put("returnCode", "4002");
+			result.put("returnMsg", "交易权限不足");
+			return result;
+		}
+		return null;
+	}
+	//判断子商户限额
+	public JSONObject checkSubMerchantLimitMoney(String subMerchantCode ,String tradeMoney , String routeCode){
+		JSONObject result = new JSONObject();
+		
+		String limitMoney = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo("LIMIT_SUB_MERCHANT_MONEY_"+routeCode).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			limitMoney = sysCommonConfig.get(0).getValue();
+		}
+		
+		if(!"".equals(limitMoney)){
+			SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
+			subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(new SimpleDateFormat("yyyyMMdd").format(new Date())).andDelFlagEqualTo("0");
+			List<SubMerchantTotal> totalList = subMerchantTotalService.selectByExample(subMerchantTotalExample);
+			if(totalList!=null&&totalList.size()>0){
+				if(totalList.get(0).getTotalMoney().add(new BigDecimal(tradeMoney)).compareTo(new BigDecimal(limitMoney))>0){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "交易权限不足");
 					return result;
 				}
 			}

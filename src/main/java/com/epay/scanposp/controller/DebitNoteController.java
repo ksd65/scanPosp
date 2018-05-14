@@ -9368,6 +9368,25 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 						e.printStackTrace();
 					}
 				}
+			}else{
+				JSONObject smlResult = commonUtilService.checkSubMerchantLimitMoney(subMerchantCode, payMoney, routeCode);
+				if(null != smlResult){
+					debitNote.setStatus("17");//超过子商户限额
+					debitNoteService.insertSelective(debitNote);
+					return smlResult;
+				}
+				
+				JSONObject mbResult = commonUtilService.checkSubMerchantBlackList(subMerchantCode);
+				if(null != mbResult){
+					if("4001".equals(mbResult.getString("returnCode"))){
+						debitNote.setStatus("15");//子商户永久黑名单
+					}else{
+						debitNote.setStatus("16");//子商户临时黑名单
+					}
+					debitNoteService.insertSelective(debitNote);
+					mbResult.put("returnCode", "4004");
+					return mbResult;
+				}
 			}
 			
 			

@@ -7758,7 +7758,7 @@ public class CashierDeskController {
 				if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
 					result.put("returnCode", "4004");
 					result.put("returnMsg", "交易权限不足");
-					debitNote.setStatus("13");
+					debitNote.setStatus("13");//没有可用子商户
 					debitNoteService.insertSelective(debitNote);
 					return result;
 				}
@@ -7777,11 +7777,30 @@ public class CashierDeskController {
 						e.printStackTrace();
 					}
 				}
+			}else{
+				JSONObject smlResult = commonUtilService.checkSubMerchantLimitMoney(subMerchantCode, payMoney, routeCode);
+				if(null != smlResult){
+					debitNote.setStatus("17");//超过子商户限额
+					debitNoteService.insertSelective(debitNote);
+					return smlResult;
+				}
+				
+				JSONObject mbResult = commonUtilService.checkSubMerchantBlackList(subMerchantCode);
+				if(null != mbResult){
+					if("4001".equals(mbResult.getString("returnCode"))){
+						debitNote.setStatus("15");//子商户永久黑名单
+					}else{
+						debitNote.setStatus("16");//子商户临时黑名单
+					}
+					debitNoteService.insertSelective(debitNote);
+					mbResult.put("returnCode", "4004");
+					return mbResult;
+				}
 			}
 			if("".equals(subMerchantCode)){
 				result.put("returnCode", "4004");
 				result.put("returnMsg", "交易权限不足");
-				debitNote.setStatus("14");
+				debitNote.setStatus("14");//并发没有轮询到子商户
 				debitNoteService.insertSelective(debitNote);
 				return result;
 			}

@@ -133,7 +133,9 @@
 			and NOT  EXISTS(
 				SELECT 1 FROM bu_debit_note_sub t where t.sub_merchant_code=mp.sub_merchant_code and  t.create_date >= DATE_SUB(
 				SYSDATE(),INTERVAL #{seconds,jdbcType=INTEGER}   SECOND
-			)) 
+			)) AND NOT EXISTS(
+				SELECT  1 FROM bu_sub_merchant_black_list sb where sb.sub_merchant_code=mp.sub_merchant_code AND ((sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.black_type='1') OR sb.black_type='2') AND sb.del_flag='0'
+			)
 			
 		) c 
 		LEFT JOIN bu_sub_merchant_counts s ON c.sub_merchant_code=s.sub_merchant_code AND s.trade_date=#{tradeDate,jdbcType=VARCHAR} 
