@@ -9346,7 +9346,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			}
 			
 			if("".equals(subMerchantCode)){
-				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode);
+				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode,new BigDecimal(payMoney));
 				if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
 					result.put("returnCode", "4004");
 					result.put("returnMsg", "交易权限不足");

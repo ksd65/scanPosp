@@ -539,7 +539,7 @@ public class CommonUtilService {
 	}
 	
 	
-	public List<SubMerchantCode> getSubMerchantCodeList( String routeCode){
+	public List<SubMerchantCode> getSubMerchantCodeList( String routeCode,BigDecimal tradeMoney){
 		
 		String value = "60";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
@@ -548,7 +548,16 @@ public class CommonUtilService {
 		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
 			value = sysCommonConfig.get(0).getValue();
 		}
-		if(!"".equals(value) && !"0".equals(value)){
+		
+		String limitMoney = "";
+		sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo("LIMIT_SUB_MERCHANT_MONEY_"+routeCode).andDelFlagEqualTo("0");
+		sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			limitMoney = sysCommonConfig.get(0).getValue();
+		}
+		
+		if(!"".equals(value) && !"0".equals(value)&&!"".equals(limitMoney)){
 			String tradeDate = DateUtil.getDateFormat(new Date(), "yyyyMMdd");
 			String nowTime = DateUtil.getDateFormat(new Date(), "HHmmss");
 			Map<String,Object> param = new HashMap<String, Object>();
@@ -556,6 +565,7 @@ public class CommonUtilService {
 			param.put("nowTime", nowTime);
 			param.put("tradeDate", tradeDate);
 			param.put("seconds", value);
+			param.put("totalMoney", new BigDecimal(limitMoney).subtract(tradeMoney));
 			List<SubMerchantCode> list = subMerchantCodeService.selectByMap(param);
 			return list;
 		}

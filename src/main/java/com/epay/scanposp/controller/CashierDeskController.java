@@ -164,6 +164,7 @@ import com.epay.scanposp.entity.StTradeDetail;
 import com.epay.scanposp.entity.StTradeDetailAll;
 import com.epay.scanposp.entity.StTradeDetailExample;
 import com.epay.scanposp.entity.SubMerchantCode;
+import com.epay.scanposp.entity.SubMerchantCodeExample;
 import com.epay.scanposp.entity.SubMerchantCodeTemp;
 import com.epay.scanposp.entity.SubMerchantTotal;
 import com.epay.scanposp.entity.SubMerchantTotalExample;
@@ -7713,6 +7714,7 @@ public class CashierDeskController {
 			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip);
 			if(null != timeResult){
 				debitNote.setStatus("12");
+				debitNote.setRespMsg(timeResult.getString("returnMsg"));
 				debitNoteService.insertSelective(debitNote);
 				return timeResult;
 			}
@@ -7752,7 +7754,7 @@ public class CashierDeskController {
 			}
 			
 			if("".equals(subMerchantCode)){
-				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode);
+				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode,new BigDecimal(payMoney));
 				if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
 					result.put("returnCode", "4004");
 					result.put("returnMsg", "交易权限不足");
@@ -8066,6 +8068,17 @@ public class CashierDeskController {
 						debitNoteIp.setUpdateDate(new Date());
 						debitNoteIpService.updateByPrimaryKey(debitNoteIp);
 					}
+					
+					SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
+					subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(debitNote.getSubMerchantCode()).andTradeDateEqualTo(tradeDetail.getTxnDate()).andDelFlagEqualTo("0");
+					List<SubMerchantTotal> stList = subMerchantTotalService.selectByExample(subMerchantTotalExample);
+					if(stList!=null&&stList.size()>0){
+						SubMerchantTotal subMerchantTotal = stList.get(0);
+						subMerchantTotal.setTotalMoney(subMerchantTotal.getTotalMoney().add(tradeDetail.getMoney()));
+						subMerchantTotal.setUpdateDate(new Date());
+						subMerchantTotalService.updateByPrimaryKey(subMerchantTotal);
+					}
+					
 					
 					MsResultNotice msResultNotice = new MsResultNotice();
 					msResultNotice.setMoney(new BigDecimal(respObj.get("transAmount")));
