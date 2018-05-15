@@ -62,7 +62,7 @@ public class SubMerchantBlackListTigger {
 					for(Map<String,Object> map:list){
 						String subMerchantCode = (String)map.get("sub_merchant_code");
 						Long count = (Long)map.get("counts");
-						System.out.println(subMerchantCode+"    "+count);
+					//	System.out.println(subMerchantCode+"    "+count);
 						if(count>=Integer.parseInt(value)){//超过IP数
 							SubMerchantBlackListExample subMerchantBlackListExample = new SubMerchantBlackListExample();
 							subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("1").andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(DateUtil.getDateFormat(time, "yyyyMMdd")).andDelFlagEqualTo("0");
@@ -95,13 +95,13 @@ public class SubMerchantBlackListTigger {
 				List<SubMerchantBlackList> bllist = subMerchantBlackListService.getSubMerchantBlackToday(paramMap);
 				if(bllist!=null&&bllist.size()>0){
 					for(SubMerchantBlackList black:bllist){
-						System.out.println(black.getSubMerchantCode());
+					//	System.out.println(black.getSubMerchantCode());
 						boolean flag = true;
 						for(int i=1;i<Integer.parseInt(continueCount);i++){
 							SubMerchantBlackListExample subMerchantBlackListExample = new SubMerchantBlackListExample();
 							subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("1").andSubMerchantCodeEqualTo(black.getSubMerchantCode()).andTradeDateEqualTo(DateUtil.getBeforeDate(i, "yyyyMMdd")).andDelFlagEqualTo("0");
 							List<SubMerchantBlackList> list_1 = subMerchantBlackListService.selectByExample(subMerchantBlackListExample);
-							System.out.println(list_1.size());
+						//	System.out.println(list_1.size());
 							if(list_1==null||list_1.size()==0){
 								flag = false;
 								break;

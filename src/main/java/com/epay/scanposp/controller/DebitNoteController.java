@@ -2917,6 +2917,9 @@ public class DebitNoteController {
 				JSONObject reqData = new JSONObject();
 				reqData.put("oriOrderNumber", orderCode);
 				reqData.put("tranCode", tranCode);
+				if(RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+					reqData.put("aisleType", "2");
+				}
 				
 				System.out.println("待加密数据: "+reqData);
 				
@@ -3190,6 +3193,24 @@ public class DebitNoteController {
 				//		result.put("returnMsg", "出参验签失败");
 				//	}
 				}
+		    }else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.GRSM_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+
+		    	TradeDetailExample tradeDetailExample = new TradeDetailExample();
+				tradeDetailExample.createCriteria().andOrderCodeEqualTo(debitNote.getOrderCode());
+				List<TradeDetail> list = tradeDetailService.selectByExample(tradeDetailExample);
+				JSONObject resEntity = new JSONObject();
+				if(list!=null && list.size()>0){
+					TradeDetail detail = list.get(0);
+					resEntity.put("oriRespType", "S");
+					resEntity.put("oriRespCode", "000000");
+					resEntity.put("oriRespMsg", "支付成功");
+					resEntity.put("totalAmount", String.valueOf(detail.getMoney()));
+				}else{
+					resEntity.put("oriRespType", "E");
+					resEntity.put("oriRespCode", "000002");
+					resEntity.put("oriRespMsg", "支付失败");
+				}
+				result.put("resData", resEntity);
 		    }else{
 
 				String serverUrl = MSConfig.msServerUrl;

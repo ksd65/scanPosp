@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.sf.json.JSONObject;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.epay.scanposp.common.constant.CJConfig;
+import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.HXConfig;
 import com.epay.scanposp.common.constant.MLConfig;
 import com.epay.scanposp.common.constant.SysConfig;
@@ -59,6 +61,8 @@ import com.epay.scanposp.common.utils.cj.util.SignatureUtil;
 import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
+import com.epay.scanposp.common.utils.esk.Key;
+import com.epay.scanposp.common.utils.ms.CryptoUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
 import com.epay.scanposp.common.utils.ys.HttpUtils;
@@ -1158,6 +1162,7 @@ public class QuickPayController {
 		String orderNum = request.getParameter("orderNum");
 		String payMoney = request.getParameter("payMoney");
 		String tel = request.getParameter("tel");
+		String ip = request.getParameter("ip");
 		
 		String signStr = request.getParameter("signStr");
 		
@@ -1249,13 +1254,13 @@ public class QuickPayController {
 			result.put("returnMsg", "缺少签名信息");
 			return CommonUtil.signReturn(result);
 		}
-		result = validMemberInfoForQuickPay(memberCode, orderNum, payMoney, accountType,accountName,bankAccount,bankCvv,bankYxq, certNo,tel,goodsName,callbackUrl,  srcStr.toString(), signStr);
+		result = validMemberInfoForQuickPay(memberCode, orderNum, payMoney, accountType,accountName,bankAccount,bankCvv,bankYxq, certNo,tel,goodsName,callbackUrl,  srcStr.toString(), signStr,ip);
 		
 		return CommonUtil.signReturn(result);
 	}
 	
 	
-	public JSONObject validMemberInfoForQuickPay(String memberCode,String orderNum,String payMoney,String accountType,String accountName,String bankAccount,String bankCvv,String bankYxq,String certNo ,String tel,String goodsName,String callbackUrl,String signOrginalStr,String signedStr){
+	public JSONObject validMemberInfoForQuickPay(String memberCode,String orderNum,String payMoney,String accountType,String accountName,String bankAccount,String bankCvv,String bankYxq,String certNo ,String tel,String goodsName,String callbackUrl,String signOrginalStr,String signedStr,String ip){
 		JSONObject result = new JSONObject();
 		try{
 			MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -1365,6 +1370,10 @@ public class QuickPayController {
 			}else if(RouteCodeConstant.ML_ROUTE_CODE.equals(routeCode)){
 				memberInfo.setSettleType("1");
 				result = mlQuickPay("3",memberInfo,merchantCode,memberPayType,payMoney,orderNum,accountType,accountName,bankAccount,bankCvv,bankYxq,certNo,tel,callbackUrl,goodsName,routeCode,aisleType);
+				result.put("routeCode", routeCode);
+			}else if(RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)){
+				memberInfo.setSettleType("1");
+				result = eskQuickPay("3",memberInfo,merchantCode,memberPayType,payMoney,orderNum,accountType,accountName,bankAccount,bankCvv,bankYxq,certNo,tel,callbackUrl,goodsName,routeCode,aisleType,ip);
 				result.put("routeCode", routeCode);
 			}
 			
@@ -2869,6 +2878,11 @@ public class QuickPayController {
 			tel = reqDataJson.getString("tel");
 		}
 		
+		String ip = "";
+		if(reqDataJson.containsKey("ip")){
+			ip = reqDataJson.getString("ip");
+		}
+		
 		StringBuilder srcStr = new StringBuilder();
 		JSONObject result = new JSONObject();
 		if(null == payMoney || !ValidateUtil.isDoubleT(payMoney) || Double.parseDouble(payMoney)<=0){
@@ -2934,7 +2948,7 @@ public class QuickPayController {
 			return result;
 		}
 		
-		result = validMemberInfoForQuickPay(memberCode, orderNum, payMoney, "",accountName, bankAccount, "", "", certNo, tel, goodsName, callbackUrl, srcStr.toString(), signStr);
+		result = validMemberInfoForQuickPay(memberCode, orderNum, payMoney, "",accountName, bankAccount, "", "", certNo, tel, goodsName, callbackUrl, srcStr.toString(), signStr,ip);
 		return result;
 	}
 	
@@ -3359,5 +3373,181 @@ public class QuickPayController {
 			logger.error(e.getMessage());
 		}
 
+	}
+	
+	
+	public JSONObject eskQuickPay(String platformType,MemberInfo memberInfo,MemberMerchantCode merchantCode,MemberPayType memberPayType,String payMoney,String orderNumOuter,String accountType,String accountName,String bankAccount,String bankCvv,String bankYxq,String certNo,String tel,String callbackUrl,String goodsName,String routeCode,String aisleType,String ip) {
+		JSONObject result = new JSONObject();
+		try {
+			String payType = "9";
+			String payTypeStr = PayTypeConstant.PAY_TYPE_KJ;
+			String payMethod = PayTypeConstant.PAY_METHOD_YL;
+			String merCode = merchantCode.getKjMerchantCode();
+			
+			// 插入一条收款记录
+			String orderCode = CommonUtil.getOrderCode();
+			
+			DebitNote debitNote = new DebitNote();
+			debitNote.setCreateDate(new Date());
+			debitNote.setMemberId(memberInfo.getId());
+			debitNote.setMoney(new BigDecimal(payMoney));
+			debitNote.setOrderCode(orderCode);
+			debitNote.setOrderNumOuter(orderNumOuter);
+			debitNote.setRouteId(routeCode);
+			debitNote.setStatus("0");
+			debitNote.setTxnMethod(payMethod);
+			debitNote.setTxnType(payType);
+			debitNote.setMerchantCode(merCode);
+			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setSettleType(memberInfo.getSettleType());
+			if("0".equals(memberInfo.getSettleType())){
+				debitNote.setTradeRate(memberPayType.getT0TradeRate());
+			}else{
+				debitNote.setTradeRate(memberPayType.getT1TradeRate());
+			}
+			
+			
+			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_"+payMethod+"_"+payTypeStr;
+			JSONObject memResult = commonUtilService.checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != memResult){
+				debitNote.setStatus("9");
+				debitNoteService.insertSelective(debitNote);
+				return memResult;
+			} 
+			
+			configName = "SINGLE_MIN_"+routeCode+"_"+payMethod+"_"+payTypeStr;
+			JSONObject checkResult = commonUtilService.checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResult){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payTypeStr;
+			JSONObject limitResult = commonUtilService.checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResult){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResult;
+			}
+			
+			debitNoteService.insertSelective(debitNote);
+			
+			PayResultNotice payResultNotice = new PayResultNotice();
+			payResultNotice.setOrderCode(debitNote.getOrderCode());
+			payResultNotice.setOrderNumOuter(orderNumOuter);
+			payResultNotice.setPayMoney(debitNote.getMoney());
+			payResultNotice.setMemberCode(memberInfo.getCode());
+			payResultNotice.setPayType(payType);
+			payResultNotice.setReturnUrl(callbackUrl);
+			payResultNotice.setStatus("1");
+			payResultNotice.setCreateDate(new Date());
+			payResultNotice.setPlatformType(platformType);
+			if("3".equals(platformType)){
+				payResultNotice.setInterfaceType("2");
+			}else{
+				payResultNotice.setInterfaceType("1");
+			}
+			payResultNoticeService.insertSelective(payResultNotice);
+			
+			String callBack = SysConfig.serverUrl + "/cashierDesk/eskPayNotify";
+			// 调用支付通道
+			String serverUrl = ESKConfig.msServerUrl;
+			String tranCode = "020";
+			String charset = "utf-8";
+			
+			JSONObject reqData = new JSONObject();
+			reqData.put("merchantCode", merchantCode.getKjMerchantCode());
+			reqData.put("orderNumber", orderCode);
+			reqData.put("tranCode", tranCode);
+			reqData.put("aisleType", aisleType);
+			reqData.put("totalAmount", payMoney);
+			reqData.put("subject", memberInfo.getName() + " 收款");
+			reqData.put("PayType", "2");
+			reqData.put("callback", callBack);
+			reqData.put("channelType", "07");
+			reqData.put("body", memberInfo.getName() + " 收款");
+			reqData.put("terminalId", ip);
+			reqData.put("cardNo", bankAccount);
+			reqData.put("successUrl", SysConfig.frontUrl+"/debitNote/payCallBack?orderCode="+orderCode);
+			System.out.println("待加密数据: "+reqData);
+			
+			String plainXML = reqData.toString();
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = MSCommonUtil.generateLenString(16);
+			;
+			byte[] keyBytes = keyStr.getBytes(charset);
+			
+			//String encryptData = new String(Base64.encodeBase64((Key.jdkAES(plainBytes, keyBytes))));
+			String signData = new String(Base64.encodeBase64(Key.rsaSign(plainBytes, ESKConfig.privateKey)), charset);
+			String encryptData = new String(Base64.encodeBase64((CryptoUtil.AESEncrypt(plainBytes, keyBytes, "AES", "AES/ECB/PKCS5Padding", null))), charset);
+			//String signData = new String(Base64.encodeBase64(CryptoUtil.digitalSign(plainBytes, hzfPriKey, "SHA1WithRSA")), charset);
+			String encrtptKey = new String(Base64.encodeBase64(Key.jdkRSA(keyBytes, ESKConfig.yhPublicKey)), charset);
+
+			//String encrtptKey = new String(Base64.encodeBase64(CryptoUtil.RSAEncrypt(keyBytes, yhPubKey, 2048, 11, "RSA/ECB/PKCS1Padding")), charset);
+			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("Context", encryptData));
+			nvps.add(new BasicNameValuePair("encrtpKey", encrtptKey));
+			
+			nvps.add(new BasicNameValuePair("signData", signData));
+			nvps.add(new BasicNameValuePair("agentId", ESKConfig.agentId));
+			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+			String respStr = new String(b, charset);
+			logger.info("返回报文[{}]", new Object[] { respStr });
+			JSONObject jsonObject = JSONObject.fromObject(respStr);
+			String resEncryptData = jsonObject.getString("Context");
+			String resEncryptKey = jsonObject.getString("encrtpKey");
+			byte[] decodeBase64KeyBytes = Base64.decodeBase64(resEncryptKey.getBytes(charset));
+			// 解密encryptKey得到merchantAESKey
+			//byte[] merchantAESKeyBytes = CryptoUtil.RSADecrypt(decodeBase64KeyBytes, hzfPriKey, 2048, 11, "RSA/ECB/PKCS1Padding");
+			byte[] merchantAESKeyBytes = Key.jdkRSA_(decodeBase64KeyBytes, ESKConfig.privateKey);
+					
+
+			// 使用base64解码商户请求报文
+			byte[] decodeBase64DataBytes = Base64.decodeBase64(resEncryptData.getBytes(charset));
+			// 用解密得到的merchantAESKey解密encryptData
+			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
+			String resXml = new String(merchantXmlDataBytes, charset);
+			JSONObject respJSONObject = JSONObject.fromObject(resXml);
+			logger.info("返回报文[{}]",  respJSONObject );
+			
+			
+			if("R".equals(respJSONObject.getString("respType"))&&"555555".equals(respJSONObject.getString("respCode"))){
+				if(respJSONObject.containsKey("payUrl")&&!"".equals(respJSONObject.getString("payUrl"))){
+					result.put("payUrl", respJSONObject.getString("payUrl"));
+					//result.put("payUrl", respJSONObject.getString("pay_url"));
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "成功");
+					
+				}else{
+					result.put("returnCode", "0009");
+					result.put("returnMsg", "获取信息失败");
+				}
+			}else{
+				
+				String result_message = respJSONObject.getString("respMsg");
+	        	result.put("returnCode", "0009");
+				result.put("returnMsg", result_message);
+				
+				DebitNoteExample debitNoteExample = new DebitNoteExample();
+				debitNoteExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<DebitNote> debitNotes = debitNoteService.selectByExample(debitNoteExample);
+				if (debitNotes != null && debitNotes.size() > 0) {
+					DebitNote debitNote_1 = debitNotes.get(0);
+					debitNote_1.setStatus("2");
+					debitNote_1.setUpdateDate(new Date());
+					if(!"".equals(result_message)){
+						debitNote_1.setRespMsg(result_message.length()>250?result_message.substring(0, 250):result_message);
+					}
+					debitNoteService.updateByPrimaryKey(debitNote_1);
+				}
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
 	}
 }
