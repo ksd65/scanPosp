@@ -1372,7 +1372,7 @@ public class QuickPayController {
 				result = mlQuickPay("3",memberInfo,merchantCode,memberPayType,payMoney,orderNum,accountType,accountName,bankAccount,bankCvv,bankYxq,certNo,tel,callbackUrl,goodsName,routeCode,aisleType);
 				result.put("routeCode", routeCode);
 			}else if(RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)){
-				memberInfo.setSettleType("1");
+				memberInfo.setSettleType("0");
 				result = eskQuickPay("3",memberInfo,merchantCode,memberPayType,payMoney,orderNum,accountType,accountName,bankAccount,bankCvv,bankYxq,certNo,tel,callbackUrl,goodsName,routeCode,aisleType,ip);
 				result.put("routeCode", routeCode);
 			}

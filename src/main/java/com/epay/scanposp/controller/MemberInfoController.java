@@ -523,8 +523,8 @@ public class MemberInfoController {
 				resData.put("drawFee", new DecimalFormat("0.00").format(drawFee));
 				result.put("resData", resData);
 				
-			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)){//畅捷，快捷支付 走T1 
-				drawFee = merchantCode.getKjT1DrawFee().doubleValue();
+			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){//畅捷，快捷支付   易收款网关 走T1 
+				drawFee = drawRoute.getDrawFee().doubleValue();
 				
 				paramMap = new HashMap<String, Object>();
 				paramMap.put("memberId", reqDataJson.getInt("memberId"));
@@ -995,7 +995,7 @@ public class MemberInfoController {
 				paramMap.put("routeId", routeCode);
 				paramMap.put("startDate", df.format(begin));
 				paramMap.put("endDate", df.format(end));
-				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
+				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
 					paramMap.put("settleType", "1");//D1
 				}else{
 					paramMap.put("settleType", "0");//D0
@@ -1003,7 +1003,7 @@ public class MemberInfoController {
 				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
 				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
 				Double canDrawToday = balanceToday;//当天可提现的金额
-				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
+				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
 					canDrawToday = 0d;
 				}else if(RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 					canDrawToday = balanceToday * 0.8;

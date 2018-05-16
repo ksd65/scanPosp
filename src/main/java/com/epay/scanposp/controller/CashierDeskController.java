@@ -4765,7 +4765,7 @@ public class CashierDeskController {
 			result.put("orderTime", format.format(debitNote.getCreateDate()));
 			
 			String routeCode = debitNote.getRouteId();
-			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)){
+			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
 				// 调用支付通道
 				String serverUrl = ESKConfig.msServerUrl;
 			//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
@@ -4775,7 +4775,9 @@ public class CashierDeskController {
 				JSONObject reqData = new JSONObject();
 				reqData.put("oriOrderNumber", debitNote.getOrderCode());
 				reqData.put("tranCode", tranCode);
-				
+				if(RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+					reqData.put("aisleType", "2");
+				}
 				System.out.println("待加密数据: "+reqData);
 				
 				String plainXML = reqData.toString();

@@ -467,7 +467,7 @@ public class BankPayController {
 			result = bankPayCj(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName);
 			result.put("routeCode", routeCode);
 		}else if(RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
-			memberInfo.setSettleType("1");
+			memberInfo.setSettleType("0");
 			result = bankPayEsk(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName,memberPayType,aisleType,ip);
 			result.put("routeCode", routeCode);
 		}
@@ -1244,7 +1244,7 @@ public class BankPayController {
 				obj = receivePayZhzf(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayHlb(memberId, String.valueOf(draw.getMoney()), draw);
-			}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
+			}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayEskHlb(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayCJ(memberId, String.valueOf(draw.getMoney()), draw);
@@ -2602,7 +2602,7 @@ public class BankPayController {
 					}else{
 						logger.info("查询接口出参验签失败");
 					}
-				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
+				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
 					
 					String serverUrl = ESKConfig.agentServerUrl;
 					String tranCode = "101";
@@ -3556,19 +3556,20 @@ public class BankPayController {
 			}
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
 			String merCode = "";
-			double drawFee = 0d;
+			double drawFee = draw.getDrawfee().doubleValue();
 			if(routeCode.equals(RouteCodeConstant.ESKHLB_ROUTE_CODE)){
 				merCode = merchantCode.getQqMerchantCode();
-				drawFee = merchantCode.getQqT0DrawFee().doubleValue();
 			}else if(routeCode.equals(RouteCodeConstant.ESKXF_ROUTE_CODE)){
 				merCode = merchantCode.getWxMerchantCode();
-				drawFee = merchantCode.getT0DrawFee().doubleValue();
 			}else if(routeCode.equals(RouteCodeConstant.ESK_ROUTE_CODE)){
 				merCode = merchantCode.getWxMerchantCode();
-				drawFee = merchantCode.getT1DrawFee().doubleValue();
+			}else if(routeCode.equals(RouteCodeConstant.ESKKJ_ROUTE_CODE)){
+				merCode = merchantCode.getKjMerchantCode();
+			}else if(routeCode.equals(RouteCodeConstant.ESKWG_ROUTE_CODE)){
+				merCode = merchantCode.getWyMerchantCode();
 			}
 			
-			double amount = (new BigDecimal(payMoney)).doubleValue()-drawFee;
+			double amount = (new BigDecimal(payMoney)).subtract(new BigDecimal(drawFee)).doubleValue();
 				
 	        String bankCode = draw.getBankCode();
 			BankRouteExample bankRouteExample = new BankRouteExample();
@@ -3598,7 +3599,7 @@ public class BankPayController {
 			}else{
 				reqData.put("aisleType", merchantCode.getAisleType());
 			}
-			reqData.put("totalAmount", new DecimalFormat("#.00").format(amount));
+			reqData.put("totalAmount", new DecimalFormat("0.00").format(amount));
 			reqData.put("callback", callBack);
 			reqData.put("bankNo", bankCode);
 			reqData.put("accountNo", draw.getBankAccount());
@@ -3610,7 +3611,7 @@ public class BankPayController {
 			reqData.put("IdCard", draw.getCertNo());
 			reqData.put("mobile", draw.getTel());
 			reqData.put("remark", "打款备注");
-			logger.info("易收款合利宝代付请求数据[{}]", new Object[] { JSONObject.fromObject(reqData).toString() });
+			logger.info("易收款代付请求数据[{}]", new Object[] { JSONObject.fromObject(reqData).toString() });
 			String plainXML = reqData.toString();
 			byte[] plainBytes = plainXML.getBytes(charset);
 			String keyStr = MSCommonUtil.generateLenString(16);
@@ -3629,7 +3630,7 @@ public class BankPayController {
 			byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
 			String respStr = new String(b, charset);
 			
-			logger.info("易收款合利宝代付返回报文[{}]", new Object[] { respStr });
+			logger.info("易收款代付返回报文[{}]", new Object[] { respStr });
 			
 			JSONObject jsonObject = JSONObject.fromObject(respStr);
 			String resEncryptData = jsonObject.getString("Context");
@@ -3643,7 +3644,7 @@ public class BankPayController {
 			byte[] merchantXmlDataBytes = CryptoUtil.AESDecrypt(decodeBase64DataBytes, merchantAESKeyBytes, "AES", "AES/ECB/PKCS5Padding", null);
 			String resXml = new String(merchantXmlDataBytes, charset);
 			JSONObject respJSONObject = JSONObject.fromObject(resXml);
-			logger.info("易收款合利宝代付解密返回报文[{}]",  respJSONObject );
+			logger.info("易收款代付解密返回报文[{}]",  respJSONObject );
 			
 			if("S".equals(respJSONObject.getString("respType"))&&"000000".equals(respJSONObject.getString("respCode"))){
 				result.put("returnCode", "0000");
