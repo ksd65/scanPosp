@@ -4866,8 +4866,8 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			}
 		}else if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("1");
-			if("1".equals(payType)){
-				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType );
+			if("1".equals(payType)||"2".equals(payType)){
+				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType ,payType);
 			}else if("3".equals(payType)){
 				result = esk001H5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType,payType );
 			}else if("5".equals(payType)){
@@ -4883,7 +4883,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}else if(RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("0");
 			if("1".equals(payType)){
-				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType );
+				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType,payType );
 			}else if("3".equals(payType)){
 				result = esk001H5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,routeCode,aisleType,payType);
 			}
@@ -5175,11 +5175,22 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	}
 	
 	
-	public JSONObject eskH5Pay(String platformType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String sceneInfo,String ip,String callbackUrl,MemberMerchantCode merchantCode,String userAgent,String routeCode,String aisleType) {
+	public JSONObject eskH5Pay(String platformType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String sceneInfo,String ip,String callbackUrl,MemberMerchantCode merchantCode,String userAgent,String routeCode,String aisleType,String payType) {
 		JSONObject result = new JSONObject();
 		try {
 			// 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
+			
+			String merCode = merchantCode.getWxMerchantCode();
+			String memberCode = memberInfo.getWxMemberCode();
+			String payTypeStr = "WX";
+			String eskPayType = "1";
+			if("2".equals(payType)){
+				merCode = merchantCode.getZfbMerchantCode();
+				memberCode = memberInfo.getZfbMemberCode();
+				payTypeStr = "ZFB";
+				eskPayType = "0";
+			}
 			
 			DebitNote debitNote = new DebitNote();
 			debitNote.setCreateDate(new Date());
@@ -5191,8 +5202,8 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			debitNote.setStatus("0");
 			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
 			debitNote.setTxnType("1");
-			debitNote.setMemberCode(memberInfo.getWxMemberCode());
-			debitNote.setMerchantCode(merchantCode.getWxMerchantCode());
+			debitNote.setMemberCode(memberCode);
+			debitNote.setMerchantCode(merCode);
 			debitNote.setIp(ip);
 			debitNote.setUserAgent(userAgent.length()>1000?userAgent.substring(0, 1000):userAgent);
 			debitNote.setBrowser(DeviceRequestUtil.getBrowser(userAgent));
@@ -5204,7 +5215,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				debitNote.setTradeRate(memberPayType.getT1TradeRate());
 			}
 			
-			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_006_WX";
+			String configName = "SINGLE_MEMBER_LIMIT_"+memberInfo.getId()+"_006_"+payTypeStr;
 			JSONObject memResult = checkLimitMoney(configName, new BigDecimal(payMoney));
 			if(null != memResult){
 				debitNote.setStatus("9");
@@ -5212,7 +5223,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return memResult;
 			} 
 			
-			configName = "SINGLE_MIN_"+routeCode+"_006_WX";
+			configName = "SINGLE_MIN_"+routeCode+"_006_"+payTypeStr;
 			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
 			if(null != checkResult){
 				debitNote.setStatus("5");
@@ -5220,7 +5231,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return checkResult;
 			}
 			
-			configName = "SINGLE_LIMIT_"+routeCode+"_006_WX";
+			configName = "SINGLE_LIMIT_"+routeCode+"_006_"+payTypeStr;
 			JSONObject limitResult = checkLimitMoney(configName, new BigDecimal(payMoney));
 			if(null != limitResult){
 				debitNote.setStatus("4");
@@ -5228,21 +5239,21 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
 				return timeResult;
 			}
 			
-			JSONObject ipResult = checkLimitIp(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), routeCode, merchantCode.getWxMerchantCode(), ip);
+			JSONObject ipResult = checkLimitIp(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), routeCode, merCode, ip);
 			if(null != ipResult){
 				debitNote.setStatus("6");
 				debitNoteService.insertSelective(debitNote);
 				return ipResult;
 			}
 			
-			JSONObject mResult = checkLimitMerchantMoney(routeCode,merchantCode.getWxMerchantCode());
+			JSONObject mResult = checkLimitMerchantMoney(routeCode,merCode);
 			if(null != mResult){
 				debitNote.setStatus("7");
 				debitNoteService.insertSelective(debitNote);
@@ -5263,7 +5274,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			payResultNotice.setOrderNumOuter(orderNumOuter);
 			payResultNotice.setPayMoney(debitNote.getMoney());
 			payResultNotice.setMemberCode(memberInfo.getCode());
-			payResultNotice.setPayType("1");
+			payResultNotice.setPayType(payType);
 			
 			payResultNotice.setReturnUrl(callbackUrl);
 			payResultNotice.setStatus("1");
@@ -5289,19 +5300,20 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			String charset = "utf-8";
 			
 			JSONObject reqData = new JSONObject();
-			reqData.put("merchantCode", merchantCode.getWxMerchantCode());
+			reqData.put("merchantCode",merCode);
 			reqData.put("orderNumber", orderCode);
 			reqData.put("tranCode", tranCode);
 			reqData.put("aisleType", aisleType);
 			reqData.put("totalAmount", payMoney);
 			reqData.put("subject", memberInfo.getName() + " 收款");
-			reqData.put("PayType", "1");
+			reqData.put("PayType", eskPayType);
 			reqData.put("callback", callBack);
 			reqData.put("desc", memberInfo.getName() + " 收款");
 			reqData.put("terminalId", ip);
 			reqData.put("sceneType", "2");
 			reqData.put("wapName", "聚合支付");
 			reqData.put("onlyId", ip);
+			reqData.put("successUrl", SysConfig.frontUrl+"/debitNote/payCallBack?orderCode="+orderCode);
 			System.out.println("待加密数据: "+reqData);
 			
 			String plainXML = reqData.toString();
@@ -5346,7 +5358,11 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			if("R".equals(respJSONObject.getString("respType"))&&"555555".equals(respJSONObject.getString("respCode"))){
 				if(respJSONObject.containsKey("pay_url")&&!"".equals(respJSONObject.getString("pay_url"))){
-					result.put("payUrl", respJSONObject.getString("pay_url")+"&redirecturl="+SysConfig.frontUrl+"/debitNote/payCallBack?orderCode="+orderCode);
+					if("1".equals(payType)){
+						result.put("payUrl", respJSONObject.getString("pay_url")+"&redirecturl="+SysConfig.frontUrl+"/debitNote/payCallBack?orderCode="+orderCode);
+					}else{
+						result.put("payUrl", respJSONObject.getString("pay_url"));
+					}
 					//result.put("payUrl", respJSONObject.getString("pay_url"));
 					result.put("returnCode", "0000");
 					result.put("returnMsg", "成功");
@@ -5377,11 +5393,11 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			try{
 		        DebitNoteIp debitNoteIp = new DebitNoteIp();
 		        debitNoteIp.setMemberId(memberInfo.getId());
-		        debitNoteIp.setMerchantCode(merchantCode.getWxMerchantCode());
+		        debitNoteIp.setMerchantCode(merCode);
 		        debitNoteIp.setOrderCode(orderCode);
 		        debitNoteIp.setRouteId(routeCode);
 		        debitNoteIp.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
-		        debitNoteIp.setTxnType("1");
+		        debitNoteIp.setTxnType(payType);
 		        debitNoteIp.setIp(ip);
 		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
 				debitNoteIpService.insertSelective(debitNoteIp);
@@ -7032,7 +7048,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			result.put("routeCode", routeCode);
 		}else if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)){
 			if("1".equals(payType)){
-				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,RouteCodeConstant.ESK_ROUTE_CODE,aisleType );
+				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,RouteCodeConstant.ESK_ROUTE_CODE,aisleType,payType );
 			}else if("3".equals(payType)){
 				result = esk001H5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,RouteCodeConstant.ESK_ROUTE_CODE,aisleType,payType );
 			}
@@ -7047,7 +7063,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			result.put("routeCode", routeCode);
 		}else if(RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)){
 			if("1".equals(payType)){
-				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,RouteCodeConstant.ESKXF_ROUTE_CODE,aisleType );
+				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,RouteCodeConstant.ESKXF_ROUTE_CODE,aisleType,payType );
 			}else if("3".equals(payType)){
 				result = esk001H5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,RouteCodeConstant.ESKXF_ROUTE_CODE,aisleType,payType);
 			}
