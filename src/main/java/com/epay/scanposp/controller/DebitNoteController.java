@@ -4745,6 +4745,8 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
 		            	}else if("3".equals(payType)){
 		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("2".equals(payType)){
+		            		merchantCode.setZfbMerchantCode(payTypeRule.getMerchantCode());
 		            	}
 		            	routeCode = payTypeRule.getRouteCode();
 		            	aisleType = payTypeRule.getAisleType();
@@ -4776,6 +4778,8 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
 		            	}else if("3".equals(payType)){
 		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("2".equals(payType)){
+		            		merchantCode.setZfbMerchantCode(payTypeRule.getMerchantCode());
 		            	}
 		            	routeCode = payTypeRule.getRouteCode();
 		            	aisleType = payTypeRule.getAisleType();
@@ -4807,6 +4811,8 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
 		            	}else if("3".equals(payType)){
 		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("2".equals(payType)){
+		            		merchantCode.setZfbMerchantCode(payTypeRule.getMerchantCode());
 		            	}
 		            	routeCode = payTypeRule.getRouteCode();
 		            	aisleType = payTypeRule.getAisleType();
@@ -5201,7 +5207,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			debitNote.setRouteId(routeCode);
 			debitNote.setStatus("0");
 			debitNote.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
-			debitNote.setTxnType("1");
+			debitNote.setTxnType(payType);
 			debitNote.setMemberCode(memberCode);
 			debitNote.setMerchantCode(merCode);
 			debitNote.setIp(ip);

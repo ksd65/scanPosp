@@ -1371,6 +1371,8 @@ public class CashierDeskController {
 		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
 		            	}else if("3".equals(payType)){
 		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("2".equals(payType)){
+		            		merchantCode.setZfbMerchantCode(payTypeRule.getMerchantCode());
 		            	}
 		            	routeCode = payTypeRule.getRouteCode();
 		            	aisleType = payTypeRule.getAisleType();
@@ -1402,6 +1404,8 @@ public class CashierDeskController {
 		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
 		            	}else if("3".equals(payType)){
 		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("2".equals(payType)){
+		            		merchantCode.setZfbMerchantCode(payTypeRule.getMerchantCode());
 		            	}
 		            	routeCode = payTypeRule.getRouteCode();
 		            	aisleType = payTypeRule.getAisleType();
@@ -1433,6 +1437,8 @@ public class CashierDeskController {
 		            		merchantCode.setWxMerchantCode(payTypeRule.getMerchantCode());
 		            	}else if("3".equals(payType)){
 		            		merchantCode.setQqMerchantCode(payTypeRule.getMerchantCode());
+		            	}else if("2".equals(payType)){
+		            		merchantCode.setZfbMerchantCode(payTypeRule.getMerchantCode());
 		            	}
 		            	routeCode = payTypeRule.getRouteCode();
 		            	aisleType = payTypeRule.getAisleType();
