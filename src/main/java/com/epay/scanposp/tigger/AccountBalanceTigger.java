@@ -992,7 +992,7 @@ public class AccountBalanceTigger {
 					paramMap.put("routeId", routeCode);
 					paramMap.put("startDate", yesterday);
 					paramMap.put("endDate", yesterday);
-					paramMap.put("settleType", "0");//D0
+					paramMap.put("settleType", "1");//D0
 					Double tradeMoneyBalance = commonService.countTransactionRealMoneyByCondition(paramMap);
 					tradeMoneyBalance = tradeMoneyBalance == null ? 0 : tradeMoneyBalance;//昨天交易账户余额
 				
