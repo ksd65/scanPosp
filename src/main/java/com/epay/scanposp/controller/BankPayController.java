@@ -3612,6 +3612,18 @@ public class BankPayController {
 			reqData.put("mobile", draw.getTel());
 			reqData.put("remark", "打款备注");
 			logger.info("易收款代付请求数据[{}]", new Object[] { JSONObject.fromObject(reqData).toString() });
+			try{
+				RoutewayDrawLog routewayDrawLog = new RoutewayDrawLog();
+				routewayDrawLog.setDrawId(draw.getId());
+				routewayDrawLog.setOrderCode(orderCode);
+				routewayDrawLog.setOrderNumOuter(draw.getOrderNumOuter());
+				String inparam = reqData.toString();
+				routewayDrawLog.setInParam(inparam.length()>1000?inparam.substring(0, 1000):inparam);
+				routewayDrawLog.setCreateDate(new Date());
+				routewayDrawLogService.insert(routewayDrawLog);
+			}catch(Exception e){
+				logger.info("代付入日志异常", e);
+			}
 			String plainXML = reqData.toString();
 			byte[] plainBytes = plainXML.getBytes(charset);
 			String keyStr = MSCommonUtil.generateLenString(16);
@@ -3645,6 +3657,21 @@ public class BankPayController {
 			String resXml = new String(merchantXmlDataBytes, charset);
 			JSONObject respJSONObject = JSONObject.fromObject(resXml);
 			logger.info("易收款代付解密返回报文[{}]",  respJSONObject );
+			
+			try{
+				RoutewayDrawLogExample routewayDrawLogExample = new RoutewayDrawLogExample();
+				routewayDrawLogExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<RoutewayDrawLog> logList = routewayDrawLogService.selectByExample(routewayDrawLogExample);
+				if(logList != null && logList.size()>0){
+					String str = JSONObject.fromObject(respJSONObject).toString();
+					RoutewayDrawLog routewayDrawLog1 = logList.get(0);
+					routewayDrawLog1.setOutParam(str.length()>1000?str.substring(0, 1000):str);
+					routewayDrawLog1.setUpdateDate(new Date());
+					routewayDrawLogService.updateByPrimaryKey(routewayDrawLog1);
+				}
+			}catch(Exception e){
+				logger.info("代付更新日志异常", e);
+			}
 			
 			if("S".equals(respJSONObject.getString("respType"))&&"000000".equals(respJSONObject.getString("respCode"))){
 				result.put("returnCode", "0000");
