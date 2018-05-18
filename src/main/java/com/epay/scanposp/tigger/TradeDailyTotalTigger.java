@@ -48,6 +48,8 @@ public class TradeDailyTotalTigger {
 				routeList.add(RouteCodeConstant.ESKXF_ROUTE_CODE);
 				routeList.add(RouteCodeConstant.ESK_ROUTE_CODE);
 				routeList.add(RouteCodeConstant.TLWD_ROUTE_CODE);
+				routeList.add(RouteCodeConstant.ESKKJ_ROUTE_CODE);
+				routeList.add(RouteCodeConstant.ESKWG_ROUTE_CODE);
 				
 				if(routeList!=null && routeList.size()>0){
 					for(String routeCode:routeList){
