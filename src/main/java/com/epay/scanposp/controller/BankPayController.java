@@ -467,7 +467,7 @@ public class BankPayController {
 			result = bankPayCj(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName);
 			result.put("routeCode", routeCode);
 		}else if(RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
-			memberInfo.setSettleType("0");
+			memberInfo.setSettleType("1");
 			result = bankPayEsk(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName,memberPayType,aisleType,ip);
 			result.put("routeCode", routeCode);
 		}
