@@ -972,7 +972,7 @@ public class EncryptUtil {
         StringBuffer buf = new StringBuffer("");
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(strSrc.getBytes());
+            md.update(strSrc.getBytes("UTF-8"));
             byte b[] = md.digest();
             int i;
             for (int offset = 0; offset < b.length; offset++) {
@@ -984,7 +984,7 @@ public class EncryptUtil {
             }
 
 
-        } catch (NoSuchAlgorithmException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

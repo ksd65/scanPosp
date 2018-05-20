@@ -8,6 +8,12 @@ public class BankRoute {
     private String routeCode;
 
     private String routeBankCode;
+    
+    private String routeBankNo;
+    
+    private String routeBankName;
+    
+    private String lineNumber;
 
     private String delFlag;
 
@@ -51,5 +57,30 @@ public class BankRoute {
 		this.delFlag = delFlag;
 	}
 
+	public String getRouteBankNo() {
+		return routeBankNo;
+	}
+
+	public void setRouteBankNo(String routeBankNo) {
+		this.routeBankNo = routeBankNo;
+	}
+
+	public String getRouteBankName() {
+		return routeBankName;
+	}
+
+	public void setRouteBankName(String routeBankName) {
+		this.routeBankName = routeBankName;
+	}
+
+	public String getLineNumber() {
+		return lineNumber;
+	}
+
+	public void setLineNumber(String lineNumber) {
+		this.lineNumber = lineNumber;
+	}
+	
+	
     
 }

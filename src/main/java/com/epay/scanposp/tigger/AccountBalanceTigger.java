@@ -959,7 +959,7 @@ public class AccountBalanceTigger {
 				routeCode = RouteCodeConstant.ESKWG_ROUTE_CODE;
 				for(MemberInfo member:memberList){
 					Integer memberId = member.getId();
-				    RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
+					RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
 					routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
 					List<RoutewayAccount> routewayAccountList = routewayAccountService.selectByExample(routewayAccountExample);
 					
