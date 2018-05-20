@@ -1999,7 +1999,7 @@ public class QuickPayController {
 				accDtl.setRespCode("0");
 				result.put("returnCode", "0000");
 				if(routeCode.equals(RouteCodeConstant.ML_ROUTE_CODE)){
-					result.put("returnMsg", "请求成功");
+					result.put("returnMsg", cardObj.getString("returnMsg"));
 					result.put("PAY_INFO", cardObj.getString("PAY_INFO"));
 					result.put("routeCode", routeCode);
 				}else{
@@ -3667,7 +3667,7 @@ public class QuickPayController {
 			String code = rootEl.elementText("RESP_CODE");
 			if("0000".equals(code)||"00".equals(code)||"0100".equals(code)){
 				result.put("returnCode", "0000");
-				result.put("returnMsg", "成功");
+				result.put("returnMsg", rootEl.elementText("RESP_DESC"));
 				result.put("PAY_INFO", URLDecoder.decode(rootEl.elementText("PAY_INFO"), "UTF-8"));
 			}else{
 				result.put("returnCode", "0003");
