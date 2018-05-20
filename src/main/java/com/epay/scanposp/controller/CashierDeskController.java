@@ -2,7 +2,6 @@ package com.epay.scanposp.controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -40,6 +39,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,7 @@ import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.FTConfig;
 import com.epay.scanposp.common.constant.HLBConfig;
+import com.epay.scanposp.common.constant.MLConfig;
 import com.epay.scanposp.common.constant.MSConfig;
 import com.epay.scanposp.common.constant.POSPConfig;
 import com.epay.scanposp.common.constant.RFConfig;
@@ -164,7 +167,6 @@ import com.epay.scanposp.entity.StTradeDetail;
 import com.epay.scanposp.entity.StTradeDetailAll;
 import com.epay.scanposp.entity.StTradeDetailExample;
 import com.epay.scanposp.entity.SubMerchantCode;
-import com.epay.scanposp.entity.SubMerchantCodeExample;
 import com.epay.scanposp.entity.SubMerchantCodeTemp;
 import com.epay.scanposp.entity.SubMerchantTotal;
 import com.epay.scanposp.entity.SubMerchantTotalExample;
@@ -5602,7 +5604,70 @@ public class CashierDeskController {
 					result.put("returnCode", "0012");
 					result.put("returnMsg", resultMsg);
 				}
-			}else{
+			}else if(RouteCodeConstant.ML_ROUTE_CODE.equals(routeCode)){
+				MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return signReturn(result);
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        String serverUrl = MLConfig.serverUrl+"/OrderQuery";
+		        
+		        String orderCode = "X"+CommonUtil.getOrderCode();
+		        String srcStr1 = orderCode+debitNote.getOrderCode()+debitNote.getMerchantCode();
+		     //	System.out.println("加密源串："+srcStr1);
+				String sign1 = com.epay.scanposp.common.utils.ml.EncryptUtil.MD5(srcStr1, 1).toUpperCase();
+			///	System.out.println("第一次加密结果："+sign1);
+				String sign = com.epay.scanposp.common.utils.ml.EncryptUtil.MD5(sign1+merchantKey.getPrivateKey(), 0).toUpperCase();
+			//	System.out.println("第二次加密结果："+sign);
+				
+				Map<String,String> param = new HashMap<String, String>();
+				param.put("ORDER_ID", orderCode);
+				param.put("USER_TYPE", "02");
+				param.put("USER_ID", debitNote.getMerchantCode());
+				param.put("SIGN_TYPE", "03");
+				param.put("SIGN", sign);
+				param.put("ORG_ORDER_ID", debitNote.getOrderCode());
+				logger.info("米联订单查询参数[{}]",JSONObject.fromObject(param).toString() );
+				
+				List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+				List<String> keys = new ArrayList<String>(param.keySet());
+				for (int i = 0; i < keys.size(); i++) {
+					String name=(String) keys.get(i);
+					String value=(String) param.get(name);
+					if(value!=null && !"".equals(value)){
+						nvps.add(new BasicNameValuePair(name, value));
+					}
+				}
+	            
+	            byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+				String respStr = new String(b, "UTF-8");
+				logger.info("米联订单查询返回报文[{}]", new Object[] { respStr });
+				
+				Document reqDoc = DocumentHelper.parseText(respStr);
+				Element rootEl = reqDoc.getRootElement();
+				String code = rootEl.elementText("RESP_CODE");
+				String result_message = rootEl.elementText("RESP_DESC");
+				
+				if("0000".equals(code)){
+					result.put("oriRespType", "S");
+					result.put("oriRespCode", "000000");
+					result.put("oriRespMsg", "支付成功");
+					result.put("totalAmount", String.valueOf(debitNote.getMoney()));
+				}else if("0100".equals(code)){
+					result.put("oriRespType", "R");
+					result.put("oriRespCode", "000001");
+					result.put("oriRespMsg", "处理中");
+				}else{
+					result.put("oriRespType", "E");
+					result.put("oriRespCode", "000002");
+					result.put("oriRespMsg", result_message);
+				}
+		    }else{
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
 				if (serverUrl.startsWith("https://ipay")) {
