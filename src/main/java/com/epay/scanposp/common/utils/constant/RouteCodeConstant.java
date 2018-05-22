@@ -70,4 +70,6 @@ public class RouteCodeConstant {
 	
 	public static String ESKWG_ROUTE_CODE = "1034";//易收款网关
 	
+	public static String ESK13_ROUTE_CODE = "1035";//易收款13
+	
 }

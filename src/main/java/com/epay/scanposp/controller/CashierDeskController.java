@@ -4773,7 +4773,7 @@ public class CashierDeskController {
 			result.put("orderTime", format.format(debitNote.getCreateDate()));
 			
 			String routeCode = debitNote.getRouteId();
-			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK13_ROUTE_CODE.equals(routeCode)){
 				// 调用支付通道
 				String serverUrl = ESKConfig.msServerUrl;
 			//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();

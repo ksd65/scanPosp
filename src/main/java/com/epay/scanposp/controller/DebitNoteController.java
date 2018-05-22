@@ -2908,7 +2908,7 @@ public class DebitNoteController {
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(debitNote.getMemberId());
 			String routeCode = debitNote.getRouteId();
 			
-			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)){
+			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK13_ROUTE_CODE.equals(routeCode)){
 				String serverUrl = ESKConfig.msServerUrl;
 			//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
 				String tranCode = "004";
@@ -4878,6 +4878,11 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				result = esk001H5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType,payType );
 			}else if("5".equals(payType)){
 				result = esk001H5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType,payType );
+			}
+		}else if(RouteCodeConstant.ESK13_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("1");
+			if("1".equals(payType)){
+				result = eskH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent,routeCode,aisleType ,payType);
 			}
 		}else if(RouteCodeConstant.XF_ROUTE_CODE.equals(routeCode)){
 			result = xfH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode );
