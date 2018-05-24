@@ -4095,6 +4095,7 @@ public class QuickPayController {
 			debitNote.setTxnType(payType);
 			debitNote.setMerchantCode(merCode);
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
+			debitNote.setRemarks(bankAccount);
 			debitNote.setSettleType(memberInfo.getSettleType());
 			if("0".equals(memberInfo.getSettleType())){
 				debitNote.setTradeRate(memberPayType.getT0TradeRate());

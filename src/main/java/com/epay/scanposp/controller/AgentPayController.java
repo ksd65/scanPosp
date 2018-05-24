@@ -86,6 +86,8 @@ import com.epay.scanposp.entity.RoutewayAccount;
 import com.epay.scanposp.entity.RoutewayAccountExample;
 import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
+import com.epay.scanposp.entity.RoutewayDrawLog;
+import com.epay.scanposp.entity.RoutewayDrawLogExample;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
@@ -108,6 +110,7 @@ import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
 import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayAccountService;
+import com.epay.scanposp.service.RoutewayDrawLogService;
 import com.epay.scanposp.service.RoutewayDrawService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeExtendService;
@@ -195,6 +198,9 @@ public class AgentPayController {
 	
 	@Autowired
 	private BankRouteService bankRouteService;
+	
+	@Autowired
+	private RoutewayDrawLogService routewayDrawLogService;
 	
 	@ResponseBody
 	@RequestMapping("/agentPay/toPay")
@@ -1014,7 +1020,7 @@ public class AgentPayController {
 			}else if(routeCode.equals(RouteCodeConstant.WW_ROUTE_CODE)){
 				resObj = wwAgentPay(orderCode, merCode, bankAccount, payMoney);
 			}else if(routeCode.equals(RouteCodeConstant.ML_ROUTE_CODE)){
-				resObj = mlAgentPay(orderCode, merCode, bankAccount,accountName,bankCode,bankName, String.valueOf(drawAmount));
+				resObj = mlAgentPay(orderCode, merCode, bankAccount,accountName,bankCode,bankName, String.valueOf(drawAmount),draw);
 			}
 			String code = resObj.getString("returnCode");
 			String resultMsg = "";
@@ -2249,7 +2255,7 @@ public class AgentPayController {
 	}
 	
 	//米联代付
-	public JSONObject mlAgentPay(String orderCode,String merCode,String bankAccount,String accountName,String bankCode,String bankName,String payMoney){
+	public JSONObject mlAgentPay(String orderCode,String merCode,String bankAccount,String accountName,String bankCode,String bankName,String payMoney,RoutewayDraw draw){
 		JSONObject result = new JSONObject();
 		try{
 			String routeCode = RouteCodeConstant.ML_ROUTE_CODE;
@@ -2292,6 +2298,18 @@ public class AgentPayController {
 	     	contextjson.put("SIGN", sign);
 	     	
 	     	logger.info("米联代付参数[{}]",JSONObject.fromObject(contextjson).toString() );
+	     	try{
+				RoutewayDrawLog routewayDrawLog = new RoutewayDrawLog();
+				routewayDrawLog.setDrawId(draw.getId());
+				routewayDrawLog.setOrderCode(orderCode);
+				routewayDrawLog.setOrderNumOuter(draw.getOrderNumOuter());
+				String inparam = contextjson.toString();
+				routewayDrawLog.setInParam(inparam.length()>1000?inparam.substring(0, 1000):inparam);
+				routewayDrawLog.setCreateDate(new Date());
+				routewayDrawLogService.insert(routewayDrawLog);
+			}catch(Exception e){
+				logger.info("代付入日志异常", e);
+			}
 			
 			List<NameValuePair> nvps = new LinkedList<NameValuePair>();
 			List<String> keys = new ArrayList<String>(contextjson.keySet());
@@ -2307,6 +2325,19 @@ public class AgentPayController {
 			String respStr = new String(b, "UTF-8");
 			logger.info("米联代付返回报文[{}]", new Object[] { respStr });
 			
+			try{
+				RoutewayDrawLogExample routewayDrawLogExample = new RoutewayDrawLogExample();
+				routewayDrawLogExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<RoutewayDrawLog> logList = routewayDrawLogService.selectByExample(routewayDrawLogExample);
+				if(logList != null && logList.size()>0){
+					RoutewayDrawLog routewayDrawLog1 = logList.get(0);
+					routewayDrawLog1.setOutParam(respStr.length()>1000?respStr.substring(0, 1000):respStr);
+					routewayDrawLog1.setUpdateDate(new Date());
+					routewayDrawLogService.updateByPrimaryKey(routewayDrawLog1);
+				}
+			}catch(Exception e){
+				logger.info("代付更新日志异常", e);
+			}
 			Document reqDoc = DocumentHelper.parseText(respStr);
 			Element rootEl = reqDoc.getRootElement();
 			
