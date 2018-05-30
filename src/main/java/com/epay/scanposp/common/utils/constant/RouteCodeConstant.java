@@ -72,4 +72,6 @@ public class RouteCodeConstant {
 	
 	public static String ESK13_ROUTE_CODE = "1035";//易收款13
 	
+	public static String SM_ROUTE_CODE = "1036";//商盟
+	
 }
