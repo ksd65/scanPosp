@@ -2918,7 +2918,7 @@ public class DebitNoteController {
 			MemberInfo memberInfo = memberInfoService.selectByPrimaryKey(debitNote.getMemberId());
 			String routeCode = debitNote.getRouteId();
 			
-			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK13_ROUTE_CODE.equals(routeCode)){
+			if(RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK13_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWGD0_ROUTE_CODE.equals(routeCode)){
 				String serverUrl = ESKConfig.msServerUrl;
 			//	PrivateKey hzfPriKey = CryptoUtil.getRSAPrivateKey();
 				String tranCode = "004";
@@ -2927,7 +2927,7 @@ public class DebitNoteController {
 				JSONObject reqData = new JSONObject();
 				reqData.put("oriOrderNumber", orderCode);
 				reqData.put("tranCode", tranCode);
-				if(RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+				if(RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWGD0_ROUTE_CODE.equals(routeCode)){
 					reqData.put("aisleType", "2");
 				}
 				

@@ -474,6 +474,10 @@ public class BankPayController {
 			memberInfo.setSettleType("1");
 			result = bankPayEsk(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName,memberPayType,aisleType,ip);
 			result.put("routeCode", routeCode);
+		}else if(RouteCodeConstant.ESKWGD0_ROUTE_CODE.equals(routeCode)){
+			memberInfo.setSettleType("0");
+			result = bankPayEsk(platformType,memberInfo, payMoney, orderNum, callbackUrl , merchantCode ,routeCode, bankCode ,goodsName,memberPayType,aisleType,ip);
+			result.put("routeCode", routeCode);
 		}
 		
 		return result;
@@ -1248,7 +1252,7 @@ public class BankPayController {
 				obj = receivePayZhzf(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayHlb(memberId, String.valueOf(draw.getMoney()), draw);
-			}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+			}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWGD0_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayEskHlb(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJWG_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayCJ(memberId, String.valueOf(draw.getMoney()), draw);
@@ -2606,7 +2610,7 @@ public class BankPayController {
 					}else{
 						logger.info("查询接口出参验签失败");
 					}
-				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+				}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWGD0_ROUTE_CODE.equals(routeCode)){
 					
 					String serverUrl = ESKConfig.agentServerUrl;
 					String tranCode = "101";
@@ -3633,6 +3637,8 @@ public class BankPayController {
 			}else if(routeCode.equals(RouteCodeConstant.ESKKJ_ROUTE_CODE)){
 				merCode = merchantCode.getKjMerchantCode();
 			}else if(routeCode.equals(RouteCodeConstant.ESKWG_ROUTE_CODE)){
+				merCode = merchantCode.getWyMerchantCode();
+			}else if(routeCode.equals(RouteCodeConstant.ESKWGD0_ROUTE_CODE)){
 				merCode = merchantCode.getWyMerchantCode();
 			}
 			
