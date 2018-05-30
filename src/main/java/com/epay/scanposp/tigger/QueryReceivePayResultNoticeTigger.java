@@ -1,7 +1,6 @@
 package com.epay.scanposp.tigger;
 
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -575,7 +574,7 @@ public class QueryReceivePayResultNoticeTigger {
 						}else{
 							logger.info("查询接口出参验签失败");
 						}
-					}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+					}else if(RouteCodeConstant.ESKHLB_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKXF_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWGD0_ROUTE_CODE.equals(routeCode)){
 						
 						String serverUrl = ESKConfig.agentServerUrl;
 						String tranCode = "101";
