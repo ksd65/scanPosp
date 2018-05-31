@@ -13,10 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
+import com.epay.scanposp.entity.JobRun;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.TradeDailyTotal;
 import com.epay.scanposp.service.CommonService;
+import com.epay.scanposp.service.JobRunService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.TradeDailyTotalService;
 
@@ -30,6 +32,8 @@ public class TradeDailyTotalTigger {
 	@Autowired
 	private MemberInfoService memberInfoService;
 	
+	@Autowired
+	private JobRunService jobRunService;
 	
 	@Autowired
 	private TradeDailyTotalService tradeDailyTotalService;
@@ -44,6 +48,12 @@ public class TradeDailyTotalTigger {
 			List<MemberInfo> memberList = memberInfoService.selectByExample(memberInfoExample);
 			if(memberList!=null && memberList.size()>0){
 				String yesterday = DateUtil.getBeforeDate(1, "yyyyMMdd");
+				
+				JobRun jobRun = new JobRun();
+				jobRun.setTxnDate(yesterday);
+				jobRun.setJobType("TradeDailyTotalTigger");
+				jobRunService.insertJobRun(jobRun);
+				
 				List<String> routeList = new ArrayList<String>();
 				routeList.add(RouteCodeConstant.ESKXF_ROUTE_CODE);
 				routeList.add(RouteCodeConstant.ESK_ROUTE_CODE);

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.JobRunMapper">
+  
+  <insert id="insertJobRun" parameterType="com.epay.scanposp.entity.JobRun">
+    
+    insert into bu_job_run (txn_date, job_type, create_date
+      )
+    values (#{txnDate,jdbcType=VARCHAR}, #{jobType,jdbcType=INTEGER}, sysdate()
+      )
+  </insert>
+  
+</mapper>

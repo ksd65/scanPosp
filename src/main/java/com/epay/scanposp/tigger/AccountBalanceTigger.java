@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
+import com.epay.scanposp.entity.JobRun;
 import com.epay.scanposp.entity.MemberDrawRoute;
 import com.epay.scanposp.entity.MemberDrawRouteExample;
 import com.epay.scanposp.entity.MemberInfo;
@@ -20,6 +21,7 @@ import com.epay.scanposp.entity.RoutewayAccount;
 import com.epay.scanposp.entity.RoutewayAccountExample;
 import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.CommonService;
+import com.epay.scanposp.service.JobRunService;
 import com.epay.scanposp.service.MemberDrawRouteService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
@@ -54,6 +56,9 @@ public class AccountBalanceTigger {
 	
 	@Autowired
 	private MemberDrawRouteService memberDrawRouteService;
+	
+	@Autowired
+	private JobRunService jobRunService;
 	
 	public void accountBalance(){
 		
@@ -154,6 +159,12 @@ public class AccountBalanceTigger {
 			if(memberList!=null && memberList.size()>0){
 				String routeCode = RouteCodeConstant.RF_ROUTE_CODE;
 				String yesterday = DateUtil.getBeforeDate(1, "yyyyMMdd");
+				
+				JobRun jobRun = new JobRun();
+				jobRun.setTxnDate(yesterday);
+				jobRun.setJobType("AccountBalanceTigger");
+				jobRunService.insertJobRun(jobRun);
+				
 				for(MemberInfo member:memberList){
 					Integer memberId = member.getId();
 					RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();

@@ -1,7 +1,6 @@
 package com.epay.scanposp.tigger;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -13,22 +12,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
+import com.epay.scanposp.entity.JobRun;
 import com.epay.scanposp.entity.MemberDrawRoute;
 import com.epay.scanposp.entity.MemberDrawRouteExample;
-import com.epay.scanposp.entity.MemberInfo;
-import com.epay.scanposp.entity.MemberInfoExample;
 import com.epay.scanposp.entity.MemberPlatFee;
 import com.epay.scanposp.entity.MemberPlatFeeExample;
 import com.epay.scanposp.entity.RoutewayDrawProfit;
-import com.epay.scanposp.entity.TradeDailyTotal;
 import com.epay.scanposp.entity.TradeProfit;
 import com.epay.scanposp.entity.TradeProfitExample;
 import com.epay.scanposp.service.CommonService;
+import com.epay.scanposp.service.JobRunService;
 import com.epay.scanposp.service.MemberDrawRouteService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberPlatFeeService;
 import com.epay.scanposp.service.RoutewayDrawProfitService;
-import com.epay.scanposp.service.TradeDailyTotalService;
 import com.epay.scanposp.service.TradeProfitService;
 
 public class TradeProfitTigger {
@@ -53,12 +50,21 @@ public class TradeProfitTigger {
 	@Autowired
 	private RoutewayDrawProfitService routewayDrawProfitService;
 	
+	@Autowired
+	private JobRunService jobRunService;
+	
 	public void tradeProfit(){
 		
 		try{
 			logger.info("商户通道交易额更新定时。。。");
 			
 			String yesterday = DateUtil.getBeforeDate(1, "yyyyMMdd");
+			
+			JobRun jobRun = new JobRun();
+			jobRun.setTxnDate(yesterday);
+			jobRun.setJobType("TradeProfitTigger");
+			jobRunService.insertJobRun(jobRun);
+			
 			Map<String,Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("txnDate", yesterday);
 			List<Map<String,Object>> tradeList = tradeProfitService.getTradeList(paramMap);
