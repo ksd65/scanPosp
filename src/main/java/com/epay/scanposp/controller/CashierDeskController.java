@@ -7,6 +7,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -59,6 +60,7 @@ import com.epay.scanposp.common.constant.MLConfig;
 import com.epay.scanposp.common.constant.MSConfig;
 import com.epay.scanposp.common.constant.POSPConfig;
 import com.epay.scanposp.common.constant.RFConfig;
+import com.epay.scanposp.common.constant.SMConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.TBConfig;
 import com.epay.scanposp.common.constant.TLConfig;
@@ -224,6 +226,13 @@ import com.epay.scanposp.service.TradeDetailService;
 import com.epay.scanposp.service.TradeVolumnDailyService;
 import com.epay.scanposp.thread.DrawResultNoticeThread;
 import com.google.gson.Gson;
+
+import fosun.sumpay.merchant.integration.request.Request;
+import fosun.sumpay.merchant.integration.service.SignService;
+import fosun.sumpay.merchant.integration.service.SignServiceImpl;
+import fosun.sumpay.merchant.integration.service.SumpayService;
+import fosun.sumpay.merchant.integration.service.SumpayServiceImpl;
+import fosun.sumpay.merchant.integration.util.ParamUtil;
 
 
 
@@ -1792,7 +1801,7 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -5667,6 +5676,90 @@ public class CashierDeskController {
 					result.put("oriRespCode", "000002");
 					result.put("oriRespMsg", result_message);
 				}
+		    }else if(RouteCodeConstant.SM_ROUTE_CODE.equals(routeCode)){
+				MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+		        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(debitNote.getMerchantCode()).andDelFlagEqualTo("0");
+		        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+		        if(keyList == null || keyList.size()!=1){
+		        	result.put("returnCode", "0008");
+					result.put("returnMsg", "商户私钥未配置");
+					return signReturn(result);
+		        }
+		        MemberMerchantKey merchantKey = keyList.get(0);
+		        
+		        String serverUrl = SMConfig.msServerUrl;
+		        
+		        Map<String, String> sParaTemp = new HashMap<String, String>();
+				sParaTemp.put("app_id", debitNote.getMerchantCode());
+				sParaTemp.put("terminal_type", "wap");
+				sParaTemp.put("version", "1.0");
+				sParaTemp.put("service", "sumpay.trade.order.search");
+				sParaTemp.put("format", "JSON");
+				sParaTemp.put("timestamp", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+				
+				sParaTemp.put("mer_id", debitNote.getMerchantCode());
+				//sParaTemp.put("sub_mer_no", sub_merid);
+				sParaTemp.put("order_no", debitNote.getOrderCode());
+				logger.info("商盟订单查询请求数据[{}]", new Object[] { JSONObject.fromObject(sParaTemp).toString() });
+				
+				com.epay.scanposp.common.utils.sm.CertUtil util = new com.epay.scanposp.common.utils.sm.CertUtil();
+				
+				SumpayService ss = new SumpayServiceImpl();
+				Request request2 = new Request();
+				request2.setCharset("UTF-8");
+				request2.setContent(JSON.toJSONString(sParaTemp)); // 业务参数的json字段
+				request2.setPassword("sumpay"); // 
+//			 	request2.setPrivateKeyPath("D:/dev_private.pfx");
+//			 	request2.setPublicKeyPath("D:/dev_pub.cer");
+				//System.out.println(request.getServletContext().getRealPath("") + "/yixuntiankong.pfx");
+				request2.setPrivateKeyPath(util.getConfigPath() + merchantKey.getPrivateKey());
+				request2.setPublicKeyPath(util.getConfigPath() + merchantKey.getPublicKey());
+				request2.setUrl(serverUrl);
+				request2.setDomain("pay1.hlqlb.cn");
+				
+				Map<String, String> respJSONObject = ss.execute(request2);
+				
+				logger.info("商盟订单查询返回数据[{}]", new Object[] { JSONObject.fromObject(respJSONObject).toString() });
+				
+				String sign = respJSONObject.get("sign");
+				respJSONObject.remove("sign");
+				respJSONObject.remove("sign_type");
+				
+				String result_message = "";
+				if(respJSONObject.containsKey("resp_msg")){
+					result_message = respJSONObject.get("resp_msg");
+				}
+				
+				SignService signService = new SignServiceImpl();
+				if (!signService.verifyMsg(sign, ParamUtil.createLinkString(respJSONObject),
+		                    util.getConfigPath() + keyList.get(0).getPublicKey())) {//验证失败
+		            logger.info("验证签名不通过");
+		            result.put("returnCode", "0012");
+					result.put("returnMsg", "验签失败");
+		        }else{
+		        	String result_code = respJSONObject.get("resp_code");
+		        	String status = respJSONObject.get("status");
+		        	if (result_code.equals("000000")) {
+			            if (status.equals("0")) {//支付失败
+			            	result.put("oriRespType", "E");
+							result.put("oriRespCode", "000002");
+							result.put("oriRespMsg", result_message);
+			            } else if (status.equals("1")) {//支付成功
+			            	result.put("oriRespType", "S");
+							result.put("oriRespCode", "000000");
+							result.put("oriRespMsg", "支付成功");
+							result.put("totalAmount", String.valueOf(debitNote.getMoney()));
+			            } else if (status.equals("2")) {
+			            	result.put("oriRespType", "R");
+							result.put("oriRespCode", "000001");
+							result.put("oriRespMsg", "处理中");
+			            }
+					}else{
+						result.put("oriRespType", "E");
+						result.put("oriRespCode", "000002");
+						result.put("oriRespMsg", result_message);
+					}
+		        }
 		    }else{
 				String serverUrl = MSConfig.msServerUrl;
 				PublicKey yhPubKey = null;
@@ -6432,7 +6525,7 @@ public class CashierDeskController {
 				return checkResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -7365,7 +7458,7 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -7784,7 +7877,7 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNote.setRespMsg(timeResult.getString("returnMsg"));
@@ -8336,7 +8429,7 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
