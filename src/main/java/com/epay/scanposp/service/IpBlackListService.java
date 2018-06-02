@@ -1,5 +1,8 @@
 package com.epay.scanposp.service;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,5 +23,11 @@ public class IpBlackListService extends BaseService<IpBlackList,IpBlackListExamp
 		this.ipBlackListMapper = ipBlackListMapper;
 	}
 	
+	public int countBlack(Map<String,Object> param){
+		return ipBlackListMapper.countBlack(param);
+	}
 
+	public List<Map<String,Object>> countTempBlack(Map<String,Object> param){
+		return ipBlackListMapper.countTempBlack(param);
+	}
 }

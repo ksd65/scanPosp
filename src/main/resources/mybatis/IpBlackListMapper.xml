@@ -7,6 +7,8 @@
     <result column="txn_method" property="txnMethod" jdbcType="VARCHAR" />
     <result column="txn_type" property="txnType" jdbcType="VARCHAR" />
     <result column="ip" property="ip" jdbcType="VARCHAR" />
+    <result column="route_code" property="routeCode" jdbcType="VARCHAR" />
+    <result column="black_type" property="blackType" jdbcType="VARCHAR" />
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
     <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
     <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
@@ -72,7 +74,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, member_id, txn_method,txn_type, ip, create_by, create_date, update_by, 
+    id, member_id, txn_method,txn_type, ip,route_code,black_type, create_by, create_date, update_by, 
     update_date, del_flag
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.IpBlackListExample" >
@@ -112,12 +114,12 @@
     <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
       SELECT LAST_INSERT_ID() 
     </selectKey>
-    insert into bu_ip_blacklist (member_id,txn_method,txn_type,ip,
+    insert into bu_ip_blacklist (member_id,txn_method,txn_type,ip,route_code,black_type,
       create_by, create_date, 
       update_by, update_date, del_flag
       )
     values (#{memberId,jdbcType=INTEGER},#{txnMethod,jdbcType=VARCHAR},
-     #{txnType,jdbcType=VARCHAR},#{ip,jdbcType=VARCHAR},
+     #{txnType,jdbcType=VARCHAR},#{ip,jdbcType=VARCHAR},#{routeCode,jdbcType=VARCHAR},#{blackType,jdbcType=VARCHAR},
      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, 
       #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{delFlag,jdbcType=CHAR}
       )
@@ -139,6 +141,12 @@
       </if>
       <if test="ip != null" >
         ip,
+      </if>
+      <if test="routeCode != null" >
+        route_code,
+      </if>
+      <if test="blackType != null" >
+        black_type,
       </if>
       <if test="createBy != null" >
         create_by,
@@ -169,6 +177,12 @@
       <if test="ip != null" >
         #{ip,jdbcType=VARCHAR},
       </if>
+      <if test="routeCode != null" >
+        #{routeCode,jdbcType=VARCHAR},
+      </if>
+      <if test="blackType != null" >
+        #{blackType,jdbcType=VARCHAR},
+      </if>
       <if test="createBy != null" >
         #{createBy,jdbcType=VARCHAR},
       </if>
@@ -191,6 +205,28 @@
     <if test="_parameter != null" >
       <include refid="Example_Where_Clause" />
     </if>
+  </select>
+  
+  <select id="countBlack" parameterType="java.util.Map" resultType="java.lang.Integer" >
+   <![CDATA[
+   SELECT count(1) FROM bu_ip_blacklist t where t.ip = #{ip,jdbcType=VARCHAR} AND (t.route_code='0' OR t.route_code=#{routeCode,jdbcType=VARCHAR}) AND t.txn_type=#{txnType,jdbcType=VARCHAR} AND 
+	(t.black_type='2' OR (t.black_type='1' AND t.create_date >= DATE_SUB(
+			SYSDATE(),
+			INTERVAL #{seconds,jdbcType=INTEGER}  SECOND
+			)))
+   
+   ]]>
+  </select>
+  
+  <select id="countTempBlack" parameterType="java.util.Map" resultType="java.util.Map" >
+   <![CDATA[
+   SELECT t.route_code,t.txn_type,t.ip,COUNT(1) counts FROM bu_ip_blacklist t
+	WHERE t.black_type='1' AND NOT EXISTS (
+	SELECT 1 FROM bu_ip_blacklist t1 WHERE t1.black_type='2' AND t1.route_code = t.route_code AND t1.txn_type = t.txn_type AND t1.ip=t.ip
+	)
+	 GROUP BY t.route_code,t.txn_type,t.ip
+   
+   ]]>
   </select>
   
   

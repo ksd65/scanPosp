@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.entity.DebitNoteIp;
+import com.epay.scanposp.entity.DebitNoteIpExample;
 import com.epay.scanposp.entity.IpBlackList;
 import com.epay.scanposp.entity.IpBlackListExample;
 import com.epay.scanposp.entity.MemberIpRule;
@@ -178,26 +179,40 @@ public class CommonUtilService {
 	 * @param ip
 	 * @return
 	 */
-	public JSONObject checkLimitIpFail(String payMethod, String payType, int memberId, String ip){
+	public JSONObject checkLimitIpFail(String payMethod, String payType, int memberId, String ip,String routeCode){
 		JSONObject result = new JSONObject();
+		String configName = "IP_BLACK_TIME_"+routeCode+"_"+payType;
 		String txnType = transPayType(payType);
-		IpBlackListExample ipBlackListExample = new IpBlackListExample();
-		ipBlackListExample.createCriteria().andTxnMethodEqualTo(payMethod).andTxnTypeEqualTo(txnType).andIpEqualTo(ip).andDelFlagEqualTo("0");
-		List<IpBlackList> ipList = ipBlackListService.selectByExample(ipBlackListExample);
-		if(ipList!=null && ipList.size()>0){
-			result.put("returnCode", "4004");
-			result.put("returnMsg", "IP"+ip+"无支付权限");
-			return result;
-		}
-		String configName = "LIMIT_FAIL_TIMES_"+payMethod+"_"+payType;
-		String value = "";
+		String second = "";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
 		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
 		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
 		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			second = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(second)){
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("ip", ip);
+			param.put("routeCode", routeCode);
+			param.put("txnType", txnType);
+			param.put("seconds", second);
+			int blackCount = ipBlackListService.countBlack(param);
+			if(blackCount>0){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "IP"+ip+"无支付权限");
+				return result;
+			}
+		}
+		
+		configName = "LIMIT_FAIL_TIMES_"+routeCode+"_"+payType;
+		String value = "";
+		sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
 			value = sysCommonConfig.get(0).getValue();
 		}
-		configName = "LIMIT_FAIL_COUNT_"+payMethod+"_"+payType;
+		configName = "LIMIT_FAIL_COUNT_"+routeCode+"_"+payType;
 		String count = "";
 		sysCommonConfigExample = new SysCommonConfigExample();
 		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
@@ -208,16 +223,18 @@ public class CommonUtilService {
 		if(!"".equals(value)&&!"".equals(count)){
 			Map<String,Object> param = new HashMap<String, Object>();
 			param.put("ip", ip);
-			param.put("txnMethod", payMethod);
+			param.put("routeCode", routeCode);
 			param.put("txnType", txnType);
 			param.put("seconds", value);
 			int counts = debitNoteService.selectFailCountsWithinTime(param);
 			if(counts>=Integer.parseInt(count)){
 				IpBlackList ipBlackList = new IpBlackList();
 				ipBlackList.setTxnType(txnType);
-				ipBlackList.setTxnMethod(payMethod);
+				//ipBlackList.setTxnMethod(payMethod);
 				ipBlackList.setIp(ip);
 				ipBlackList.setMemberId(memberId);
+				ipBlackList.setRouteCode(routeCode);
+				ipBlackList.setBlackType("1");
 				ipBlackList.setCreateDate(new Date());
 				ipBlackList.setDelFlag("0");
 				ipBlackListService.insertSelective(ipBlackList);
@@ -586,19 +603,32 @@ public class CommonUtilService {
 	public JSONObject getIpSubMerchant(String payMethod, String payType, Integer memberId ,String routeCode, String ip){
 		JSONObject result = new JSONObject();
 		String txnType = transPayType(payType);
-		IpBlackListExample ipBlackListExample = new IpBlackListExample();
-		ipBlackListExample.createCriteria().andIpEqualTo(ip).andDelFlagEqualTo("0");
-		List<IpBlackList> ipList = ipBlackListService.selectByExample(ipBlackListExample);
-		if(ipList!=null && ipList.size()>0){
-			result.put("returnCode", "4004");
-			result.put("returnMsg", "IP"+ip+"无支付权限");
-			return result;
-		}
-		String configName = "LIMIT_CONTINUE_FAIL_COUNTS_"+routeCode;
-		String value = "";
+		String configName = "IP_BLACK_TIME_"+routeCode+"_"+payType;
+		String second = "";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
 		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
 		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			second = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(second)){
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("ip", ip);
+			param.put("routeCode", routeCode);
+			param.put("txnType", txnType);
+			param.put("seconds", second);
+			int blackCount = ipBlackListService.countBlack(param);
+			if(blackCount>0){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "IP"+ip+"无支付权限");
+				return result;
+			}
+		}
+		configName = "LIMIT_CONTINUE_FAIL_COUNTS_"+routeCode+"_"+payType;
+		String value = "";
+		sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
 		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
 			value = sysCommonConfig.get(0).getValue();
 		}
@@ -607,8 +637,9 @@ public class CommonUtilService {
 			Map<String,Object> param = new HashMap<String, Object>();
 			param.put("ip", ip);
 			param.put("routeId", routeCode);
+			param.put("txnType", txnType);
 			param.put("createDate", DateUtil.getDateFormat(new Date(), "yyyy-MM-dd")+" 00:00:00");
-			List<DebitNoteIp> debitNoteIpList = debitNoteIpService.selectByIp(param);
+			List<DebitNoteIp> debitNoteIpList = debitNoteIpService.selectByIp(param);//取黑名单后最近的订单
 			int count = 0;
 			if(debitNoteIpList!=null&&debitNoteIpList.size()>0){
 				DebitNoteIp debitNoteIp = debitNoteIpList.get(0);
@@ -626,15 +657,33 @@ public class CommonUtilService {
 					}
 					
 				}
-			}else{
-				return null;
+			}else{//判断是否有在临时黑名单
+				IpBlackListExample ipBlackListExample = new IpBlackListExample();
+				ipBlackListExample.createCriteria().andIpEqualTo(ip).andRouteCodeEqualTo(routeCode).andTxnTypeEqualTo(txnType).andBlackTypeEqualTo("1").andDelFlagEqualTo("0");
+				ipBlackListExample.setOrderByClause(" create_date DESC");
+				List<IpBlackList> ipBlackList = ipBlackListService.selectByExample(ipBlackListExample);
+				if(ipBlackList == null || ipBlackList.size() == 0){
+					return null;
+				}
+				
+				//取临时黑名单前最新的订单
+				DebitNoteIpExample debitNoteIpExample = new DebitNoteIpExample();
+				debitNoteIpExample.createCriteria().andIpEqualTo(ip).andRouteIdEqualTo(routeCode).andTxnTypeEqualTo(txnType).andCreateDateLessThanOrEqualTo(ipBlackList.get(0).getCreateDate());
+				debitNoteIpExample.setOrderByClause(" create_date DESC");
+				List<DebitNoteIp> noteIpList = debitNoteIpService.selectByExample(debitNoteIpExample);
+				if(noteIpList == null || noteIpList.size() == 0){
+					return null;
+				}
+				subMerchantCode = noteIpList.get(0).getSubMerchantCode();
 			}
 			if(count>=Integer.parseInt(value)){
 				IpBlackList ipBlackList = new IpBlackList();
 				ipBlackList.setTxnType(txnType);
-				ipBlackList.setTxnMethod(payMethod);
+				//ipBlackList.setTxnMethod(payMethod);
 				ipBlackList.setIp(ip);
 				ipBlackList.setMemberId(memberId);
+				ipBlackList.setRouteCode(routeCode);
+				ipBlackList.setBlackType("1");
 				ipBlackList.setCreateDate(new Date());
 				ipBlackList.setDelFlag("0");
 				ipBlackListService.insertSelective(ipBlackList);

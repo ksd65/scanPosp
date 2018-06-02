@@ -5039,7 +5039,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip,RouteCodeConstant.TB_ROUTE_CODE);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -5265,7 +5265,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -5509,7 +5509,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -6010,7 +6010,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip,RouteCodeConstant.RF_ROUTE_CODE);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -7161,7 +7161,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_QQ, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_QQ, memberInfo.getId(), ip,RouteCodeConstant.ZHZF_ROUTE_CODE);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -7592,7 +7592,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -8024,7 +8024,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -8410,7 +8410,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return checkResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -8671,7 +8671,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -9128,7 +9128,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -9358,7 +9358,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNote.setRespMsg(timeResult.getString("returnMsg"));
@@ -9464,6 +9464,20 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			debitNote.setSubMerchantCode(subMerchantCode);
 			
 			debitNoteService.insertSelective(debitNote);
+			
+			
+			DebitNoteIp debitNoteIp = new DebitNoteIp();
+	        debitNoteIp.setMemberId(memberInfo.getId());
+	        debitNoteIp.setMerchantCode(merCode);
+	        debitNoteIp.setOrderCode(orderCode);
+	        debitNoteIp.setRouteId(routeCode);
+	        debitNoteIp.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
+	        debitNoteIp.setTxnType(payType);
+	        debitNoteIp.setIp(ip);
+	        debitNoteIp.setCreateDate(debitNote.getCreateDate());
+	        debitNoteIp.setSubMerchantCode(subMerchantCode);
+	        debitNoteIp.setStatus("0");
+	        debitNoteIpService.insertSelective(debitNoteIp);
 			
 			DebitNoteSub debitNoteSub = new DebitNoteSub();
 			debitNoteSub.setRouteId(routeCode);
@@ -9590,22 +9604,6 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 	            	subMerchantTotalService.updateByPrimaryKey(subMerchantTotal);
 	            }
 	            
-		        DebitNoteIp debitNoteIp = new DebitNoteIp();
-		        debitNoteIp.setMemberId(memberInfo.getId());
-		        debitNoteIp.setMerchantCode(merCode);
-		        debitNoteIp.setOrderCode(orderCode);
-		        debitNoteIp.setRouteId(routeCode);
-		        debitNoteIp.setTxnMethod(PayTypeConstant.PAY_METHOD_H5);
-		        debitNoteIp.setTxnType(payType);
-		        debitNoteIp.setIp(ip);
-		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
-		        debitNoteIp.setSubMerchantCode(subMerchantCode);
-		        if(!flag){
-		        	debitNoteIp.setStatus("2");
-		        }else{
-		        	debitNoteIp.setStatus("0");
-		        }
-				debitNoteIpService.insertSelective(debitNoteIp);
 	        }catch(Exception ex){
 	        	logger.error(ex.getMessage());
 	        }
@@ -9693,7 +9691,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -9897,7 +9895,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -10122,7 +10120,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_H5, payTypeStr, memberInfo.getId(), ip,routeCode);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -10225,7 +10223,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			Map<String, String> respJSONObject = ss.execute(request2);
 			
-			logger.info("商盟支付请求数据[{}]", new Object[] { JSONObject.fromObject(respJSONObject).toString() });
+			logger.info("商盟支付返回数据[{}]", new Object[] { JSONObject.fromObject(respJSONObject).toString() });
 			
 			if(respJSONObject.containsKey(Constant.RESP_CODE) && Constant.SUCCESS_RESP_CODE.equals(respJSONObject.get(Constant.RESP_CODE))){
 				result.put("payUrl", respJSONObject.get("redirect_url"));

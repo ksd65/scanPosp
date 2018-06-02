@@ -577,17 +577,15 @@
 	   <if test="ip != null">
 	       AND t.ip = #{ip,jdbcType=VARCHAR}
 	   </if>
-	   <if test="txnMethod != null">
-	       AND t.txn_method = #{txnMethod,jdbcType=VARCHAR}
-	   </if>
 	   <if test="txnType != null">
 	       AND t.txn_type = #{txnType,jdbcType=VARCHAR}
 	   </if>
+	   <if test="routeCode != null">
+	       AND t.route_id = #{routeCode,jdbcType=VARCHAR}
+	   </if>
 	   <![CDATA[
-	 		AND t.create_date >= DATE_SUB(
-			SYSDATE(),
-			INTERVAL #{seconds,jdbcType=INTEGER}  SECOND
-			)
+	 		AND t.create_date >= (SELECT GREATEST(IFNULL(MAX(t.create_date),DATE_SUB(SYSDATE(),INTERVAL #{seconds,jdbcType=INTEGER}  SECOND)),DATE_SUB(SYSDATE(),INTERVAL #{seconds,jdbcType=INTEGER}  SECOND)) 
+			FROM bu_ip_blacklist t WHERE t.ip=#{ip,jdbcType=INTEGER} AND t.txn_type=#{txnType,jdbcType=VARCHAR} and t.route_code=#{routeCode,jdbcType=VARCHAR} and t.black_type='1')
 	 	]]>
   </select>
   

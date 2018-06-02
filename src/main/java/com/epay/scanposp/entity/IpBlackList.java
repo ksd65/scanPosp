@@ -14,6 +14,10 @@ public class IpBlackList {
 	
 	private String ip;
 	
+	private String routeCode;
+	
+	private String blackType;
+	
 	private String delFlag;
 	
 	private String createBy;
@@ -103,6 +107,22 @@ public class IpBlackList {
 
 	public void setIp(String ip) {
 		this.ip = ip;
+	}
+
+	public String getRouteCode() {
+		return routeCode;
+	}
+
+	public void setRouteCode(String routeCode) {
+		this.routeCode = routeCode;
+	}
+
+	public String getBlackType() {
+		return blackType;
+	}
+
+	public void setBlackType(String blackType) {
+		this.blackType = blackType;
 	}
 
 	

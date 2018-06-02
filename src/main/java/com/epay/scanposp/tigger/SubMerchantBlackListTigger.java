@@ -11,11 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.epay.scanposp.common.utils.DateUtil;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
+import com.epay.scanposp.entity.IpBlackList;
 import com.epay.scanposp.entity.SubMerchantBlackList;
 import com.epay.scanposp.entity.SubMerchantBlackListExample;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.service.CommonService;
+import com.epay.scanposp.service.IpBlackListService;
 import com.epay.scanposp.service.SubMerchantBlackListService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.TradeDailyTotalService;
@@ -30,6 +32,8 @@ public class SubMerchantBlackListTigger {
 	@Autowired
 	private SubMerchantBlackListService subMerchantBlackListService;
 	
+	@Autowired
+	private IpBlackListService ipBlackListService;
 	
 	@Autowired
 	private TradeDailyTotalService tradeDailyTotalService;
@@ -121,6 +125,41 @@ public class SubMerchantBlackListTigger {
 					}
 				}
 			}
+			
+			//IP当日永久黑名单定时
+			String ipValue = "";
+			sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo("IP_CONTINUE_BLACK_COUNT").andDelFlagEqualTo("0");
+			sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+				ipValue = sysCommonConfig.get(0).getValue();
+			}
+			if(!"".equals(ipValue)){
+				Map<String,Object> paramMap = new HashMap<String, Object>();
+				List<Map<String,Object>> list = ipBlackListService.countTempBlack(paramMap);
+				if(list!=null&&list.size()>0){
+					for(Map<String,Object> map:list){
+						String route_code = (String)map.get("route_code");
+						String txn_type = (String)map.get("txn_type");
+						String ip = (String)map.get("ip");
+						Long count = (Long)map.get("counts");
+					//	System.out.println(subMerchantCode+"    "+count);
+						if(count>=Integer.parseInt(ipValue)){//超过
+							IpBlackList ipBlackList = new IpBlackList();
+							ipBlackList.setTxnType(txn_type);
+							//ipBlackList.setTxnMethod(payMethod);
+							ipBlackList.setIp(ip);
+							//ipBlackList.setMemberId(memberId);
+							ipBlackList.setRouteCode(route_code);
+							ipBlackList.setBlackType("2");
+							ipBlackList.setCreateDate(new Date());
+							ipBlackList.setDelFlag("0");
+							ipBlackListService.insertSelective(ipBlackList);
+						}
+					}
+				}
+			}
+			
 		}catch(Exception e){
 			logger.error(e.getMessage());
 		}

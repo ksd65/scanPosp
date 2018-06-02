@@ -457,6 +457,148 @@ public class IpBlackListExample {
             return (Criteria) this;
         }
         
+        
+        
+        public Criteria andBlackTypeIsNull() {
+            addCriterion("black_type is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeIsNotNull() {
+            addCriterion("black_type is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeEqualTo(String value) {
+            addCriterion("black_type =", value, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeNotEqualTo(String value) {
+            addCriterion("black_type <>", value, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeGreaterThan(String value) {
+            addCriterion("black_type >", value, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeGreaterThanOrEqualTo(String value) {
+            addCriterion("black_type >=", value, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeLessThan(String value) {
+            addCriterion("black_type <", value, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeLessThanOrEqualTo(String value) {
+            addCriterion("black_type <=", value, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeLike(String value) {
+            addCriterion("black_type like", value, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeNotLike(String value) {
+            addCriterion("black_type not like", value, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeIn(List<String> values) {
+            addCriterion("black_type in", values, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeNotIn(List<String> values) {
+            addCriterion("black_type not in", values, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeBetween(String value1, String value2) {
+            addCriterion("black_type between", value1, value2, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andBlackTypeNotBetween(String value1, String value2) {
+            addCriterion("black_type not between", value1, value2, "blackType");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeIsNull() {
+            addCriterion("route_code is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeIsNotNull() {
+            addCriterion("route_code is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeEqualTo(String value) {
+            addCriterion("route_code =", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotEqualTo(String value) {
+            addCriterion("route_code <>", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeGreaterThan(String value) {
+            addCriterion("route_code >", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeGreaterThanOrEqualTo(String value) {
+            addCriterion("route_code >=", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLessThan(String value) {
+            addCriterion("route_code <", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLessThanOrEqualTo(String value) {
+            addCriterion("route_code <=", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeLike(String value) {
+            addCriterion("route_code like", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotLike(String value) {
+            addCriterion("route_code not like", value, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeIn(List<String> values) {
+            addCriterion("route_code in", values, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotIn(List<String> values) {
+            addCriterion("route_code not in", values, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeBetween(String value1, String value2) {
+            addCriterion("route_code between", value1, value2, "routeCode");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteCodeNotBetween(String value1, String value2) {
+            addCriterion("route_code not between", value1, value2, "routeCode");
+            return (Criteria) this;
+        }
+
         public Criteria andCreateByIsNull() {
             addCriterion("create_by is null");
             return (Criteria) this;

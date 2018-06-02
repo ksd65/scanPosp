@@ -1,6 +1,7 @@
 package com.epay.scanposp.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import com.epay.scanposp.common.base.BaseDao;
 import com.epay.scanposp.common.base.MyBatisRepository;
@@ -11,5 +12,8 @@ public interface IpBlackListMapper extends BaseDao<IpBlackList, IpBlackListExamp
     
     List<IpBlackList> selectByExample(IpBlackListExample example);
 
+    int countBlack(Map<String,Object> param);
+    
+    List<Map<String,Object>> countTempBlack(Map<String,Object> param);
      
 }

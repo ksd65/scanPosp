@@ -253,7 +253,10 @@
     	<include refid="Base_Column_List" />
     FROM bu_debit_note_ip t where t.ip=#{ip,jdbcType=VARCHAR} 
      and t.route_id=#{routeId,jdbcType=VARCHAR} 
-     and t.create_date>=#{createDate,jdbcType=VARCHAR} ORDER BY t.create_date DESC
+     and t.txn_type=#{txnType,jdbcType=VARCHAR}
+     and t.create_date>=(SELECT GREATEST(IFNULL(MAX(t.create_date),#{createDate,jdbcType=VARCHAR}),#{createDate,jdbcType=VARCHAR}) 
+	 FROM bu_ip_blacklist t WHERE t.ip=#{ip,jdbcType=VARCHAR} AND t.txn_type=#{txnType,jdbcType=VARCHAR} and t.route_code=#{routeId,jdbcType=VARCHAR} and t.black_type='1')
+      ORDER BY t.create_date DESC
   </select>
   
 </mapper>

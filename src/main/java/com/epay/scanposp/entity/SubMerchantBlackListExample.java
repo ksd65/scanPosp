@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.epay.scanposp.entity.SubMerchantTotalExample.Criteria;
-
 public class SubMerchantBlackListExample {
     protected String orderByClause;
 
