@@ -99,6 +99,7 @@ import com.epay.scanposp.entity.BusinessCategory;
 import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 import com.epay.scanposp.entity.DebitNoteIp;
+import com.epay.scanposp.entity.DebitNoteIpExample;
 import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
 import com.epay.scanposp.entity.EskNotice;
@@ -9577,6 +9578,17 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 						debitNote_1.setRespMsg(result_message.length()>250?result_message.substring(0, 250):result_message);
 					}
 					debitNoteService.updateByPrimaryKey(debitNote_1);
+				}
+				
+				
+				DebitNoteIpExample debitNoteIpExample = new DebitNoteIpExample();
+				debitNoteIpExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<DebitNoteIp> debitNoteIps = debitNoteIpService.selectByExample(debitNoteIpExample);
+				if (debitNoteIps != null && debitNoteIps.size() > 0) {
+					DebitNoteIp debitNoteIp_1 = debitNoteIps.get(0);
+					debitNoteIp_1.setStatus("2");
+					debitNoteIp_1.setUpdateDate(new Date());
+					debitNoteIpService.updateByPrimaryKey(debitNoteIp_1);
 				}
 			}
 			try{

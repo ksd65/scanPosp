@@ -7982,6 +7982,19 @@ public class CashierDeskController {
 			debitNoteSub.setCreateDate(debitNote.getCreateDate());
 			debitNoteSubService.insertSelective(debitNoteSub);
 			
+			DebitNoteIp debitNoteIp = new DebitNoteIp();
+	        debitNoteIp.setMemberId(memberInfo.getId());
+	        debitNoteIp.setMerchantCode(merCode);
+	        debitNoteIp.setOrderCode(orderCode);
+	        debitNoteIp.setRouteId(routeCode);
+	        debitNoteIp.setTxnMethod(PayTypeConstant.PAY_METHOD_SMZF);
+	        debitNoteIp.setTxnType(payType);
+	        debitNoteIp.setIp(ip);
+	        debitNoteIp.setCreateDate(debitNote.getCreateDate());
+	        debitNoteIp.setSubMerchantCode(subMerchantCode);
+	        debitNoteIp.setStatus("0");
+	        debitNoteIpService.insertSelective(debitNoteIp);
+			
 			
 			PayResultNotice payResultNotice = new PayResultNotice();
 			payResultNotice.setOrderCode(debitNote.getOrderCode());
@@ -8081,31 +8094,23 @@ public class CashierDeskController {
 					}
 					debitNoteService.updateByPrimaryKey(debitNote_1);
 				}
+				
+				DebitNoteIpExample debitNoteIpExample = new DebitNoteIpExample();
+				debitNoteIpExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<DebitNoteIp> debitNoteIps = debitNoteIpService.selectByExample(debitNoteIpExample);
+				if (debitNoteIps != null && debitNoteIps.size() > 0) {
+					DebitNoteIp debitNoteIp_1 = debitNoteIps.get(0);
+					debitNoteIp_1.setStatus("2");
+					debitNoteIp_1.setUpdateDate(new Date());
+					debitNoteIpService.updateByPrimaryKey(debitNoteIp_1);
+				}
 			}
 			try{
 				SubMerchantCodeTemp smTemp = new SubMerchantCodeTemp();
 				smTemp.setSubMerchantCode(subMerchantCode);
 				subMerchantCodeTempService.delete(smTemp);
 				
-		        DebitNoteIp debitNoteIp = new DebitNoteIp();
-		        debitNoteIp.setMemberId(memberInfo.getId());
-		        debitNoteIp.setMerchantCode(merCode);
-		        debitNoteIp.setOrderCode(orderCode);
-		        debitNoteIp.setRouteId(routeCode);
-		        debitNoteIp.setTxnMethod(PayTypeConstant.PAY_METHOD_SMZF);
-		        debitNoteIp.setTxnType(payType);
-		        debitNoteIp.setIp(ip);
-		        debitNoteIp.setCreateDate(debitNote.getCreateDate());
-		        debitNoteIp.setSubMerchantCode(subMerchantCode);
-		        if(!flag){
-		        	debitNoteIp.setStatus("2");
-		        }else{
-		        	debitNoteIp.setStatus("0");
-		        }
-				debitNoteIpService.insertSelective(debitNoteIp);
-				
-				
-				String tradeDate  = new SimpleDateFormat("yyyyMMdd").format(new Date());
+		        String tradeDate  = new SimpleDateFormat("yyyyMMdd").format(new Date());
 				SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
 				subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(tradeDate).andDelFlagEqualTo("0");
 	            List<SubMerchantTotal> mtList = subMerchantTotalService.selectByExample(subMerchantTotalExample);

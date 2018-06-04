@@ -188,10 +188,13 @@
   
   <select id="getSubMerchantFailIpCount" parameterType="java.util.Map" resultType="java.util.Map">
   	<![CDATA[
-  	SELECT t.sub_merchant_code,COUNT(DISTINCT(t.ip)) counts FROM bu_debit_note_ip t 
-  	WHERE t.`status`<>'1' and t.create_date>=#{createDate,jdbcType=VARCHAR} AND t.route_id=#{routeCode,jdbcType=VARCHAR}
- 	GROUP BY t.sub_merchant_code
-  	]]>
+  	SELECT s.sub_merchant_code,s.counts FROM(
+		SELECT t.sub_merchant_code,COUNT(1) counts FROM bu_debit_note_ip t 
+  		WHERE t.`status`='0' and t.create_date>=#{createDate,jdbcType=VARCHAR} AND t.route_id=#{routeCode,jdbcType=VARCHAR}
+ 	GROUP BY t.sub_merchant_code) s 
+ 	WHERE s.counts>=#{COUNTS,jdbcType=INTEGER}
+	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list b where b.sub_merchant_code=s.sub_merchant_code AND b.del_flag='0' AND ((b.trade_date=#{tradeDate,jdbcType=VARCHAR} AND b.black_type='1') OR b.black_type='2'))
+ 	]]>
   </select>
   
   <select id="getSubMerchantBlackToday" parameterType="java.util.Map" resultMap="BaseResultMap">
