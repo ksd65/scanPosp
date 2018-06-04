@@ -50,7 +50,7 @@ public class SubMerchantBlackListTigger {
 			
 			String value = "";
 			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
-			sysCommonConfigExample.or().andNameEqualTo("SUB_MERCHANT_FAIL_IP_COUNT").andDelFlagEqualTo("0");
+			sysCommonConfigExample.or().andNameEqualTo("SUB_MERCHANT_FAIL_COUNT").andDelFlagEqualTo("0");
 			List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
 			if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
 				value = sysCommonConfig.get(0).getValue();
@@ -60,26 +60,21 @@ public class SubMerchantBlackListTigger {
 				Map<String,Object> paramMap = new HashMap<String, Object>();
 				paramMap.put("createDate", date);
 				paramMap.put("routeCode", RouteCodeConstant.TLWD_ROUTE_CODE);
+				paramMap.put("COUNTS", value);
+				paramMap.put("tradeDate", DateUtil.getDateFormat(time, "yyyyMMdd"));
 				List<Map<String,Object>> list = subMerchantBlackListService.getSubMerchantFailIpCount(paramMap);
 				if(list!=null&&list.size()>0){
 					for(Map<String,Object> map:list){
 						String subMerchantCode = (String)map.get("sub_merchant_code");
-						Long count = (Long)map.get("counts");
-					//	System.out.println(subMerchantCode+"    "+count);
-						if(count>=Integer.parseInt(value)){//超过IP数
-							SubMerchantBlackListExample subMerchantBlackListExample = new SubMerchantBlackListExample();
-							subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("1").andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(DateUtil.getDateFormat(time, "yyyyMMdd")).andDelFlagEqualTo("0");
-							List<SubMerchantBlackList> bllist = subMerchantBlackListService.selectByExample(subMerchantBlackListExample);
-							if(bllist ==null || bllist.size()==0){
-								SubMerchantBlackList subMerchantBlackList = new SubMerchantBlackList();
-								subMerchantBlackList.setBlackType("1");
-								subMerchantBlackList.setSubMerchantCode(subMerchantCode);
-								subMerchantBlackList.setTradeDate(DateUtil.getDateFormat(time, "yyyyMMdd"));
-								subMerchantBlackList.setCreateDate(new Date());
-								subMerchantBlackListService.insertSelective(subMerchantBlackList);
-							}
-							
-						}
+						//Long count = (Long)map.get("counts");
+						
+						SubMerchantBlackList subMerchantBlackList = new SubMerchantBlackList();
+						subMerchantBlackList.setBlackType("2");
+						subMerchantBlackList.setSubMerchantCode(subMerchantCode);
+						//subMerchantBlackList.setTradeDate(DateUtil.getDateFormat(time, "yyyyMMdd"));
+						subMerchantBlackList.setCreateDate(new Date());
+						subMerchantBlackListService.insertSelective(subMerchantBlackList);
+						
 					}
 				}
 			}
