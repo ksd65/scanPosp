@@ -69,9 +69,9 @@ public class SubMerchantBlackListTigger {
 						//Long count = (Long)map.get("counts");
 						
 						SubMerchantBlackList subMerchantBlackList = new SubMerchantBlackList();
-						subMerchantBlackList.setBlackType("2");
+						subMerchantBlackList.setBlackType("1");
 						subMerchantBlackList.setSubMerchantCode(subMerchantCode);
-						//subMerchantBlackList.setTradeDate(DateUtil.getDateFormat(time, "yyyyMMdd"));
+						subMerchantBlackList.setTradeDate(DateUtil.getDateFormat(time, "yyyyMMdd"));
 						subMerchantBlackList.setCreateDate(new Date());
 						subMerchantBlackListService.insertSelective(subMerchantBlackList);
 						

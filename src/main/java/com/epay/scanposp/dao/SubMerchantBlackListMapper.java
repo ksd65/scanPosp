@@ -15,4 +15,6 @@ public interface SubMerchantBlackListMapper extends BaseDao<SubMerchantBlackList
     List<Map<String,Object>> getSubMerchantFailIpCount(Map<String,Object> param);
     
     List<SubMerchantBlackList> getSubMerchantBlackToday(Map<String,Object> param);
+    
+    int getSubMerchantBlackCount(Map<String,Object> param);
 }

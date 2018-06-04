@@ -632,50 +632,51 @@ public class CommonUtilService {
 		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
 			value = sysCommonConfig.get(0).getValue();
 		}
-		if(!"".equals(value)){
-			String subMerchantCode = "";
-			Map<String,Object> param = new HashMap<String, Object>();
-			param.put("ip", ip);
-			param.put("routeId", routeCode);
-			param.put("txnType", txnType);
-			param.put("createDate", DateUtil.getDateFormat(new Date(), "yyyy-MM-dd")+" 00:00:00");
-			List<DebitNoteIp> debitNoteIpList = debitNoteIpService.selectByIp(param);//取黑名单后最近的订单
-			int count = 0;
-			if(debitNoteIpList!=null&&debitNoteIpList.size()>0){
-				DebitNoteIp debitNoteIp = debitNoteIpList.get(0);
+		
+		String subMerchantCode = "";
+		Map<String,Object> param = new HashMap<String, Object>();
+		param.put("ip", ip);
+		param.put("routeId", routeCode);
+		param.put("txnType", txnType);
+		param.put("createDate", DateUtil.getDateFormat(new Date(), "yyyy-MM-dd")+" 00:00:00");
+		List<DebitNoteIp> debitNoteIpList = debitNoteIpService.selectByIp(param);//取黑名单后最近的订单
+		int count = 0;
+		if(debitNoteIpList!=null&&debitNoteIpList.size()>0){
+			DebitNoteIp debitNoteIp = debitNoteIpList.get(0);
+			if("1".equals(debitNoteIp.getStatus())){//成功
+				return null;
+			}
+			for(int i=0;i<debitNoteIpList.size();i++){
+				debitNoteIp = debitNoteIpList.get(i);
 				if("1".equals(debitNoteIp.getStatus())){//成功
-					return null;
+					break;
 				}
-				for(int i=0;i<debitNoteIpList.size();i++){
-					debitNoteIp = debitNoteIpList.get(i);
-					if("1".equals(debitNoteIp.getStatus())){//成功
-						break;
-					}
-					if("0".equals(debitNoteIp.getStatus())||"2".equals(debitNoteIp.getStatus())){
-						subMerchantCode = debitNoteIp.getSubMerchantCode();
-						count++;
-					}
-					
-				}
-			}else{//判断是否有在临时黑名单
-				IpBlackListExample ipBlackListExample = new IpBlackListExample();
-				ipBlackListExample.createCriteria().andIpEqualTo(ip).andRouteCodeEqualTo(routeCode).andTxnTypeEqualTo(txnType).andBlackTypeEqualTo("1").andDelFlagEqualTo("0");
-				ipBlackListExample.setOrderByClause(" create_date DESC");
-				List<IpBlackList> ipBlackList = ipBlackListService.selectByExample(ipBlackListExample);
-				if(ipBlackList == null || ipBlackList.size() == 0){
-					return null;
+				if("0".equals(debitNoteIp.getStatus())||"2".equals(debitNoteIp.getStatus())){
+					subMerchantCode = debitNoteIp.getSubMerchantCode();
+					count++;
 				}
 				
-				//取临时黑名单前最新的订单
-				DebitNoteIpExample debitNoteIpExample = new DebitNoteIpExample();
-				debitNoteIpExample.createCriteria().andIpEqualTo(ip).andRouteIdEqualTo(routeCode).andTxnTypeEqualTo(txnType).andCreateDateLessThanOrEqualTo(ipBlackList.get(0).getCreateDate());
-				debitNoteIpExample.setOrderByClause(" create_date DESC");
-				List<DebitNoteIp> noteIpList = debitNoteIpService.selectByExample(debitNoteIpExample);
-				if(noteIpList == null || noteIpList.size() == 0){
-					return null;
-				}
-				subMerchantCode = noteIpList.get(0).getSubMerchantCode();
 			}
+		}else{//判断是否有在临时黑名单
+			IpBlackListExample ipBlackListExample = new IpBlackListExample();
+			ipBlackListExample.createCriteria().andIpEqualTo(ip).andRouteCodeEqualTo(routeCode).andTxnTypeEqualTo(txnType).andBlackTypeEqualTo("1").andDelFlagEqualTo("0");
+			ipBlackListExample.setOrderByClause(" create_date DESC");
+			List<IpBlackList> ipBlackList = ipBlackListService.selectByExample(ipBlackListExample);
+			if(ipBlackList == null || ipBlackList.size() == 0){
+				return null;
+			}
+			
+			//取临时黑名单前最新的订单
+			DebitNoteIpExample debitNoteIpExample = new DebitNoteIpExample();
+			debitNoteIpExample.createCriteria().andIpEqualTo(ip).andRouteIdEqualTo(routeCode).andTxnTypeEqualTo(txnType).andCreateDateLessThanOrEqualTo(ipBlackList.get(0).getCreateDate());
+			debitNoteIpExample.setOrderByClause(" create_date DESC");
+			List<DebitNoteIp> noteIpList = debitNoteIpService.selectByExample(debitNoteIpExample);
+			if(noteIpList == null || noteIpList.size() == 0){
+				return null;
+			}
+			subMerchantCode = noteIpList.get(0).getSubMerchantCode();
+		}
+		if(!"".equals(value)){
 			if(count>=Integer.parseInt(value)){
 				IpBlackList ipBlackList = new IpBlackList();
 				ipBlackList.setTxnType(txnType);
@@ -690,18 +691,27 @@ public class CommonUtilService {
 				result.put("returnCode", "4004");
 				result.put("returnMsg", "IP"+ip+"无支付权限");
 				return result;
-			}else if(!"".equals(subMerchantCode)){
-				SubMerchantCodeExample subMerchantCodeExample = new SubMerchantCodeExample();
-				subMerchantCodeExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andDelFlagEqualTo("0");
-				List<SubMerchantCode> subList = subMerchantCodeService.selectByExample(subMerchantCodeExample);
-				if(subList!=null && subList.size()>0){
-					result.put("returnCode", "0000");
-					result.put("subMerchantCode", subMerchantCode);
-					result.put("name", subList.get(0).getName());
-					return result;
-				}
 			}
 		}
+		if(!"".equals(subMerchantCode)){
+			Map<String,Object> param1 = new HashMap<String, Object>();
+			param1.put("subMerchantCode", subMerchantCode);
+			param1.put("tradeDate", DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+			int counts = subMerchantBlackListService.getSubMerchantBlackCount(param1);
+			if(counts>0){//在商户黑名单中，重新取
+				return null;
+			}
+			SubMerchantCodeExample subMerchantCodeExample = new SubMerchantCodeExample();
+			subMerchantCodeExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andDelFlagEqualTo("0");
+			List<SubMerchantCode> subList = subMerchantCodeService.selectByExample(subMerchantCodeExample);
+			if(subList!=null && subList.size()>0){
+				result.put("returnCode", "0000");
+				result.put("subMerchantCode", subMerchantCode);
+				result.put("name", subList.get(0).getName());
+				return result;
+			}
+		}
+		
 		return null;
 	}
 	//判断子商户黑名单

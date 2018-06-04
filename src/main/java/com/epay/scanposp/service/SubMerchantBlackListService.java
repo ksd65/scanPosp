@@ -31,4 +31,8 @@ public class SubMerchantBlackListService extends BaseService<SubMerchantBlackLis
 	public List<SubMerchantBlackList> getSubMerchantBlackToday(Map<String,Object> param){
 		return subMerchantBlackListMapper.getSubMerchantBlackToday(param);
 	}
+	
+	public int getSubMerchantBlackCount(Map<String,Object> param){
+		return subMerchantBlackListMapper.getSubMerchantBlackCount(param);
+	}
 }

@@ -190,7 +190,7 @@
   	<![CDATA[
   	SELECT s.sub_merchant_code,s.counts FROM(
 		SELECT t.sub_merchant_code,COUNT(1) counts FROM bu_debit_note_ip t 
-  		WHERE t.`status`='0' and t.create_date>=#{createDate,jdbcType=VARCHAR} AND t.route_id=#{routeCode,jdbcType=VARCHAR}
+  		WHERE t.`status`='0' and t.create_date>=#{createDate,jdbcType=VARCHAR} AND t.route_id=#{routeCode,jdbcType=VARCHAR} AND t.create_date<DATE_SUB(SYSDATE(),INTERVAL 60  SECOND)
  	GROUP BY t.sub_merchant_code) s 
  	WHERE s.counts>=#{COUNTS,jdbcType=INTEGER}
 	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list b where b.sub_merchant_code=s.sub_merchant_code AND b.del_flag='0' AND ((b.trade_date=#{tradeDate,jdbcType=VARCHAR} AND b.black_type='1') OR b.black_type='2'))
@@ -203,6 +203,14 @@
   	FROM bu_sub_merchant_black_list sb 
   	where sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.black_type='1' and sb.del_flag='0'
 	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list s where s.sub_merchant_code=sb.sub_merchant_code and s.black_type='2' and s.del_flag='0')
+  </select>
+  
+  <select id="getSubMerchantBlackCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+  	<![CDATA[
+  	SELECT COUNT(1) FROM 
+ 	bu_sub_merchant_black_list sb 
+  	where sb.sub_merchant_code=#{subMerchantCode,jdbcType=VARCHAR} AND ((sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.black_type='1') OR sb.black_type='2') and sb.del_flag='0'
+	]]>
   </select>
   
 </mapper>
