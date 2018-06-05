@@ -625,7 +625,7 @@ public class NativePayController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_GZHZF, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip,routeCode);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(PayTypeConstant.PAY_METHOD_GZHZF, PayTypeConstant.PAY_TYPE_WX, memberInfo.getId(), ip,routeCode,"");
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
