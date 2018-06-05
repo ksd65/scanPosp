@@ -4528,6 +4528,10 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		String callbackUrl = reqDataJson.getString("callbackUrl");
 		String sceneInfo = reqDataJson.getString("sceneInfo");
 		String ip = reqDataJson.getString("ip");
+		String ipReal = "";
+		if(reqDataJson.containsKey("ipReal")){
+			ipReal = reqDataJson.getString("ipReal");
+		}
 		
 		String signStr = reqDataJson.getString("signStr");
 		
@@ -4600,14 +4604,14 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			userAgent = reqDataJson.getString("userAgent");
 		}
 		
-		result = validMemberInfoForH5(memberCode, orderNum, payMoney, "3",  srcStr.toString(), signStr, callbackUrl,sceneInfo,ip,payType,userAgent);
+		result = validMemberInfoForH5(memberCode, orderNum, payMoney, "3",  srcStr.toString(), signStr, callbackUrl,sceneInfo,ip,payType,userAgent,ipReal);
 		
 		
 		
 		return result;
 	}
 	
-	public JSONObject validMemberInfoForH5(String memberCode,String orderNum,String payMoney,String platformType,String signOrginalStr,String signedStr,String callbackUrl,String sceneInfo,String ip,String payType,String userAgent){
+	public JSONObject validMemberInfoForH5(String memberCode,String orderNum,String payMoney,String platformType,String signOrginalStr,String signedStr,String callbackUrl,String sceneInfo,String ip,String payType,String userAgent,String ipReal){
 		JSONObject result = new JSONObject();
 		
 		MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -4957,6 +4961,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 		}else if(RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("0");
 			if("2".equals(payType)||"3".equals(payType)){
+				ip = ipReal;
 				result = tlWdH5Pay(platformType,memberInfo,memberPayType, payMoney, orderNum,sceneInfo,ip, callbackUrl , merchantCode,userAgent ,routeCode,aisleType,payType);
 			}
 		}else if(RouteCodeConstant.ZNY_ROUTE_CODE.equals(routeCode)){
