@@ -180,7 +180,7 @@ public class CommonUtilService {
 	 * @param ip
 	 * @return
 	 */
-	public JSONObject checkLimitIpFail(String payMethod, String payType, int memberId, String ip,String routeCode){
+	public JSONObject checkLimitIpFail(String payMethod, String payType, int memberId, String ip,String routeCode,String ipReal){
 		JSONObject result = new JSONObject();
 		String configName = "IP_BLACK_TIME_"+routeCode+"_"+payType;
 		String txnType = transPayType(payType);
@@ -204,7 +204,7 @@ public class CommonUtilService {
 				return result;
 			}
 		}
-		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)){
+		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)&&"".equals(ipReal)){
 			return null;
 		}
 		configName = "LIMIT_FAIL_TIMES_"+routeCode+"_"+payType;
@@ -603,7 +603,7 @@ public class CommonUtilService {
 		return null;
 	}
 	//IP取子商户
-	public JSONObject getIpSubMerchant(String payMethod, String payType, Integer memberId ,String routeCode, String ip){
+	public JSONObject getIpSubMerchant(String payMethod, String payType, Integer memberId ,String routeCode, String ip,String ipReal){
 		JSONObject result = new JSONObject();
 		String txnType = transPayType(payType);
 		String configName = "IP_BLACK_TIME_"+routeCode+"_"+payType;
@@ -627,7 +627,7 @@ public class CommonUtilService {
 				return result;
 			}
 		}
-		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)){//扫码支付  
+		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)&&"".equals(ipReal)){//扫码支付  
 			return null;
 		}
 		configName = "LIMIT_CONTINUE_FAIL_COUNTS_"+routeCode+"_"+payType;

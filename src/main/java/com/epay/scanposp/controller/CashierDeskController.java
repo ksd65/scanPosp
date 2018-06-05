@@ -73,6 +73,7 @@ import com.epay.scanposp.common.constant.ZNYConfig;
 import com.epay.scanposp.common.excep.ArgException;
 import com.epay.scanposp.common.utils.CommonUtil;
 import com.epay.scanposp.common.utils.DateUtil;
+import com.epay.scanposp.common.utils.DeviceRequestUtil;
 import com.epay.scanposp.common.utils.FileUtil;
 import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.IdcardValidator;
@@ -447,7 +448,7 @@ public class CashierDeskController {
 			return result;
 		}
 		srcStr.append("&payType="+payType);
-		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, platformType, payType, srcStr.toString(), signStr, callbackUrl ,ip);
+		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, platformType, payType, srcStr.toString(), signStr, callbackUrl ,ip,"","");
 		
 		return result;
 	}
@@ -470,7 +471,14 @@ public class CashierDeskController {
 		String callbackUrl = request.getParameter("callbackUrl");
 		String signStr = request.getParameter("signStr");
 		String ip = request.getParameter("ip");
-		
+		String ipReal = "";
+		String userAgent = "";
+		if(inparam.containsKey("ipReal")){
+			ipReal = inparam.get("ipReal");
+		}
+		if(inparam.containsKey("userAgent")){
+			userAgent = inparam.get("userAgent");
+		}
 		StringBuilder srcStr = new StringBuilder();
 		JSONObject result = new JSONObject();
 		if(callbackUrl == null || "".equals(callbackUrl)){
@@ -524,7 +532,7 @@ public class CashierDeskController {
 			return signReturn(result);
 		}
 		
-		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3", payType, srcStr.toString(), signStr, callbackUrl ,ip);
+		result = validMemberInfoForQrcode(memberCode, orderNum, payMoney, "3", payType, srcStr.toString(), signStr, callbackUrl ,ip,ipReal,userAgent);
 		
 		return signReturn(result);
 	}
@@ -1224,7 +1232,7 @@ public class CashierDeskController {
 	
 	
 	
-	public JSONObject validMemberInfoForQrcode(String memberCode,String orderNum,String payMoney,String platformType,String payType,String signOrginalStr,String signedStr,String callbackUrl,String clientIp){
+	public JSONObject validMemberInfoForQrcode(String memberCode,String orderNum,String payMoney,String platformType,String payType,String signOrginalStr,String signedStr,String callbackUrl,String clientIp,String ipReal,String userAgent){
 		JSONObject result = new JSONObject();
 		
 		MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -1515,7 +1523,7 @@ public class CashierDeskController {
 			result = tlScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
 		}else if(RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("0");
-			result = tlWdScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
+			result = tlWdScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp,ipReal,userAgent);
 		}else if(RouteCodeConstant.ZNY_ROUTE_CODE.equals(routeCode)){
 			memberInfo.setSettleType("0");
 			result = znyScanQrcodePay(platformType,payType,memberInfo,memberPayType, payMoney, orderNum, callbackUrl , merchantCode ,routeCode,aisleType,clientIp);
@@ -1801,7 +1809,7 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode,"");
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -6525,7 +6533,7 @@ public class CashierDeskController {
 				return checkResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode,"");
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -7458,7 +7466,7 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode,"");
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
@@ -7797,12 +7805,16 @@ public class CashierDeskController {
 	}
 	
 	//通联扫码（新）
-	public JSONObject tlWdScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip) {
+	public JSONObject tlWdScanQrcodePay(String platformType,String payType,MemberInfo memberInfo,MemberPayType memberPayType,String payMoney,String orderNumOuter,String callbackUrl,MemberMerchantCode merchantCode,String routeCode,String aisleType,String ip,String ipReal,String userAgent) {
 		JSONObject result = new JSONObject();
 		try {
 			
 	        // 插入一条收款记录
 			String orderCode = CommonUtil.getOrderCode();
+			
+			if(!"".equals(ipReal)){
+				ip = ipReal;
+			}
 			
 			String payTypeStr = "";
 			String payMethod = PayTypeConstant.PAY_METHOD_SMZF;
@@ -7842,6 +7854,11 @@ public class CashierDeskController {
 			}else{
 				debitNote.setTradeRate(memberPayType.getT1TradeRate());
 			}
+			if(!"".equals(userAgent)){
+				debitNote.setUserAgent(userAgent.length()>1000?userAgent.substring(0, 1000):userAgent);
+				debitNote.setBrowser(DeviceRequestUtil.getBrowser(userAgent));
+				debitNote.setDeviceInfo(DeviceRequestUtil.getDevice(userAgent));
+			}
 			
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
@@ -7877,7 +7894,7 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode,ipReal);
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNote.setRespMsg(timeResult.getString("returnMsg"));
@@ -7907,7 +7924,7 @@ public class CashierDeskController {
 			}
 			String subMerchantCode = "",subMerchantName = "";
 			
-			JSONObject subResult = commonUtilService.getIpSubMerchant(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, ip);
+			JSONObject subResult = commonUtilService.getIpSubMerchant(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, ip,ipReal);
 			if(null != subResult){
 				if("4004".equals(subResult.getString("returnCode"))){
 					debitNote.setStatus("12");
@@ -8434,7 +8451,7 @@ public class CashierDeskController {
 				return limitResult;
 			}
 			
-			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode);
+			JSONObject timeResult = commonUtilService.checkLimitIpFail(payMethod, payTypeStr, memberInfo.getId(), ip,routeCode,"");
 			if(null != timeResult){
 				debitNote.setStatus("12");
 				debitNoteService.insertSelective(debitNote);
