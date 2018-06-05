@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.utils.DateUtil;
+import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.entity.DebitNoteIp;
 import com.epay.scanposp.entity.DebitNoteIpExample;
 import com.epay.scanposp.entity.IpBlackList;
@@ -203,7 +204,9 @@ public class CommonUtilService {
 				return result;
 			}
 		}
-		
+		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)){
+			return null;
+		}
 		configName = "LIMIT_FAIL_TIMES_"+routeCode+"_"+payType;
 		String value = "";
 		sysCommonConfigExample = new SysCommonConfigExample();
@@ -623,6 +626,9 @@ public class CommonUtilService {
 				result.put("returnMsg", "IP"+ip+"无支付权限");
 				return result;
 			}
+		}
+		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)){//扫码支付  
+			return null;
 		}
 		configName = "LIMIT_CONTINUE_FAIL_COUNTS_"+routeCode+"_"+payType;
 		String value = "";
