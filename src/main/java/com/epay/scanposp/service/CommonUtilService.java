@@ -769,4 +769,71 @@ public class CommonUtilService {
 		}
 		return null;
 	}
+	
+	public JSONObject checkLimitMoney(String payMethod,String payType,String routeCode,String memberCode, BigDecimal tradeMoney){
+		
+		JSONObject result = new JSONObject();
+		String configName =  "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payType+"_"+memberCode;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if("".equals(value)){
+			configName =  "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payType;
+			sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+			sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+				value = sysCommonConfig.get(0).getValue();
+			}
+		}
+		if(!"".equals(value)){
+			BigDecimal singleLimit = new BigDecimal(value);
+			if (null != singleLimit && singleLimit.compareTo(BigDecimal.ZERO) > 0){
+				if (tradeMoney.compareTo(singleLimit) > 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "单笔交易限额为"+singleLimit+"元,当前交易已超出限额");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
+	public JSONObject checkMinMoney(String payMethod,String payType,String routeCode,String memberCode, BigDecimal tradeMoney){
+		
+		JSONObject result = new JSONObject();
+		
+		String configName =  "SINGLE_MIN_"+routeCode+"_"+payMethod+"_"+payType+"_"+memberCode;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if("".equals(value)){
+			configName =  "SINGLE_MIN_"+routeCode+"_"+payMethod+"_"+payType;
+			sysCommonConfigExample = new SysCommonConfigExample();
+			sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+			sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+			if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+				value = sysCommonConfig.get(0).getValue();
+			}
+		}
+		if(!"".equals(value)){
+			BigDecimal singleMin = new BigDecimal(value);
+			if (null != singleMin && singleMin.compareTo(BigDecimal.ZERO) > 0){
+				if (tradeMoney.compareTo(singleMin) < 0) {
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "单笔交易最小金额为"+singleMin+"元,当前交易已小于最小金额");
+					return result;
+				}
+			}
+		}
+		return null;
+	}
 }
