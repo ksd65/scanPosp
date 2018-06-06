@@ -57,12 +57,26 @@ public class SubMerchantBlackListTigger {
 			}
 			
 			if(!"".equals(value)){
+				
+				String type = "";
+				sysCommonConfigExample = new SysCommonConfigExample();
+				sysCommonConfigExample.or().andNameEqualTo("SUB_MERCHANR_BLACK_LIST_TYPE").andDelFlagEqualTo("0");
+				sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+				if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+					type = sysCommonConfig.get(0).getValue();
+				}
+				
 				Map<String,Object> paramMap = new HashMap<String, Object>();
 				paramMap.put("createDate", date);
 				paramMap.put("routeCode", RouteCodeConstant.TLWD_ROUTE_CODE);
 				paramMap.put("COUNTS", value);
 				paramMap.put("tradeDate", DateUtil.getDateFormat(time, "yyyyMMdd"));
-				List<Map<String,Object>> list = subMerchantBlackListService.getSubMerchantFailIpCount(paramMap);
+				List<Map<String,Object>> list = null;
+				if("1".equals(type)){
+					list = subMerchantBlackListService.getSubMerchantFailDifIpCount(paramMap);
+				}else{
+					list = subMerchantBlackListService.getSubMerchantFailIpCount(paramMap);
+				}
 				if(list!=null&&list.size()>0){
 					for(Map<String,Object> map:list){
 						String subMerchantCode = (String)map.get("sub_merchant_code");

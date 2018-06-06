@@ -7922,17 +7922,32 @@ public class CashierDeskController {
 			}
 			String subMerchantCode = "",subMerchantName = "";
 			
-			JSONObject subResult = commonUtilService.getIpSubMerchant(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, ip,ipReal);
-			if(null != subResult){
-				if("4004".equals(subResult.getString("returnCode"))){
-					debitNote.setStatus("12");
-					debitNote.setRespMsg(subResult.getString("returnMsg"));
-					debitNoteService.insertSelective(debitNote);
-					return subResult;
+			String ipSubmerchantFlag = commonUtilService.getIpSubMerchantConfig(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, routeCode);
+
+			if("1".equals(ipSubmerchantFlag)){
+				JSONObject subResult = commonUtilService.getIpSubMerchant(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, ip,ipReal);
+				if(null != subResult){
+					if("4004".equals(subResult.getString("returnCode"))){
+						debitNote.setStatus("12");
+						debitNote.setRespMsg(subResult.getString("returnMsg"));
+						debitNoteService.insertSelective(debitNote);
+						return subResult;
+					}
+					subMerchantCode = subResult.getString("subMerchantCode");
+					subMerchantName = subResult.getString("name");
 				}
-				subMerchantCode = subResult.getString("subMerchantCode");
-				subMerchantName = subResult.getString("name");
+			}else{
+				JSONObject subResult = commonUtilService.checkIpContinueFail(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, ip,ipReal);
+				if(null != subResult){
+					if("4004".equals(subResult.getString("returnCode"))){
+						debitNote.setStatus("12");
+						debitNote.setRespMsg(subResult.getString("returnMsg"));
+						debitNoteService.insertSelective(debitNote);
+						return subResult;
+					}
+				}
 			}
+			
 			
 			if("".equals(subMerchantCode)){
 				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode,new BigDecimal(payMoney));

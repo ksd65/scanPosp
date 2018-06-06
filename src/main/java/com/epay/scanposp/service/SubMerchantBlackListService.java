@@ -35,4 +35,8 @@ public class SubMerchantBlackListService extends BaseService<SubMerchantBlackLis
 	public int getSubMerchantBlackCount(Map<String,Object> param){
 		return subMerchantBlackListMapper.getSubMerchantBlackCount(param);
 	}
+	
+	public List<Map<String,Object>> getSubMerchantFailDifIpCount(Map<String,Object> param){
+		return subMerchantBlackListMapper.getSubMerchantFailDifIpCount(param);
+	}
 }

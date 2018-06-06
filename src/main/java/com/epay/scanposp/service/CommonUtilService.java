@@ -657,7 +657,7 @@ public class CommonUtilService {
 				if("1".equals(debitNoteIp.getStatus())){//成功
 					break;
 				}
-				if("0".equals(debitNoteIp.getStatus())||"2".equals(debitNoteIp.getStatus())){
+				if("0".equals(debitNoteIp.getStatus())){
 					subMerchantCode = debitNoteIp.getSubMerchantCode();
 					count++;
 				}
@@ -836,4 +836,102 @@ public class CommonUtilService {
 		}
 		return null;
 	}
+	
+	//判断一个IP是否连续失败
+	public JSONObject checkIpContinueFail(String payMethod, String payType, Integer memberId ,String routeCode, String ip,String ipReal){
+		JSONObject result = new JSONObject();
+		String txnType = transPayType(payType);
+		String configName = "IP_BLACK_TIME_"+routeCode+"_"+payType;
+		String second = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			second = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(second)){
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("ip", ip);
+			param.put("routeCode", routeCode);
+			param.put("txnType", txnType);
+			param.put("seconds", second);
+			int blackCount = ipBlackListService.countBlack(param);
+			if(blackCount>0){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "IP"+ip+"无支付权限");
+				return result;
+			}
+		}
+		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)&&"".equals(ipReal)){//扫码支付  
+			return null;
+		}
+		configName = "LIMIT_CONTINUE_FAIL_COUNTS_"+routeCode+"_"+payType;
+		String value = "";
+		sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		
+		if(!"".equals(value)){
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("ip", ip);
+			param.put("routeId", routeCode);
+			param.put("txnType", txnType);
+			param.put("createDate", DateUtil.getDateFormat(new Date(), "yyyy-MM-dd")+" 00:00:00");
+			List<DebitNoteIp> debitNoteIpList = debitNoteIpService.selectByIp(param);//取黑名单后最近的订单
+			int count = 0;
+			if(debitNoteIpList!=null&&debitNoteIpList.size()>0){
+				DebitNoteIp debitNoteIp = debitNoteIpList.get(0);
+				if("1".equals(debitNoteIp.getStatus())){//成功
+					return null;
+				}
+				for(int i=0;i<debitNoteIpList.size();i++){
+					debitNoteIp = debitNoteIpList.get(i);
+					if("1".equals(debitNoteIp.getStatus())){//成功
+						break;
+					}
+					if("0".equals(debitNoteIp.getStatus())){
+						count++;
+					}
+					
+				}
+			}
+			if(count>=Integer.parseInt(value)){
+				IpBlackList ipBlackList = new IpBlackList();
+				ipBlackList.setTxnType(txnType);
+				//ipBlackList.setTxnMethod(payMethod);
+				ipBlackList.setIp(ip);
+				ipBlackList.setMemberId(memberId);
+				ipBlackList.setRouteCode(routeCode);
+				ipBlackList.setBlackType("1");
+				ipBlackList.setCreateDate(new Date());
+				ipBlackList.setDelFlag("0");
+				ipBlackListService.insertSelective(ipBlackList);
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "IP"+ip+"无支付权限");
+				return result;
+			}
+		}
+		
+		return null;
+	}
+	
+	
+	//是否根据IP取子商户  配置
+	public String getIpSubMerchantConfig(String payMethod,String payType,String routeCode){
+		String configName =  "IP_GET_SUB_MERCHANT_"+routeCode+"_"+payType;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		return value;
+	}
+	
+	
+	
 }
