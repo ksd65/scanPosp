@@ -7878,12 +7878,28 @@ public class CashierDeskController {
 				return memResult;
 			} 
 			
+			configName = "SINGLE_MIN_"+routeCode+"_"+payMethod+"_"+payTypeStr+"_"+memberInfo.getCode();
+			JSONObject checkResultM = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResultM){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResultM;
+			}
+			
 			configName = "SINGLE_MIN_"+routeCode+"_"+payMethod+"_"+payTypeStr;
 			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
 			if(null != checkResult){
 				debitNote.setStatus("5");
 				debitNoteService.insertSelective(debitNote);
 				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payTypeStr+"_"+memberInfo.getCode();
+			JSONObject limitResultM = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResultM){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResultM;
 			}
 			
 			configName = "SINGLE_LIMIT_"+routeCode+"_"+payMethod+"_"+payTypeStr;

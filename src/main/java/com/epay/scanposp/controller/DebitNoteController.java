@@ -9348,12 +9348,28 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 				return memResult;
 			} 
 			
+			configName = "SINGLE_MIN_"+routeCode+"_006_"+payTypeStr+"_"+memberInfo.getCode();
+			JSONObject checkResultM = checkMinMoney(configName, new BigDecimal(payMoney));
+			if(null != checkResultM){
+				debitNote.setStatus("5");
+				debitNoteService.insertSelective(debitNote);
+				return checkResultM;
+			}
+			
 			configName = "SINGLE_MIN_"+routeCode+"_006_"+payTypeStr;
 			JSONObject checkResult = checkMinMoney(configName, new BigDecimal(payMoney));
 			if(null != checkResult){
 				debitNote.setStatus("5");
 				debitNoteService.insertSelective(debitNote);
 				return checkResult;
+			}
+			
+			configName = "SINGLE_LIMIT_"+routeCode+"_006_"+payTypeStr+"_"+memberInfo.getCode();
+			JSONObject limitResultM = checkLimitMoney(configName, new BigDecimal(payMoney));
+			if(null != limitResultM){
+				debitNote.setStatus("4");
+				debitNoteService.insertSelective(debitNote);
+				return limitResultM;
 			}
 			
 			configName = "SINGLE_LIMIT_"+routeCode+"_006_"+payTypeStr;
