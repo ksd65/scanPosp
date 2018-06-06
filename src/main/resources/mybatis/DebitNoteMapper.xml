@@ -573,7 +573,7 @@
   	<select id="selectFailCountsWithinTime" parameterType="java.util.Map" resultType="int">
 	  	SELECT count(1) 
 	    from bu_debit_note t
-	   where 1=1 AND t.`status` in('0','2') 
+	   where 1=1 AND t.`status`='0' 
 	   <if test="ip != null">
 	       AND t.ip = #{ip,jdbcType=VARCHAR}
 	   </if>
