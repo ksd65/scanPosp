@@ -20,6 +20,8 @@ public class MemberIpRule {
 	
 	private Integer limitTimes;
 	
+	private String isLock;
+	
 	private String delFlag;
 	
 	private String createBy;
@@ -133,6 +135,14 @@ public class MemberIpRule {
 
 	public void setPayType(String payType) {
 		this.payType = payType;
+	}
+
+	public String getIsLock() {
+		return isLock;
+	}
+
+	public void setIsLock(String isLock) {
+		this.isLock = isLock;
 	}
     
 	

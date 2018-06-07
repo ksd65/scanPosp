@@ -40,4 +40,6 @@ public interface DebitNoteMapper extends BaseDao<DebitNote, DebitNoteExample>{
     Double countTransactionRateByCondition(Map<String,Object> paramMap);
     
     int selectFailCountsWithinTime(Map<String,Object> paramMap);
+    
+    Double selectSubMerchantSuccessPer(Map<String,Object> paramMap);
 }

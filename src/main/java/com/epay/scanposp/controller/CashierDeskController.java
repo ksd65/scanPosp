@@ -7903,8 +7903,25 @@ public class CashierDeskController {
 			JSONObject ipResult = checkLimitIp(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, merCode, ip);
 			if(null != ipResult){
 				debitNote.setStatus("6");
+				debitNote.setRespMsg("IP"+ip+"支付次数超过限制");
 				debitNoteService.insertSelective(debitNote);
 				return ipResult;
+			}
+			
+			JSONObject ipResult1 = commonUtilService.checkIpAllCountToday(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, ip,ipReal);
+			if(null != ipResult1){
+				debitNote.setStatus("18");
+				debitNote.setRespMsg("IP"+ip+"支付次数超过当天限制");
+				debitNoteService.insertSelective(debitNote);
+				return ipResult1;
+			}
+			
+			JSONObject ipResult2 = commonUtilService.checkIpNotPayCountToday(PayTypeConstant.PAY_METHOD_SMZF, payTypeStr, memberInfo.getId(), routeCode, ip,ipReal);
+			if(null != ipResult2){
+				debitNote.setStatus("19");
+				debitNote.setRespMsg("IP"+ip+"未支付次数超过当天限制");
+				debitNoteService.insertSelective(debitNote);
+				return ipResult2;
 			}
 			
 			JSONObject mResult = checkLimitMerchantMoney(routeCode,merCode);
@@ -8293,7 +8310,20 @@ public class CashierDeskController {
 					subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(debitNote.getSubMerchantCode()).andTradeDateEqualTo(tradeDetail.getTxnDate()).andDelFlagEqualTo("0");
 					List<SubMerchantTotal> stList = subMerchantTotalService.selectByExample(subMerchantTotalExample);
 					if(stList!=null&&stList.size()>0){
+						Double successPer = 0d;
+						try{
+							Map<String,Object> paramMap = new HashMap<String, Object>();
+							paramMap.put("routeCode", debitNote.getRouteId());
+							paramMap.put("subMerchantCode", debitNote.getSubMerchantCode());
+							paramMap.put("createDate", DateUtil.getDateFormat(new Date(), "yyyy-MM-dd"));
+							successPer = debitNoteService.selectSubMerchantSuccessPer(paramMap);
+							successPer = successPer == null ? 0 :successPer;
+						}catch(Exception e){
+							e.printStackTrace();
+						}
+						
 						SubMerchantTotal subMerchantTotal = stList.get(0);
+						subMerchantTotal.setSuccessPer(new BigDecimal(successPer));
 						subMerchantTotal.setTotalMoney(subMerchantTotal.getTotalMoney().add(tradeDetail.getMoney()));
 						subMerchantTotal.setUpdateDate(new Date());
 						subMerchantTotalService.updateByPrimaryKey(subMerchantTotal);
@@ -8800,5 +8830,6 @@ public class CashierDeskController {
 			logger.error(e.getMessage());
 		}
 	}
+	
 	
 }

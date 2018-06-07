@@ -7,6 +7,7 @@
     <result column="sub_merchant_code" jdbcType="VARCHAR" property="subMerchantCode" />
     <result column="total_money" jdbcType="DECIMAL" property="totalMoney" />
     <result column="counts" jdbcType="INTEGER" property="counts" />
+    <result column="success_per" jdbcType="DECIMAL" property="successPer" />
     <result column="trade_date" jdbcType="VARCHAR" property="tradeDate" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
@@ -73,7 +74,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id,route_id, sub_merchant_code,total_money, trade_date,counts, 
+    id,route_id, sub_merchant_code,total_money, trade_date,counts,success_per, 
     create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.SubMerchantTotalExample" resultMap="BaseResultMap">
@@ -138,6 +139,9 @@
       <if test="counts != null">
         counts,
       </if>
+      <if test="successPer != null">
+        success_per,
+      </if>
       <if test="createBy != null">
         create_by,
       </if>
@@ -168,6 +172,9 @@
       <if test="counts != null">
         #{counts,jdbcType=INTEGER},
       </if>
+      <if test="successPer != null">
+        #{successPer,jdbcType=DECIMAL},
+      </if>
       <if test="createBy != null">
         #{createBy,jdbcType=VARCHAR},
       </if>
@@ -187,6 +194,7 @@
   <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.SubMerchantTotal">
     update bu_sub_merchant_counts
     set total_money = #{totalMoney,jdbcType=DECIMAL},
+      success_per = #{successPer,jdbcType=DECIMAL},
       counts = #{counts,jdbcType=INTEGER},
       trade_date = #{tradeDate,jdbcType=VARCHAR},
       sub_merchant_code = #{subMerchantCode,jdbcType=INTEGER},

@@ -214,7 +214,7 @@
 			count(1) counts
 		FROM
 			bu_debit_note_ip t
-		WHERE 1=1 
+		WHERE 1=1 AND t.`status` in('0','1')
 		<if test="memberId != null" >
 			AND t.member_id = #{memberId,jdbcType=INTEGER} 
 		</if>
@@ -258,5 +258,54 @@
 	 FROM bu_ip_blacklist t WHERE t.ip=#{ip,jdbcType=VARCHAR} AND t.txn_type=#{txnType,jdbcType=VARCHAR} and t.route_code=#{routeId,jdbcType=VARCHAR} and t.black_type='1')
       ORDER BY t.create_date DESC
   </select>
+  
+  
+  <select id="getAllCountByCondition" parameterType="java.util.Map" resultType="java.lang.Integer">
+  		SELECT
+			count(1) counts
+		FROM
+			bu_debit_note_ip t
+		WHERE 1=1 AND t.`status` in('0','1')
+		<if test="routeId != null" >
+			AND t.route_id = #{routeId,jdbcType=VARCHAR} 
+		</if>
+		<if test="txnMethod != null" >
+			AND t.txn_method = #{txnMethod,jdbcType=VARCHAR} 
+		</if>
+		<if test="txnType != null" >
+			AND t.txn_type = #{txnType,jdbcType=VARCHAR} 
+		</if>
+		<if test="ip != null" >
+			AND t.ip = #{ip,jdbcType=VARCHAR} 
+		</if>
+		<![CDATA[
+  		AND t.create_date >= #{createDate,jdbcType=VARCHAR}
+  		]]>
+  </select>
+  
+  <select id="getNotPayCountByCondition" parameterType="java.util.Map" resultType="java.lang.Integer">
+  		SELECT
+			count(1) counts
+		FROM
+			bu_debit_note_ip t
+		WHERE 1=1 AND t.`status` = '0'
+		<if test="routeId != null" >
+			AND t.route_id = #{routeId,jdbcType=VARCHAR} 
+		</if>
+		<if test="txnMethod != null" >
+			AND t.txn_method = #{txnMethod,jdbcType=VARCHAR} 
+		</if>
+		<if test="txnType != null" >
+			AND t.txn_type = #{txnType,jdbcType=VARCHAR} 
+		</if>
+		<if test="ip != null" >
+			AND t.ip = #{ip,jdbcType=VARCHAR} 
+		</if>
+		<![CDATA[
+  		AND t.create_date >= #{createDate,jdbcType=VARCHAR} AND t.create_date < DATE_SUB(SYSDATE(),INTERVAL 60  SECOND)
+  		]]>
+  </select>
+  
+  
   
 </mapper>

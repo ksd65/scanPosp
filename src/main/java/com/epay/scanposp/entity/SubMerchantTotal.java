@@ -13,6 +13,8 @@ public class SubMerchantTotal {
     private BigDecimal totalMoney;
     
     private Integer counts;
+    
+    private BigDecimal successPer;
 
     private String tradeDate;
 
@@ -113,6 +115,14 @@ public class SubMerchantTotal {
 
 	public void setSubMerchantCode(String subMerchantCode) {
 		this.subMerchantCode = subMerchantCode;
+	}
+
+	public BigDecimal getSuccessPer() {
+		return successPer;
+	}
+
+	public void setSuccessPer(BigDecimal successPer) {
+		this.successPer = successPer;
 	}
     
     

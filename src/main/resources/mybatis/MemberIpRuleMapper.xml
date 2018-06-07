@@ -10,6 +10,7 @@
     <result column="merchant_code" jdbcType="VARCHAR" property="merchantCode" />
     <result column="seconds" jdbcType="INTEGER" property="seconds" />
     <result column="limit_times" jdbcType="INTEGER" property="limitTimes" />
+    <result column="is_lock" jdbcType="VARCHAR" property="isLock" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
     <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
@@ -75,7 +76,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id,member_id, route_code,pay_method,pay_type,merchant_code,seconds, limit_times, 
+    id,member_id, route_code,pay_method,pay_type,merchant_code,seconds, limit_times, is_lock,
     create_by, create_date, update_by, update_date,del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberIpRuleExample" resultMap="BaseResultMap">

@@ -39,4 +39,8 @@ public class DebitNoteService extends BaseService<DebitNote,DebitNoteExample> {
 	public int selectFailCountsWithinTime(Map<String,Object> paramMap){
 		return debitNoteMapper.selectFailCountsWithinTime(paramMap);
 	}
+	
+	public Double selectSubMerchantSuccessPer(Map<String,Object> paramMap){
+		return debitNoteMapper.selectSubMerchantSuccessPer(paramMap);
+	}
 }

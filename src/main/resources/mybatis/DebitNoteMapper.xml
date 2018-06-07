@@ -589,4 +589,14 @@
 	 	]]>
   </select>
   
+  
+  <select id="selectSubMerchantSuccessPer" parameterType="java.util.Map" resultType="java.lang.Double">
+  	SELECT ROUND(k.count1/(k.count0+k.count1)*100,2) successPer FROM(
+		SELECT MAX(CASE s.`status` WHEN '0' THEN IFNULL(counts,0) ELSE 0 END) count0,
+		MAX(CASE s.`status` WHEN '1' THEN IFNULL(counts,0) ELSE 0 END) count1 FROM(
+		SELECT t.`status`,COUNT(1) counts FROM bu_debit_note t where t.route_id=#{routeCode,jdbcType=VARCHAR}
+ 		AND t.sub_merchant_code=#{subMerchantCode,jdbcType=VARCHAR} AND t.create_date>=#{createDate,jdbcType=VARCHAR} GROUP BY t.`status`) s
+	)k
+  </select>
+  
 </mapper>

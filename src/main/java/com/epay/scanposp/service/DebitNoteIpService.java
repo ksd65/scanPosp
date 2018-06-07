@@ -31,4 +31,12 @@ public class DebitNoteIpService extends BaseService<DebitNoteIp,DebitNoteIpExamp
 	public List<DebitNoteIp> selectByIp(Map<String,Object> paramMap) {
 		return debitNoteIpMapper.selectByIp(paramMap);
 	}
+	
+	public Integer getAllCountByCondition(Map<String, Object> paramMap){
+		return debitNoteIpMapper.getAllCountByCondition(paramMap);
+	}
+    
+    public Integer getNotPayCountByCondition(Map<String, Object> paramMap){
+    	return debitNoteIpMapper.getNotPayCountByCondition(paramMap);
+    }
 }

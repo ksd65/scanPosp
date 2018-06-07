@@ -315,10 +315,11 @@ public class CommonUtilService {
 					for(MemberIpRule rule : memberIpRouteRuleList){
 						int seconds = rule.getSeconds();
 						int limitTimes = rule.getLimitTimes();
+						String isLock = rule.getIsLock();
 						Map<String,Object> param = new HashMap<String, Object>();
-						param.put("memberId", memberId);
+					//	param.put("memberId", memberId);
 						param.put("routeId", routeCode);
-						param.put("txnMethod", payMethod);
+					//	param.put("txnMethod", payMethod);
 						String payTypeStr = "1";
 						if("WX".equals(payType)){
 							payTypeStr = "1";
@@ -336,6 +337,18 @@ public class CommonUtilService {
 						count = count == null ? 0 : count;
 						if(count >= limitTimes){
 							logger.info("超过通道IP访问次数，规则："+seconds+"秒"+limitTimes+"次，访问"+count);
+							if("1".equals(isLock)){
+								IpBlackList ipBlackList = new IpBlackList();
+								ipBlackList.setTxnType(payTypeStr);
+								//ipBlackList.setTxnMethod(payMethod);
+								ipBlackList.setIp(ip);
+								ipBlackList.setMemberId(memberId);
+								ipBlackList.setRouteCode(routeCode);
+								ipBlackList.setBlackType("1");
+								ipBlackList.setCreateDate(new Date());
+								ipBlackList.setDelFlag("0");
+								ipBlackListService.insertSelective(ipBlackList);
+							}
 							result.put("returnCode", "4004");
 							result.put("returnMsg", "您的IP访问过于频繁，请稍后再访问");
 							return result;
@@ -932,6 +945,74 @@ public class CommonUtilService {
 		return value;
 	}
 	
+	
+	//判断一个IP当天支付次数是否超过限制
+	public JSONObject checkIpAllCountToday(String payMethod, String payType, Integer memberId ,String routeCode, String ip,String ipReal){
+		
+		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)&&"".equals(ipReal)){//扫码支付  
+			return null;
+		}
+		
+		JSONObject result = new JSONObject();
+		String txnType = transPayType(payType);
+		String configName = "LIMIT_IP_ALL_COUNT_TODAY_"+routeCode+"_"+payType;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("ip", ip);
+			param.put("routeId", routeCode);
+			param.put("txnType", txnType);
+			param.put("createDate", DateUtil.getDateFormat(new Date(), "yyyy-MM-dd")+" 00:00:00");
+			int count = debitNoteIpService.getAllCountByCondition(param);
+			if(count>=Integer.parseInt(value)){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "IP"+ip+"无支付权限");
+				return result;
+			}
+		}
+		
+		return null;
+	}
+	
+	//判断一个IP当天未支付次数是否超过限制
+	public JSONObject checkIpNotPayCountToday(String payMethod, String payType, Integer memberId ,String routeCode, String ip,String ipReal){
+		
+		if(PayTypeConstant.PAY_METHOD_SMZF.equals(payMethod)&&"".equals(ipReal)){//扫码支付  
+			return null;
+		}
+		
+		JSONObject result = new JSONObject();
+		String txnType = transPayType(payType);
+		String configName = "LIMIT_IP_NOT_PAY_COUNT_TODAY_"+routeCode+"_"+payType;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("ip", ip);
+			param.put("routeId", routeCode);
+			param.put("txnType", txnType);
+			param.put("createDate", DateUtil.getDateFormat(new Date(), "yyyy-MM-dd")+" 00:00:00");
+			int count = debitNoteIpService.getNotPayCountByCondition(param);
+			if(count>=Integer.parseInt(value)){
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "IP"+ip+"无支付权限");
+				return result;
+			}
+		}
+		
+		return null;
+	}
 	
 	
 }
