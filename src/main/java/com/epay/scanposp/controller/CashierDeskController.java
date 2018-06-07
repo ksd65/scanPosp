@@ -5176,9 +5176,15 @@ public class CashierDeskController {
 					result.put("oriRespMsg", "支付成功");
 					result.put("totalAmount", String.valueOf(detail.getMoney()));
 				}else{
-					result.put("oriRespType", "E");
-					result.put("oriRespCode", "000002");
-					result.put("oriRespMsg", "支付失败");
+					if("0".equals(debitNote.getStatus())){
+						result.put("oriRespType", "R");
+						result.put("oriRespCode", "000001");
+						result.put("oriRespMsg", "待支付");
+					}else{
+						result.put("oriRespType", "E");
+						result.put("oriRespCode", "000002");
+						result.put("oriRespMsg", "支付失败");
+					}
 				}
 		    }else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){
 		    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
