@@ -8312,7 +8312,7 @@ public class CashierDeskController {
 						debitNoteIpService.updateByPrimaryKey(debitNoteIp);
 					}
 					
-					SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
+				/*	SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
 					subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(debitNote.getSubMerchantCode()).andTradeDateEqualTo(tradeDetail.getTxnDate()).andDelFlagEqualTo("0");
 					List<SubMerchantTotal> stList = subMerchantTotalService.selectByExample(subMerchantTotalExample);
 					if(stList!=null&&stList.size()>0){
@@ -8333,7 +8333,7 @@ public class CashierDeskController {
 						subMerchantTotal.setTotalMoney(subMerchantTotal.getTotalMoney().add(tradeDetail.getMoney()));
 						subMerchantTotal.setUpdateDate(new Date());
 						subMerchantTotalService.updateByPrimaryKey(subMerchantTotal);
-					}
+					}*/
 					
 					
 					MsResultNotice msResultNotice = new MsResultNotice();
