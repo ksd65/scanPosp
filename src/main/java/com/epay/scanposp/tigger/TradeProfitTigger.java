@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.epay.scanposp.common.utils.DateUtil;
+import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.entity.JobRun;
 import com.epay.scanposp.entity.MemberDrawRoute;
@@ -78,7 +79,7 @@ public class TradeProfitTigger {
 					BigDecimal tradeMoney  = (BigDecimal)tradeMap.get("trade_money");
 					BigDecimal memberCost  = (BigDecimal)tradeMap.get("member_cost");//商户成本
 					System.out.println(memberId+" "+routeId+" "+" "+merchantCode+" "+txnMethod+" "+txnType+" "+tradeMoney.doubleValue()+" "+memberCost.doubleValue());
-					if(routeId.equals(RouteCodeConstant.YS_ROUTE_CODE)){
+					if(routeId.equals(RouteCodeConstant.YS_ROUTE_CODE)||routeId.equals(RouteCodeConstant.ML_ROUTE_CODE)){
 						continue;
 					}
 					MemberPlatFeeExample memberPlatFeeExample = new MemberPlatFeeExample();
@@ -93,6 +94,7 @@ public class TradeProfitTigger {
 					BigDecimal platFee = new BigDecimal(0);
 					BigDecimal agentFee = new BigDecimal(0);
 					BigDecimal memberFee = new BigDecimal(0);
+					BigDecimal realPlatFee = new BigDecimal(0);
 					String agentOfficeId = "";
 					if(feeList!=null && feeList.size()>0){
 						MemberPlatFee memberPlatFee = feeList.get(0);
@@ -100,6 +102,12 @@ public class TradeProfitTigger {
 						agentFee = memberPlatFee.getAgentFee();
 						memberFee = memberPlatFee.getMemberFee();
 						agentOfficeId = memberPlatFee.getAgentOfficeId();
+						realPlatFee = memberPlatFee.getPlatFee();
+						if(routeId.equals(RouteCodeConstant.TLWD_ROUTE_CODE)){//新通联支付宝h5
+							if(txnMethod.equals(PayTypeConstant.PAY_METHOD_H5)&&"2".equals(txnType)){
+								realPlatFee = platFee.add(new BigDecimal(0.012));
+							}
+						}
 					}
 					
 					Double drawPer = 1d;//分润比例
@@ -116,6 +124,7 @@ public class TradeProfitTigger {
 					}
 					
 					BigDecimal platCost = tradeMoney.multiply(platFee);//平台成本
+					BigDecimal realPlatCost = tradeMoney.multiply(realPlatFee);//实际平台成本
 					BigDecimal agentCost = tradeMoney.multiply(agentFee);//代理商成本
 					BigDecimal agentProfitAll = memberCost.subtract(agentCost);//代理商收益
 					BigDecimal agentProfit = agentProfitAll.multiply(new BigDecimal(drawPer));//代理商可分润
@@ -135,6 +144,7 @@ public class TradeProfitTigger {
 						profit.setMemberCost(memberCost.add(profit.getMemberCost()));
 						profit.setAgentProfit(agentProfit.add(profit.getAgentProfit()));
 						profit.setAgentProfitD1(agentProfitD1.add(profit.getAgentProfitD1()));
+						profit.setRealPlatCost(realPlatCost.add(profit.getRealPlatCost()));
 						profit.setUpdateDate(new Date());
 						tradeProfitService.updateByPrimaryKey(profit);
 					}else{
@@ -158,12 +168,14 @@ public class TradeProfitTigger {
 						profit.setAgentOfficeId(agentOfficeId);
 						profit.setCreateDate(new Date());
 						profit.setDelFlag("0");
+						profit.setRealPlatTradeRate(realPlatFee);
+						profit.setRealPlatCost(realPlatCost);
 						tradeProfitService.insertSelective(profit);
 					}
 					
 				} 
 			}
-			
+		
 			paramMap = new HashMap<String, Object>();
 			paramMap.put("txnDate", yesterday);
 			

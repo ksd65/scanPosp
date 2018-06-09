@@ -27,11 +27,15 @@ public class TradeProfit {
 	
 	private BigDecimal memberTradeRate;
 	
+	private BigDecimal realPlatTradeRate;
+	
 	private BigDecimal platCost;
 	
 	private BigDecimal agentCost;
 	
 	private BigDecimal memberCost;
+	
+	private BigDecimal realPlatCost;
 	
 	private BigDecimal drawPer;
 	
@@ -236,6 +240,22 @@ public class TradeProfit {
 
 	public void setAgentProfitD1(BigDecimal agentProfitD1) {
 		this.agentProfitD1 = agentProfitD1;
+	}
+
+	public BigDecimal getRealPlatTradeRate() {
+		return realPlatTradeRate;
+	}
+
+	public void setRealPlatTradeRate(BigDecimal realPlatTradeRate) {
+		this.realPlatTradeRate = realPlatTradeRate;
+	}
+
+	public BigDecimal getRealPlatCost() {
+		return realPlatCost;
+	}
+
+	public void setRealPlatCost(BigDecimal realPlatCost) {
+		this.realPlatCost = realPlatCost;
 	}
 
 	
