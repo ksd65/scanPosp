@@ -83,6 +83,7 @@ import com.epay.scanposp.entity.RoutewayDraw;
 import com.epay.scanposp.entity.RoutewayDrawExample;
 import com.epay.scanposp.entity.RoutewayDrawLog;
 import com.epay.scanposp.entity.RoutewayDrawLogExample;
+import com.epay.scanposp.entity.RoutewayDrawTemp;
 import com.epay.scanposp.entity.SysCommonConfig;
 import com.epay.scanposp.entity.SysCommonConfigExample;
 import com.epay.scanposp.entity.SysOffice;
@@ -107,6 +108,7 @@ import com.epay.scanposp.service.PayTypeService;
 import com.epay.scanposp.service.RoutewayAccountService;
 import com.epay.scanposp.service.RoutewayDrawLogService;
 import com.epay.scanposp.service.RoutewayDrawService;
+import com.epay.scanposp.service.RoutewayDrawTempService;
 import com.epay.scanposp.service.SysCommonConfigService;
 import com.epay.scanposp.service.SysOfficeExtendService;
 import com.epay.scanposp.service.SysOfficeService;
@@ -196,6 +198,9 @@ public class AgentPayController {
 	
 	@Autowired
 	private RoutewayDrawLogService routewayDrawLogService;
+	
+	@Autowired
+	private RoutewayDrawTempService routewayDrawTempService;
 	
 	@ResponseBody
 	@RequestMapping("/agentPay/toPay")
@@ -1649,6 +1654,19 @@ public class AgentPayController {
 				return result;
 			}
 			
+			try{
+				RoutewayDrawTemp routewayDrawTemp = new RoutewayDrawTemp();
+				routewayDrawTemp.setMemberId(memberId);
+				routewayDrawTemp.setRouteCode(routeCode);
+				routewayDrawTemp.setTxnDate(df.format(new Date()));
+				routewayDrawTempService.insertRoutewayDrawTemp(routewayDrawTemp);
+			}catch(Exception e){
+				e.printStackTrace();
+				result.put("returnCode", "4004");
+				result.put("returnMsg", "该商户目前有代付请求正在处理中，请稍后再试");
+				return result;
+			}
+			
 			// 今天开始时间
 			Date begin = dateFormatLong.parse(dateFormatShort.format(new Date()) + " 00:00:00");
 			// 今天结束时间
@@ -1662,7 +1680,7 @@ public class AgentPayController {
 			paramMap.put("respDate", df.format(new Date()));
 			Double drawMoneyCountToday = commonService.countDrawMoneyByCondition(paramMap);
 			drawMoneyCountToday = drawMoneyCountToday == null ? 0 : drawMoneyCountToday;
-			
+		
 			paramMap = new HashMap<String, Object>();
 			paramMap.put("memberId", memberId);
 			//待审核提现金额
@@ -1670,6 +1688,7 @@ public class AgentPayController {
 			paramMap.put("routeCode", routeCode);
 			Double waitAuditMoneyCountAll = commonService.countMoneyByCondition(paramMap);
 			waitAuditMoneyCountAll = waitAuditMoneyCountAll == null ? 0 : waitAuditMoneyCountAll;
+			
 			//提现中的金额
 			paramMap.put("auditStatus", "2");
 			paramMap.put("respType", "R");
@@ -1690,7 +1709,6 @@ public class AgentPayController {
 			balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
 			Double canDrawToday = new BigDecimal(balanceToday.doubleValue()).multiply(drawRoute.getD0Percent()).doubleValue();//当天可提现的金额
 			
-			
 			Double balanceHis = 0d;
 			RoutewayAccountExample routewayAccountExample = new RoutewayAccountExample();
 			routewayAccountExample.createCriteria().andMemberIdEqualTo(memberId).andRouteCodeEqualTo(routeCode).andDelFlagEqualTo("0");
@@ -1699,10 +1717,8 @@ public class AgentPayController {
 				RoutewayAccount account = accountList.get(0);
 				balanceHis = account.getBalance().doubleValue();
 			}
-			
 			//可提现总额
 			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
-			
 			if(Double.parseDouble(payMoney)>canDrawMoneyCount){
 				result.put("returnCode", "4004");
 				result.put("returnMsg", "代付金额大于可代付金额，无法代付");
@@ -1739,6 +1755,16 @@ public class AgentPayController {
 			routewayDraw.setTel(tel);
 			routewayDraw.setDrawProfit(new BigDecimal(drawFee).subtract(new BigDecimal(platDrawFee)));
 			routewayDrawService.insertSelective(routewayDraw);
+			
+			try{
+				RoutewayDrawTemp routewayDrawTemp1 = new RoutewayDrawTemp();
+				routewayDrawTemp1.setMemberId(memberId);
+				routewayDrawTemp1.setRouteCode(routeCode);
+				routewayDrawTemp1.setTxnDate(df.format(new Date()));
+				routewayDrawTempService.deleteRoutewayDrawTemp(routewayDrawTemp1);
+			}catch(Exception e){
+				e.printStackTrace();
+			}
 			
 			result.put("returnCode", "0000");
 			result.put("returnMsg", "提交成功");

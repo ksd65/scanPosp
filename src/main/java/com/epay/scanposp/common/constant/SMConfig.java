@@ -11,10 +11,14 @@ import com.epay.scanposp.common.utils.EnvironmentUtil;
  */
 public class SMConfig {
 	public static String msServerUrl;
+	
+	public static String agentServerUrl;
+	
 	static {
 		//生产环境参数
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "sm_config");
 		//测试环境参数
 		msServerUrl = bundle.getString("msServerUrl");
+		agentServerUrl = bundle.getString("agentServerUrl");
 	}
 }
