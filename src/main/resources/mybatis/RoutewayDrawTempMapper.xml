@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epay.scanposp.dao.RoutewayDrawTempMapper">
+  
+  <insert id="insertRoutewayDrawTemp" parameterType="com.epay.scanposp.entity.RoutewayDrawTemp">
+    
+    INSERT INTO bu_routeway_draw_temp(route_code,member_id,txn_date,create_date)
+    values (#{routeCode,jdbcType=VARCHAR},#{memberId,jdbcType=INTEGER}, #{txnDate,jdbcType=VARCHAR}, sysdate()
+      )
+  </insert>
+  
+  <delete id="deleteRoutewayDrawTemp" parameterType="com.epay.scanposp.entity.RoutewayDrawTemp">
+  	DELETE FROM bu_routeway_draw_temp WHERE member_id = #{memberId,jdbcType=INTEGER}
+  	AND route_code = #{routeCode,jdbcType=VARCHAR} AND txn_date = #{txnDate,jdbcType=VARCHAR}
+  </delete>
+  
+</mapper>
