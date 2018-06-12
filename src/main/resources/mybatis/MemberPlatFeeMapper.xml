@@ -9,6 +9,7 @@
     <result column="plat_fee" jdbcType="DECIMAL" property="platFee" />
     <result column="agent_fee" jdbcType="DECIMAL" property="agentFee" />
     <result column="member_fee" jdbcType="DECIMAL" property="memberFee" />
+    <result column="agent_fee_level2" jdbcType="DECIMAL" property="agentFeeLevel2" />
     <result column="agent_name" jdbcType="VARCHAR" property="agentName" />
     <result column="pay_mode" jdbcType="VARCHAR" property="payMode" />
     <result column="pay_type" jdbcType="VARCHAR" property="payType" />
@@ -75,7 +76,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id,member_id,member_code,member_name,plat_fee,agent_fee,member_fee,agent_name,pay_mode,pay_type,route_id,merchantcode,agent_office_id
+    id,member_id,member_code,member_name,plat_fee,agent_fee,member_fee,agent_fee_level2,agent_name,pay_mode,pay_type,route_id,merchantcode,agent_office_id
     
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.MemberPlatFeeExample" resultMap="BaseResultMap">

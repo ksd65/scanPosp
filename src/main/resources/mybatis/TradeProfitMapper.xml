@@ -13,9 +13,11 @@
     <result column="member_trade_rate" property="memberTradeRate" jdbcType="DECIMAL" />
     <result column="plat_trade_rate" property="platTradeRate" jdbcType="DECIMAL" />
     <result column="agent_trade_rate" property="agentTradeRate" jdbcType="DECIMAL" />
+    <result column="agent_trade_rate_level2" property="agentTradeRateLevel2" jdbcType="DECIMAL" />
     <result column="real_plat_trade_rate" property="realPlatTradeRate" jdbcType="DECIMAL" />
     <result column="plat_cost" property="platCost" jdbcType="DECIMAL" />
     <result column="agent_cost" property="agentCost" jdbcType="DECIMAL" />
+    <result column="agent_cost_level2" property="agentCostLevel2" jdbcType="DECIMAL" />
     <result column="member_cost" property="memberCost" jdbcType="DECIMAL" />
     <result column="real_plat_cost" property="realPlatCost" jdbcType="DECIMAL" />
     <result column="draw_per" property="drawPer" jdbcType="DECIMAL" />
@@ -88,7 +90,7 @@
   </sql>
   <sql id="Base_Column_List" >
     id, member_id, txn_date,txn_method,txn_type, route_code, merchant_code,trade_money,
-    plat_trade_rate,agent_trade_rate,member_trade_rate,real_plat_trade_rate,plat_cost,agent_cost,member_cost,real_plat_cost,draw_per,
+    plat_trade_rate,agent_trade_rate,agent_trade_rate_level2,member_trade_rate,real_plat_trade_rate,plat_cost,agent_cost,agent_cost_level2,member_cost,real_plat_cost,draw_per,
     agent_profit,agent_profit_d1,agent_office_id, create_by, create_date, update_by, 
     update_date, del_flag
   </sql>
@@ -175,6 +177,11 @@
       <if test="agentTradeRate != null" >
         agent_trade_rate,
       </if>
+      
+      <if test="agentTradeRateLevel2 != null" >
+        agent_trade_rate_level2,
+      </if>
+      
       <if test="memberTradeRate != null" >
         member_trade_rate,
       </if>
@@ -189,6 +196,11 @@
       <if test="agentCost != null" >
         agent_cost,
       </if>
+      
+      <if test="agentCostLevel2 != null" >
+        agent_cost_level2,
+      </if>
+      
       <if test="memberCost != null" >
         member_cost,
       </if>
@@ -257,6 +269,11 @@
       <if test="agentTradeRate != null" >
         #{agentTradeRate,jdbcType=DECIMAL},
       </if>
+      
+      <if test="agentTradeRateLevel2 != null" >
+        #{agentTradeRateLevel2,jdbcType=DECIMAL},
+      </if>
+      
       <if test="memberTradeRate != null" >
         #{memberTradeRate,jdbcType=DECIMAL},
       </if>
@@ -271,6 +288,11 @@
       <if test="agentCost != null" >
         #{agentCost,jdbcType=DECIMAL},
       </if>
+      
+      <if test="agentCostLevel2 != null" >
+        #{agentCostLevel2,jdbcType=DECIMAL},
+      </if>
+      
       <if test="memberCost != null" >
         #{memberCost,jdbcType=DECIMAL},
       </if>
@@ -328,6 +350,7 @@
       trade_money = #{tradeMoney,jdbcType=DECIMAL},
       plat_cost = #{platCost,jdbcType=DECIMAL},
       agent_cost = #{agentCost,jdbcType=DECIMAL},
+      agent_cost_level2 = #{agentCostLevel2,jdbcType=DECIMAL},
       member_cost = #{memberCost,jdbcType=DECIMAL},
       real_plat_cost = #{realPlatCost,jdbcType=DECIMAL},
       draw_per = #{drawPer,jdbcType=DECIMAL},

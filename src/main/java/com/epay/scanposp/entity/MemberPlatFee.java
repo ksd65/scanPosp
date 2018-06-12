@@ -16,6 +16,8 @@ public class MemberPlatFee {
 	private BigDecimal platFee;
     
     private BigDecimal agentFee;
+    
+    private BigDecimal agentFeeLevel2;
 
     private BigDecimal memberFee;
     
@@ -187,6 +189,14 @@ public class MemberPlatFee {
 
 	public void setAgentOfficeId(String agentOfficeId) {
 		this.agentOfficeId = agentOfficeId;
+	}
+
+	public BigDecimal getAgentFeeLevel2() {
+		return agentFeeLevel2;
+	}
+
+	public void setAgentFeeLevel2(BigDecimal agentFeeLevel2) {
+		this.agentFeeLevel2 = agentFeeLevel2;
 	}
 
 	

@@ -58,9 +58,7 @@ public class TradeProfitTigger {
 		
 		try{
 			logger.info("商户通道交易额更新定时。。。");
-			
 			String yesterday = DateUtil.getBeforeDate(1, "yyyyMMdd");
-			
 			JobRun jobRun = new JobRun();
 			jobRun.setTxnDate(yesterday);
 			jobRun.setJobType("TradeProfitTigger");
@@ -95,11 +93,13 @@ public class TradeProfitTigger {
 					BigDecimal agentFee = new BigDecimal(0);
 					BigDecimal memberFee = new BigDecimal(0);
 					BigDecimal realPlatFee = new BigDecimal(0);
+					BigDecimal agentFeeLevel2 = new BigDecimal(0);
 					String agentOfficeId = "";
 					if(feeList!=null && feeList.size()>0){
 						MemberPlatFee memberPlatFee = feeList.get(0);
 						platFee = memberPlatFee.getPlatFee();
 						agentFee = memberPlatFee.getAgentFee();
+						agentFeeLevel2 = memberPlatFee.getAgentFeeLevel2();
 						memberFee = memberPlatFee.getMemberFee();
 						agentOfficeId = memberPlatFee.getAgentOfficeId();
 						realPlatFee = memberPlatFee.getPlatFee();
@@ -126,6 +126,7 @@ public class TradeProfitTigger {
 					BigDecimal platCost = tradeMoney.multiply(platFee);//平台成本
 					BigDecimal realPlatCost = tradeMoney.multiply(realPlatFee);//实际平台成本
 					BigDecimal agentCost = tradeMoney.multiply(agentFee);//代理商成本
+					BigDecimal agentCostLevel2 = tradeMoney.multiply(agentFeeLevel2);//二级代理商成本
 					BigDecimal agentProfitAll = memberCost.subtract(agentCost);//代理商收益
 					BigDecimal agentProfit = agentProfitAll.multiply(new BigDecimal(drawPer));//代理商可分润
 					BigDecimal agentProfitD1 = agentProfitAll.subtract(agentProfit);//代理商D1分润
@@ -145,6 +146,7 @@ public class TradeProfitTigger {
 						profit.setAgentProfit(agentProfit.add(profit.getAgentProfit()));
 						profit.setAgentProfitD1(agentProfitD1.add(profit.getAgentProfitD1()));
 						profit.setRealPlatCost(realPlatCost.add(profit.getRealPlatCost()));
+						profit.setAgentCostLevel2(agentCostLevel2.add(profit.getAgentCostLevel2()));
 						profit.setUpdateDate(new Date());
 						tradeProfitService.updateByPrimaryKey(profit);
 					}else{
@@ -170,6 +172,8 @@ public class TradeProfitTigger {
 						profit.setDelFlag("0");
 						profit.setRealPlatTradeRate(realPlatFee);
 						profit.setRealPlatCost(realPlatCost);
+						profit.setAgentTradeRateLevel2(agentFeeLevel2);
+						profit.setAgentCostLevel2(agentCostLevel2);
 						tradeProfitService.insertSelective(profit);
 					}
 					
