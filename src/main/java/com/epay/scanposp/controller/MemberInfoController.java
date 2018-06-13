@@ -523,7 +523,7 @@ public class MemberInfoController {
 				resData.put("drawFee", new DecimalFormat("0.00").format(drawFee));
 				result.put("resData", resData);
 				
-			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){//畅捷，快捷支付   易收款网关 走T1 
+			}else if(RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.SM_ROUTE_CODE.equals(routeCode)){//畅捷，快捷支付   易收款网关,商盟  走T1 
 				drawFee = drawRoute.getDrawFee().doubleValue();
 				
 				paramMap = new HashMap<String, Object>();
@@ -995,7 +995,7 @@ public class MemberInfoController {
 				paramMap.put("routeId", routeCode);
 				paramMap.put("startDate", df.format(begin));
 				paramMap.put("endDate", df.format(end));
-				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){
+				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.SM_ROUTE_CODE.equals(routeCode)){
 					paramMap.put("settleType", "1");//D1
 				}else{
 					paramMap.put("settleType", "0");//D0

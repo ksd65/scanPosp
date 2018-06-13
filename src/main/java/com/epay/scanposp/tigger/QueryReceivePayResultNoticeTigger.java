@@ -36,6 +36,7 @@ import com.epay.scanposp.common.constant.ESKConfig;
 import com.epay.scanposp.common.constant.HLBConfig;
 import com.epay.scanposp.common.constant.MLConfig;
 import com.epay.scanposp.common.constant.RFConfig;
+import com.epay.scanposp.common.constant.SMConfig;
 import com.epay.scanposp.common.constant.TLConfig;
 import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.YSConfig;
@@ -58,6 +59,7 @@ import com.epay.scanposp.common.utils.slf.SecurityUtil;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePay;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayQueryRequest;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayQueryResponse;
+import com.epay.scanposp.common.utils.sm.CryptNoRestrict;
 import com.epay.scanposp.common.utils.tl.CertUtil;
 import com.epay.scanposp.common.utils.ys.SwpHashUtil;
 import com.epay.scanposp.common.utils.yzf.AESTool;
@@ -821,6 +823,86 @@ public class QueryReceivePayResultNoticeTigger {
 				        draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 				        draw.setUpdateDate(new Date());
 				        routewayDrawService.updateByPrimaryKey(draw);
+				    }else if(RouteCodeConstant.SM_ROUTE_CODE.equals(routeCode)){
+						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+				        if(keyList == null || keyList.size()!=1){
+				        	continue;
+				        }
+				        MemberMerchantKey merchantKey = keyList.get(0);
+				        
+				        
+				        String serverUrl = SMConfig.agentServerUrl;
+				         
+				        Map<String, String> sParaTemp = new HashMap<String, String>();
+						sParaTemp.put("version", "1.0");
+						sParaTemp.put("service", "sumpay.trade.queryobopage");
+						sParaTemp.put("format", "JSON");
+						sParaTemp.put("app_id", merchantKey.getMerchantCode());
+						sParaTemp.put("terminal_type", "wap");
+						sParaTemp.put("timestamp", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+						sParaTemp.put("mer_id", merchantKey.getMerchantCode());
+						sParaTemp.put("cst_no", merchantKey.getMerchantCode());
+						
+						sParaTemp.put("obo_type", "00");
+						sParaTemp.put("order_id", draw.getOrderCode());
+						sParaTemp.put("page","1" );
+						sParaTemp.put("rows", "10");
+						sParaTemp.put("is_inner", "01");//00个人 01商户
+						
+						
+						String signSrc = StringUtil.orderedKey(sParaTemp);
+						//System.out.println(signSrc);
+						CryptNoRestrict cnr = new CryptNoRestrict();
+						com.epay.scanposp.common.utils.sm.CertUtil util = new com.epay.scanposp.common.utils.sm.CertUtil();
+						String sign = cnr.SignMsg(signSrc, util.getConfigPath() + merchantKey.getPrivateKey(), "sumpay");
+						sParaTemp.put("sign", sign);
+						sParaTemp.put("sign_type", "RSA");
+						
+						logger.info("商盟代付订单查询请求数据[{}]", new Object[] { JSONObject.fromObject(sParaTemp).toString() });
+						
+						
+						List<NameValuePair> nvps = new LinkedList<NameValuePair>();
+						List<String> keys = new ArrayList<String>(sParaTemp.keySet());
+						for (int i = 0; i < keys.size(); i++) {
+							 String name=(String) keys.get(i);
+							 String value=(String) sParaTemp.get(name);
+							if(value!=null && !"".equals(value)){
+								nvps.add(new BasicNameValuePair(name, value));
+							}
+						}
+						
+						byte[] b = HttpClient4Util.getInstance().doPost(serverUrl, null, nvps);
+						String respStr = new String(b, "UTF-8");
+						logger.info("商盟代付订单查询返回数据[{}]", new Object[] { respStr });
+				        
+				        JSONObject resultObj = JSONObject.fromObject(respStr);
+				        
+				        String result_message = resultObj.getString("resp_msg");
+						String result_code = resultObj.getString("resp_code");
+						if("000000".equals(result_code)){
+							String data = resultObj.getString("listObO");
+							com.alibaba.fastjson.JSONArray arr = com.alibaba.fastjson.JSONArray.parseArray(data);
+							JSONObject respJSONObject =  JSONObject.fromObject(arr.get(0));
+							result_code = respJSONObject.getString("oboStatus");//00 成功 01 处理中 03 失败
+							if("00".equals(result_code)&&"00".equals(respJSONObject.getString("oboType"))){//代付成功
+								draw.setRespType("S");
+								draw.setRespCode("000");
+							}else if("01".equals(result_code)){
+								draw.setRespType("R");
+							}else{
+								draw.setRespType("E");
+								draw.setRespCode(result_code);
+							}
+							draw.setRespMsg(result_message);
+							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+							draw.setUpdateDate(new Date());
+							routewayDrawService.updateByPrimaryKey(draw);
+						}else{
+							result_message = resultObj.getString("resp_msg");
+							logger.info(result_message);
+						}
 				    }
 				}
 			}
