@@ -1,6 +1,7 @@
 package com.epay.scanposp.controller;
 
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
@@ -40,9 +41,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.MLConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.TLConfig;
+import com.epay.scanposp.common.constant.TLKJConfig;
 import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
@@ -56,6 +59,8 @@ import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
 import com.epay.scanposp.common.utils.tl.CertUtil;
+import com.epay.scanposp.common.utils.tlkj.MapUtils;
+import com.epay.scanposp.common.utils.tlkj.RandomTools;
 import com.epay.scanposp.common.utils.ys.HttpUtils;
 import com.epay.scanposp.common.utils.ys.SwpHashUtil;
 import com.epay.scanposp.common.utils.yzf.AESTool;
@@ -983,6 +988,8 @@ public class AgentPayController {
 				resObjb = wwBalance(merCode);
 			}else if(routeCode.equals(RouteCodeConstant.ML_ROUTE_CODE)){
 				resObjb = mlBalance(merCode);
+			}else if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+				resObjb = tlkjBalance(merCode,bankAccount);
 			}
 			
 			Double balance = 0d;
@@ -993,6 +1000,8 @@ public class AgentPayController {
 					balance = Double.valueOf(resObjb.getString("balance"));
 				}else if(routeCode.equals(RouteCodeConstant.ML_ROUTE_CODE)){
 					balance = Double.valueOf(resObjb.getString("balance"));
+				}else if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+					balance = Double.valueOf(resObjb.getString("balance"))/100;
 				}
 			}else{
 				result.put("returnCode", "0003");
@@ -1021,6 +1030,8 @@ public class AgentPayController {
 				resObj = wwAgentPay(orderCode, merCode, bankAccount, payMoney);
 			}else if(routeCode.equals(RouteCodeConstant.ML_ROUTE_CODE)){
 				resObj = mlAgentPay(orderCode, merCode, bankAccount,accountName,bankCode,bankName, String.valueOf(drawAmount),draw);
+			}else if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+				resObj = tlkjAgentPay(orderCode, merCode, bankAccount,accountName,bankCode,bankName, String.valueOf(drawAmount),draw);
 			}
 			String code = resObj.getString("returnCode");
 			String resultMsg = "";
@@ -2135,7 +2146,7 @@ public class AgentPayController {
 		    String value=request.getParameter(name);
 		    inparam.put(name, value);
 		}
-		logger.info("米联同名信用卡代付下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
+		logger.info("同名信用卡代付下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
 		String bankAccount = request.getParameter("bankAccount");
 		String memberCode = request.getParameter("memberCode");
 		String orderNum = request.getParameter("orderNum");
@@ -2398,4 +2409,164 @@ public class AgentPayController {
 		return result;
 	}
 	
+	
+	/**
+	 * 通联快捷商户余额查询
+	 * @param merCode
+	 * @return
+	 */
+	public JSONObject tlkjBalance(String merCode,String bankAccount){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = TLKJConfig.serverUrl+"/df/merchantPay/req";
+			String routeCode = RouteCodeConstant.TLKJ_ROUTE_CODE;
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+	        
+	        Map<String ,Object> reqMap = new HashMap<>();
+	        reqMap.put("agentNo", merchantKey.getAppId());
+	        reqMap.put("shopNo", merCode);
+	        reqMap.put("cardNo", bankAccount);
+	        reqMap.put("settleMode", "2");
+	        reqMap.put("reqMethod", "0653000101");
+	        reqMap.put("signType", "SHAWITHRSA");
+	        reqMap.put("randomStr", RandomTools.getRandomString(32));
+	        String s = MapUtils.map2UrlParams(reqMap);
+	        CommonUtil commonUtil = new CommonUtil();
+	        String privateKeyFile = commonUtil.getConfigPath() + "tlkjkey"+File.separator + TLKJConfig.rsaPrivateKey;
+	        String sign = com.epay.scanposp.common.utils.tlkj.RSATool.signByPrivateKey(privateKeyFile, merchantKey.getPrivateKeyPassword(), s);
+	        reqMap.put("sign", sign);
+	   //     CommonUtil.httpsClientRequestStr("http://localhost:8080/QuickPlatDFService/merchantPay/req", "POST",JSON.toJSONString(reqMap));
+			
+			logger.info("通联快捷商户余额查询参数[{}]",JSONObject.fromObject(reqMap).toString() );
+			
+			String respStr =  HttpUtil.sendPostRequest(serverUrl, JSON.toJSONString(reqMap));
+			logger.info("通联快捷商户余额查询返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			String code = resObj.getString("respCode");
+			if("00".equals(code)){
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "成功");
+				result.put("balance", resObj.getString("amount"));
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", resObj.getString("respMsg"));
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
+	
+	public JSONObject tlkjAgentPay(String orderCode,String merCode,String bankAccount,String accountName,String bankCode,String bankName,String payMoney,RoutewayDraw draw){
+		JSONObject result = new JSONObject();
+		try{
+			String routeCode = RouteCodeConstant.TLKJ_ROUTE_CODE;
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+	        
+			String serverUrl = TLKJConfig.serverUrl+"/df/merchantPay/req";
+			payMoney = String.valueOf((new BigDecimal(payMoney)).multiply(new BigDecimal(100)).intValue());
+	     	
+			Map<String ,Object> reqMap = new HashMap<String ,Object>();
+
+	        reqMap.put("agentNo", merchantKey.getAppId());
+	        reqMap.put("settleMode", "2");
+	        reqMap.put("reqMethod", "0651000101");
+	        reqMap.put("amount", payMoney);
+	        reqMap.put("cardNo", bankAccount);
+	        reqMap.put("acctName", accountName);
+	        reqMap.put("shopNo", merCode);
+	        reqMap.put("orderNo",orderCode);
+	        reqMap.put("randomStr", RandomTools.getRandomString(32));
+	        reqMap.put("signType", "SHAWITHRSA");
+	        String s = MapUtils.map2UrlParams(reqMap);
+	        CommonUtil commonUtil = new CommonUtil();
+	        String privateKeyFile = commonUtil.getConfigPath() + "tlkjkey"+File.separator + TLKJConfig.rsaPrivateKey;
+	        String sign = com.epay.scanposp.common.utils.tlkj.RSATool.signByPrivateKey(privateKeyFile, merchantKey.getPrivateKeyPassword(), s);
+	        reqMap.put("sign", sign);
+			
+	     	
+	     	logger.info("通联快捷代付参数[{}]",JSONObject.fromObject(reqMap).toString() );
+	     	try{
+				RoutewayDrawLog routewayDrawLog = new RoutewayDrawLog();
+				routewayDrawLog.setDrawId(draw.getId());
+				routewayDrawLog.setOrderCode(orderCode);
+				routewayDrawLog.setOrderNumOuter(draw.getOrderNumOuter());
+				String inparam = JSONObject.fromObject(reqMap).toString();
+				routewayDrawLog.setInParam(inparam.length()>1000?inparam.substring(0, 1000):inparam);
+				routewayDrawLog.setCreateDate(new Date());
+				routewayDrawLogService.insert(routewayDrawLog);
+			}catch(Exception e){
+				logger.info("代付入日志异常", e);
+			}
+			
+			
+	     	String respStr =  HttpUtil.sendPostRequest(serverUrl, JSON.toJSONString(reqMap));
+	     	
+	     	logger.info("通联代付返回报文[{}]", new Object[] { respStr });
+			
+			try{
+				RoutewayDrawLogExample routewayDrawLogExample = new RoutewayDrawLogExample();
+				routewayDrawLogExample.createCriteria().andOrderCodeEqualTo(orderCode);
+				List<RoutewayDrawLog> logList = routewayDrawLogService.selectByExample(routewayDrawLogExample);
+				if(logList != null && logList.size()>0){
+					RoutewayDrawLog routewayDrawLog1 = logList.get(0);
+					routewayDrawLog1.setOutParam(respStr.length()>1000?respStr.substring(0, 1000):respStr);
+					routewayDrawLog1.setUpdateDate(new Date());
+					routewayDrawLogService.updateByPrimaryKey(routewayDrawLog1);
+				}
+			}catch(Exception e){
+				logger.info("代付更新日志异常", e);
+			}
+			
+			JSONObject resObj = JSONObject.fromObject(respStr);
+            
+        	String code = resObj.getString("respCode");
+			String resultMsg = "";
+			boolean flag = false;
+			
+			if("00".equals(code)){
+				String status = resObj.getString("status");//0、待出款，2、出款失败；3、出款中；大于等于6、出款成功。
+				if("0".equals(status)||"3".equals(status)||Integer.parseInt(status)>=6){
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "提交成功");
+					flag = true;
+				}else{
+					resultMsg = resObj.getString("respMsg");
+				}
+			}else{
+				resultMsg = resObj.getString("respMsg");
+			}
+				
+			if(!flag){
+				result.put("returnCode", "0003");
+				result.put("returnMsg", resultMsg);
+			}
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+		}
+		return result;
+	}
 }

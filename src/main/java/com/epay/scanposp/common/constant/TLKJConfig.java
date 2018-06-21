@@ -13,11 +13,15 @@ public class TLKJConfig {
 	public static String orgNo;
 	public static String privateKey;
 	public static String serverUrl;
+	public static String rsaPrivateKey;
+	public static String rsaPublicKey;
 	static {
 		
 		ResourceBundle bundle = PropertyResourceBundle.getBundle(EnvironmentUtil.propertyPath + "tlkj_config");
 		orgNo = bundle.getString("orgNo");
 		privateKey = bundle.getString("privateKey");
 		serverUrl = bundle.getString("serverUrl");
+		rsaPrivateKey = bundle.getString("rsaPrivateKey");
+		rsaPublicKey = bundle.getString("rsaPublicKey");
 	}
 }

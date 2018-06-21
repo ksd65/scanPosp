@@ -1,5 +1,8 @@
 package com.epay.scanposp.controller;
 
+
+
+import java.io.File;
 import java.math.BigDecimal;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -37,13 +40,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.MLConfig;
 import com.epay.scanposp.common.constant.SysConfig;
+import com.epay.scanposp.common.constant.TLKJConfig;
 import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.XinFuConfig;
 import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
 import com.epay.scanposp.common.utils.CommonUtil;
+import com.epay.scanposp.common.utils.HttpUtil;
 import com.epay.scanposp.common.utils.SecurityUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.cj.util.MD5Util;
@@ -54,6 +60,8 @@ import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
 import com.epay.scanposp.common.utils.epaySecurityUtil.RSAUtil;
 import com.epay.scanposp.common.utils.ms.HttpClient4Util;
 import com.epay.scanposp.common.utils.ms.MSCommonUtil;
+import com.epay.scanposp.common.utils.tlkj.MapUtils;
+import com.epay.scanposp.common.utils.tlkj.RandomTools;
 import com.epay.scanposp.common.utils.xinfu.HttpPostRequest;
 import com.epay.scanposp.common.utils.xinfu.Md5SignUtil;
 import com.epay.scanposp.common.utils.ys.HttpUtils;
@@ -2318,6 +2326,7 @@ public class RegistController {
 			logger.info("商户余额查询下游入参[{}]",  JSONObject.fromObject(inparam).toString() );
 			
 			String memberCode = request.getParameter("memberCode");
+			String bankAccount = request.getParameter("bankAccount");
 			String signStr = request.getParameter("signStr");
 			
 			
@@ -2330,6 +2339,10 @@ public class RegistController {
 				return CommonUtil.signReturn(result);
 			}
 			params.put("memberCode", memberCode);
+			
+			if(bankAccount != null && !"".equals(bankAccount)){
+				params.put("bankAccount", bankAccount);
+			}
 			
 			if(signStr == null || "".equals(signStr)){
 				result.put("returnCode", "0007");
@@ -2430,6 +2443,24 @@ public class RegistController {
 				Double balance = 0d;
 				if("0000".equals(resObjb.getString("returnCode"))){
 					balance = Double.valueOf(resObjb.getString("balance"));
+					result.put("returnCode", "0000");
+					result.put("returnMsg", "余额查询成功");
+					result.put("balance", new DecimalFormat("0.00").format(balance));
+				}else{
+					result.put("returnCode", "0003");
+					result.put("returnMsg", resObjb.getString("returnMsg"));
+				}
+			}else if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+				if(bankAccount == null || "".equals(bankAccount)){
+					result.put("returnCode", "0007");
+					result.put("returnMsg", "银行卡号[bankAccount]缺失");
+					return CommonUtil.signReturn(result);
+				}
+				
+				JSONObject resObjb = tlkjBalance(merchantCode.getKjMerchantCode(),bankAccount);
+				Double balance = 0d;
+				if("0000".equals(resObjb.getString("returnCode"))){
+					balance = Double.valueOf(resObjb.getString("balance"))/100;
 					result.put("returnCode", "0000");
 					result.put("returnMsg", "余额查询成功");
 					result.put("balance", new DecimalFormat("0.00").format(balance));
@@ -3416,6 +3447,67 @@ public class RegistController {
 			}else{
 				result.put("returnCode", "0003");
 				result.put("returnMsg", rootEl.elementText("RESP_DESC"));
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			result.put("returnCode", "0096");
+			result.put("returnMsg", e.getMessage());
+			return result;
+		}
+		return result;
+	}
+	
+	
+	/**
+	 * 通联快捷商户余额查询
+	 * @param merCode
+	 * @return
+	 */
+	public JSONObject tlkjBalance(String merCode,String bankAccount){
+		JSONObject result = new JSONObject();
+		try {
+			String serverUrl = TLKJConfig.serverUrl+"/df/merchantPay/req";
+			String routeCode = RouteCodeConstant.TLKJ_ROUTE_CODE;
+			
+			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
+	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+	        if(keyList == null || keyList.size()!=1){
+	            result.put("returnCode", "0008");
+				result.put("returnMsg", "商户私钥未配置");
+				return result;
+	        }
+	        MemberMerchantKey merchantKey = keyList.get(0);
+	        
+	        Map<String ,Object> reqMap = new HashMap<>();
+	        reqMap.put("agentNo", merchantKey.getAppId());
+	        reqMap.put("shopNo", merCode);
+	        reqMap.put("cardNo", bankAccount);
+	        reqMap.put("settleMode", "2");
+	        reqMap.put("reqMethod", "0653000101");
+	        reqMap.put("signType", "SHAWITHRSA");
+	        reqMap.put("randomStr", RandomTools.getRandomString(32));
+	        String s = MapUtils.map2UrlParams(reqMap);
+	        CommonUtil commonUtil = new CommonUtil();
+	        String privateKeyFile = commonUtil.getConfigPath() + "tlkjkey"+File.separator + TLKJConfig.rsaPrivateKey;
+	        String sign = com.epay.scanposp.common.utils.tlkj.RSATool.signByPrivateKey(privateKeyFile, merchantKey.getPrivateKeyPassword(), s);
+	        reqMap.put("sign", sign);
+	   //     CommonUtil.httpsClientRequestStr("http://localhost:8080/QuickPlatDFService/merchantPay/req", "POST",JSON.toJSONString(reqMap));
+			
+			logger.info("通联快捷商户余额查询参数[{}]",JSONObject.fromObject(reqMap).toString() );
+			
+			String respStr =  HttpUtil.sendPostRequest(serverUrl, JSON.toJSONString(reqMap));
+			logger.info("通联快捷商户余额查询返回报文[{}]", new Object[] { respStr });
+			
+			JSONObject resObj = JSONObject.fromObject(respStr);
+			String code = resObj.getString("respCode");
+			if("00".equals(code)){
+				result.put("returnCode", "0000");
+				result.put("returnMsg", "成功");
+				result.put("balance", resObj.getString("amount"));
+			}else{
+				result.put("returnCode", "0003");
+				result.put("returnMsg", resObj.getString("respMsg"));
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage());

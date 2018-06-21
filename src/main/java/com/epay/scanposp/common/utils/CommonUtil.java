@@ -4,6 +4,8 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -18,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.utils.epaySecurityUtil.EpaySignUtil;
+import com.epay.scanposp.common.utils.sm.CertUtil;
 
 import net.sf.json.JSONObject;
 
@@ -206,4 +209,23 @@ public class CommonUtil {
 		return map;
 	}
 	
+	
+	public  String getConfigPath(){
+    	String configPath = "";
+    	try {
+			configPath = new java.io.File(java.net.URLDecoder.decode(
+					CommonUtil.class.getProtectionDomain().getCodeSource().getLocation().getFile(),
+					"utf-8")).getParentFile().getAbsolutePath()+ File.separator+"config"+File.separator;
+			if(!new File(configPath).exists()){
+				File file = new File((this.getClass().getClassLoader().getResource("").getPath()));
+				String p = file.getParent();
+				if(p.endsWith(File.separator))configPath = p+"classes"+File.separator+EnvironmentUtil.propertyPath;
+				else configPath = p +File.separator+"classes"+File.separator+EnvironmentUtil.propertyPath;
+			}
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			
+		}
+    	return configPath;
+    }
 }

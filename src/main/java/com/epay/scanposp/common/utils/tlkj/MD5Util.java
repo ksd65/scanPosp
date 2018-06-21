@@ -86,7 +86,7 @@ public class MD5Util {
 		for (int i = 0; i < size; i++) {
 			sb.append(arrayToSort[i]);
 		}
-		sb.append(SECRET_KEY.toUpperCase()).append("=").append(md5Key);
+		sb.append(SECRET_KEY).append("=").append(md5Key);
 		String str2Sign = sb.toString();
 		System.out.println("Sign Before MD5:" + str2Sign);
 		String result = MD5.MD5Encode(str2Sign).toUpperCase();

@@ -1,5 +1,6 @@
 package com.epay.scanposp.controller;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -55,6 +56,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 
 
+
+
+
+
+
 import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.ESKConfig;
@@ -66,6 +72,7 @@ import com.epay.scanposp.common.constant.SLFConfig;
 import com.epay.scanposp.common.constant.SMConfig;
 import com.epay.scanposp.common.constant.SysConfig;
 import com.epay.scanposp.common.constant.TLConfig;
+import com.epay.scanposp.common.constant.TLKJConfig;
 import com.epay.scanposp.common.constant.WWConfig;
 import com.epay.scanposp.common.constant.YSConfig;
 import com.epay.scanposp.common.constant.YZFConfig;
@@ -99,6 +106,7 @@ import com.epay.scanposp.common.utils.slf.vo.ReceivePayRequest;
 import com.epay.scanposp.common.utils.slf.vo.ReceivePayResponse;
 import com.epay.scanposp.common.utils.sm.CryptNoRestrict;
 import com.epay.scanposp.common.utils.tl.CertUtil;
+import com.epay.scanposp.common.utils.tlkj.MapUtils;
 import com.epay.scanposp.common.utils.ys.SwpHashUtil;
 import com.epay.scanposp.common.utils.yzf.AESTool;
 import com.epay.scanposp.common.utils.yzf.Base64Utils;
@@ -2189,11 +2197,11 @@ public class BankPayController {
 			}
 			
 			SysOffice sysOffice = sysOfficeList.get(0);
-		/*	if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
+			if(!EpaySignUtil.checksign(sysOffice.getPublicKeyRsa(), srcStr.toString(), signStr)){
 				result.put("returnCode", "0004");
 				result.put("returnMsg", "签名校验错误，请检查签名参数是否正确");
 				return signReturn(result);
-			}*/
+			}
 			
 			
 			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
@@ -2989,6 +2997,60 @@ public class BankPayController {
 						routewayDrawService.updateByPrimaryKey(draw);
 					}else{
 						result_message = resultObj.getString("resp_msg");
+						logger.info(result_message);
+					}
+			    }else if(RouteCodeConstant.TLKJ_ROUTE_CODE.equals(routeCode)){
+			    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+			        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
+			        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
+			        if(keyList == null || keyList.size()!=1){
+			        	result.put("returnCode", "0008");
+						result.put("returnMsg", "商户私钥未配置");
+						return signReturn(result);
+			        }
+			        MemberMerchantKey merchantKey = keyList.get(0);
+			        
+			        String serverUrl = TLKJConfig.serverUrl+"/df/merchantPay/req";
+			        
+			        Map<String ,Object> reqMap = new HashMap<String ,Object>();
+			        reqMap.put("agentNo", merchantKey.getAppId());
+			        reqMap.put("reqMethod", "0652000101");
+			        reqMap.put("orderNo",draw.getOrderCode());
+			        reqMap.put("signType", "SHAWITHRSA");
+			        
+			        String s = MapUtils.map2UrlParams(reqMap);
+			        CommonUtil commonUtil = new CommonUtil();
+			        String privateKeyFile = commonUtil.getConfigPath() + "tlkjkey"+File.separator + TLKJConfig.rsaPrivateKey;
+			        String sign = com.epay.scanposp.common.utils.tlkj.RSATool.signByPrivateKey(privateKeyFile, merchantKey.getPrivateKeyPassword(), s);
+			        reqMap.put("sign", sign);
+			        
+			     	logger.info("通联快捷代付查询请求数据[{}]", new Object[] { JSONObject.fromObject(reqMap).toString() });
+			     	String respStr =  HttpUtil.sendPostRequest(serverUrl, JSON.toJSONString(reqMap));
+					logger.info("通联快捷代付查询返回报文[{}]", new Object[] { respStr });
+			        
+			        JSONObject resultObj = JSONObject.fromObject(respStr);
+			        
+			        String result_message = "";
+					String result_code = resultObj.getString("respCode");
+					if("00".equals(result_code)){
+						String status = resultObj.getString("status");//0、待出款，2、出款失败；3、出款中；大于等于6、出款成功。
+						if(Integer.parseInt(status)>=6){
+							draw.setRespType("S");
+							draw.setRespCode("000");
+						}else if("3".equals(result_code)||"0".equals(result_code)){
+							draw.setRespType("R");
+						}else{
+							draw.setRespType("E");
+							draw.setRespCode(result_code);
+						}
+						if(resultObj.containsKey("respMsg")){
+							draw.setRespMsg(resultObj.getString("respMsg"));
+						}
+						draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+						draw.setUpdateDate(new Date());
+						routewayDrawService.updateByPrimaryKey(draw);
+					}else{
+						result_message = resultObj.getString("respMsg");
 						logger.info(result_message);
 					}
 			    }
