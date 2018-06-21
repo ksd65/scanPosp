@@ -2196,12 +2196,12 @@ public class QuickPayController {
 			return result;
 		}
 		
-		result = validMemberInfoToCardQuickPay(memberCode, orderNum,payMoney,bankCardToken,callbackUrl, "","","","","","","",srcStr.toString(), signStr);
+		result = validMemberInfoToCardQuickPay(memberCode, orderNum,payMoney,bankCardToken,callbackUrl, "","","","","","","","",srcStr.toString(), signStr);
 		
 		return CommonUtil.signReturn(result);
 	}
 	
-	public JSONObject validMemberInfoToCardQuickPay(String memberCode,String orderNum,String payMoney,String bankCardToken,String callbackUrl,String accountType,String bankAccount,String tel,String bankCvv,String bankYxq,String accountName,String certNbr,String signOrginalStr,String signedStr){
+	public JSONObject validMemberInfoToCardQuickPay(String memberCode,String orderNum,String payMoney,String bankCardToken,String callbackUrl,String accountType,String bankAccount,String tel,String bankCvv,String bankYxq,String accountName,String certNbr,String tradeRate,String signOrginalStr,String signedStr){
 		JSONObject result = new JSONObject();
 		try{
 			MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -2276,6 +2276,12 @@ public class QuickPayController {
 					result.put("returnMsg", "手机号缺失");
 					return CommonUtil.signReturn(result);
 				}
+			}else{
+				if(tradeRate == null || "".equals(tradeRate)){
+					result.put("returnCode", "0007");
+					result.put("returnMsg", "交易费率缺失");
+					return CommonUtil.signReturn(result);
+				}
 			}
 			
 			if(!RouteCodeConstant.ML_ROUTE_CODE.equals(routeCode)&&!RouteCodeConstant.TLKJ_ROUTE_CODE.equals(routeCode)){
@@ -2342,7 +2348,13 @@ public class QuickPayController {
 				result = mlCardQuickPay("3",memberInfo,merchantCode,memberPayType,orderNum,payMoney,callbackUrl,routeCode,accountType,bankAccount,tel,bankCvv,bankYxq,accountName,certNbr);
 			}else if(RouteCodeConstant.TLKJ_ROUTE_CODE.equals(routeCode)){
 				memberInfo.setSettleType("0");
-				result = tlkjCardQuickPay("3",memberInfo,merchantCode,memberPayType,orderNum,payMoney,callbackUrl,routeCode,accountType,bankAccount,tel,bankCvv,bankYxq,accountName,certNbr);
+				if(Double.valueOf(tradeRate)<memberPayType.getT0TradeRate().doubleValue()){
+					result.put("returnCode", "4004");
+					result.put("returnMsg", "交易费率小于商户最低费率");
+					return result;
+				}
+				
+				result = tlkjCardQuickPay("3",memberInfo,merchantCode,memberPayType,orderNum,payMoney,callbackUrl,routeCode,accountType,bankAccount,tel,bankCvv,bankYxq,accountName,certNbr,tradeRate);
 			}
 		}catch(Exception e){
 			logger.info(e.getMessage());
@@ -4004,6 +4016,7 @@ public class QuickPayController {
 		String bankYxq = request.getParameter("bankYxq");
 		String callbackUrl = request.getParameter("callbackUrl");
 		String signStr = request.getParameter("signStr");
+		String tradeRate = request.getParameter("tradeRate");
 		
 		StringBuilder srcStr = new StringBuilder();
 		JSONObject result = new JSONObject();
@@ -4081,13 +4094,17 @@ public class QuickPayController {
 			srcStr.append("&tel="+tel);
 		}
 		
+		if(tradeRate != null && !"".equals(tradeRate)){
+			srcStr.append("&tradeRate="+tradeRate);
+		}
+		
 		if(signStr == null || "".equals(signStr)){ 
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "缺少签名信息");
 			return result;
 		}
 		
-		result = validMemberInfoToCardQuickPay(memberCode, orderNum,payMoney,"",callbackUrl,accountType,bankAccount,tel,bankCvv,bankYxq,accountName,certNbr, srcStr.toString(), signStr);
+		result = validMemberInfoToCardQuickPay(memberCode, orderNum,payMoney,"",callbackUrl,accountType,bankAccount,tel,bankCvv,bankYxq,accountName,certNbr,tradeRate, srcStr.toString(), signStr);
 		
 		return CommonUtil.signReturn(result);
 	}
@@ -4411,7 +4428,7 @@ public class QuickPayController {
 		return result;
 	}
 	
-	public JSONObject tlkjCardQuickPay(String platformType,MemberInfo memberInfo,MemberMerchantCode merchantCode,MemberPayType memberPayType,String orderNum,String payMoney,String callbackUrl,String routeCode,String accountType,String bankAccount,String tel,String bankCvv,String bankYxq,String accountName,String certNbr) {
+	public JSONObject tlkjCardQuickPay(String platformType,MemberInfo memberInfo,MemberMerchantCode merchantCode,MemberPayType memberPayType,String orderNum,String payMoney,String callbackUrl,String routeCode,String accountType,String bankAccount,String tel,String bankCvv,String bankYxq,String accountName,String certNbr,String tradeRate) {
 		JSONObject result = new JSONObject();
 		try {
 			String merCode = merchantCode.getKjMerchantCode();
@@ -4443,11 +4460,8 @@ public class QuickPayController {
 			debitNote.setMemberCode(memberInfo.getWxMemberCode());
 			debitNote.setRemarks(bankAccount);
 			debitNote.setSettleType(memberInfo.getSettleType());
-			if("0".equals(memberInfo.getSettleType())){
-				debitNote.setTradeRate(memberPayType.getT0TradeRate());
-			}else{
-				debitNote.setTradeRate(memberPayType.getT1TradeRate());
-			}
+			debitNote.setTradeRate(new BigDecimal(tradeRate));
+			
 			
 			String configName = "SINGLE_MIN_"+routeCode+"_"+PayTypeConstant.PAY_METHOD_YL+"_"+PayTypeConstant.PAY_TYPE_KJ;
 			JSONObject checkResult = commonUtilService.checkMinMoney(configName, new BigDecimal(payMoney));
