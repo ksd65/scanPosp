@@ -2,11 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.epay.scanposp.dao.MemberBindAccDtlMapper" >
   <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.MemberBindAccDtl" >
+  	<id column="id" jdbcType="INTEGER" property="id" />
     <result column="member_id" property="memberId" jdbcType="INTEGER" />
     <result column="acc" property="acc" jdbcType="VARCHAR" />
     <result column="bank_id" property="bankId" jdbcType="VARCHAR" />
     <result column="bank_name" property="bankName" jdbcType="VARCHAR" />
     <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="cert_nbr" property="certNbr" jdbcType="VARCHAR" />
     <result column="order_num" property="orderNum" jdbcType="VARCHAR" />
     <result column="mobile_phone" property="mobilePhone" jdbcType="VARCHAR" />
     <result column="bind_type" property="bindType" jdbcType="CHAR" />
@@ -87,7 +89,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    member_id, acc, bank_id, bank_name, name, order_num, mobile_phone, bind_type, resp_code, 
+    id,member_id, acc, bank_id, bank_name, name, cert_nbr,order_num, mobile_phone, bind_type, resp_code, 
     resp_msg, create_by, create_date, update_by, update_date, remarks, del_flag,
     account_type,bank_code,cvv,expire_time,order_code,route_code,bank_card_token
   </sql>
@@ -126,6 +128,9 @@
       #{delFlag,jdbcType=CHAR})
   </insert>
   <insert id="insertSelective" parameterType="com.epay.scanposp.entity.MemberBindAccDtl" >
+  	<selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID() 
+    </selectKey>
     insert into bu_member_bind_acc_dtl
     <trim prefix="(" suffix=")" suffixOverrides="," >
       <if test="memberId != null" >
@@ -142,6 +147,9 @@
       </if>
       <if test="name != null" >
         name,
+      </if>
+      <if test="certNbr != null" >
+        cert_nbr,
       </if>
       <if test="orderNum != null" >
         order_num,
@@ -214,6 +222,9 @@
       </if>
       <if test="name != null" >
         #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="certNbr != null" >
+        #{certNbr,jdbcType=VARCHAR},
       </if>
       <if test="orderNum != null" >
         #{orderNum,jdbcType=VARCHAR},
@@ -355,5 +366,15 @@
     <if test="_parameter != null" >
       <include refid="Update_By_Example_Where_Clause" />
     </if>
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.epay.scanposp.entity.MemberBindAccDtl">
+    update bu_member_bind_acc_dtl
+    set resp_code = #{respCode,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
   </update>
 </mapper>

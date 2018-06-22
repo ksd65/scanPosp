@@ -376,6 +376,76 @@ public class MemberBindAccDtlExample {
             addCriterion("bank_name not between", value1, value2, "bankName");
             return (Criteria) this;
         }
+        
+        public Criteria andCertNbrIsNull() {
+            addCriterion("cert_nbr is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrIsNotNull() {
+            addCriterion("cert_nbr is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrEqualTo(String value) {
+            addCriterion("cert_nbr =", value, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrNotEqualTo(String value) {
+            addCriterion("cert_nbr <>", value, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrGreaterThan(String value) {
+            addCriterion("cert_nbr >", value, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrGreaterThanOrEqualTo(String value) {
+            addCriterion("cert_nbr >=", value, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrLessThan(String value) {
+            addCriterion("cert_nbr <", value, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrLessThanOrEqualTo(String value) {
+            addCriterion("cert_nbr <=", value, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrLike(String value) {
+            addCriterion("cert_nbr like", value, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrNotLike(String value) {
+            addCriterion("cert_nbr not like", value, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrIn(List<String> values) {
+            addCriterion("cert_nbr in", values, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrNotIn(List<String> values) {
+            addCriterion("cert_nbr not in", values, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrBetween(String value1, String value2) {
+            addCriterion("cert_nbr between", value1, value2, "certNbr");
+            return (Criteria) this;
+        }
+
+        public Criteria andCertNbrNotBetween(String value1, String value2) {
+            addCriterion("cert_nbr not between", value1, value2, "certNbr");
+            return (Criteria) this;
+        }
 
         public Criteria andNameIsNull() {
             addCriterion("name is null");

@@ -3,6 +3,8 @@ package com.epay.scanposp.entity;
 import java.util.Date;
 
 public class MemberBindAccDtl {
+	private Integer id;
+	
     private Integer memberId;
 
     private String acc;
@@ -14,6 +16,8 @@ public class MemberBindAccDtl {
     private String bankCode;
 
     private String bankName;
+    
+    private String certNbr;
 
     private String name;
     
@@ -231,6 +235,22 @@ public class MemberBindAccDtl {
 
 	public void setBankCardToken(String bankCardToken) {
 		this.bankCardToken = bankCardToken;
+	}
+
+	public String getCertNbr() {
+		return certNbr;
+	}
+
+	public void setCertNbr(String certNbr) {
+		this.certNbr = certNbr;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
 	}
     
     

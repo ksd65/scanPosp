@@ -217,6 +217,7 @@ public class QuickPayController {
 	@Autowired
 	private MemberPayTypeService memberPayTypeService;
 	
+	
 	/**
 	 * 快捷支付短信发送接口
 	 * @param request
@@ -1978,6 +1979,7 @@ public class QuickPayController {
 			accDtl.setBankCode(bankCode);
 			accDtl.setBankName(bankName);
 			accDtl.setName(accountName);
+			accDtl.setCertNbr(certNbr);
 			accDtl.setCvv(bankCvv);
 			accDtl.setExpireTime(bankYxq);
 			accDtl.setOrderNum(orderNum);
@@ -4749,8 +4751,45 @@ public class QuickPayController {
 		try {
 			
 			String respStr = HttpUtil.getPostString(request);
+			//String respStr = "{\"account_name\":\"林晓锋\",\"acct_ppe\":\"0\",\"agentno\":\"A0000001\",\"card_no\":\"AMgaNC8hAFmHPQz+9wYU4Bqf9jYyEjBUlFLpzPLzgMo=\",\"id_card\":\"Z+kmNGS/llHnw5/nw/O4Sml0cMxPXKgBPNvbPBCSAnA=\",\"mobile\":\"V8BgLs9DeE9WddifbLbc6g==\",\"name\":\"林晓锋\",\"nonce_str\":\"tXqCnk8h0PufhFpE5wzfTedcOUZkPgKQ\",\"sign\":\"284A3359046822960F42CEAAD0D2C050\",\"status\":\"6\"}";
 			logger.info("tlBindCardNotify回调返回报文[{}]",  respStr);
+			com.alibaba.fastjson.JSONObject respObj = com.alibaba.fastjson.JSONObject.parseObject(respStr);
+			String sign = respObj.getString("sign");
+			respObj.remove("sign");
+			String aesKey = TLKJConfig.privateKey;
+			String md5Key = TLKJConfig.privateKey;
 			
+			if(!MD5Util.verifySign(respObj, md5Key, sign)){
+				logger.info("验证签名不通过");
+                response.getWriter().write("FAIL");
+        		return;
+			}
+			
+			String cardNo = respObj.getString("card_no");
+			String certNbr  = respObj.getString("id_card");
+			cardNo = AesTool.decrypt(cardNo, aesKey);
+			certNbr = AesTool.decrypt(certNbr, aesKey);
+			String status = respObj.getString("status");
+			if("2".equals(status)||"6".equals(status)){
+				MemberBindAccDtlExample memberBindAccDtlExample = new MemberBindAccDtlExample();
+				memberBindAccDtlExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TLKJ_ROUTE_CODE).andAccEqualTo(cardNo).andCertNbrEqualTo(certNbr).andRespCodeEqualTo("0").andDelFlagEqualTo("0");
+				memberBindAccDtlExample.setOrderByClause(" create_date desc ");
+				List<MemberBindAccDtl> list = memberBindAccDtlService.selectByExample(memberBindAccDtlExample);
+				if(list!=null&&list.size()>0){
+					MemberBindAccDtl memberBindAccDtl = list.get(0);
+					if("2".equals(status)){//失败
+						memberBindAccDtl.setRespCode("1");
+					}else if("6".equals(status)){//成功
+						memberBindAccDtl.setRespCode("2");
+					}
+					memberBindAccDtl.setUpdateDate(new Date());
+					memberBindAccDtlService.updateByPrimaryKey(memberBindAccDtl);
+				}
+			}
+			
+			
+			
+			System.out.println(cardNo);
             
         } catch (Exception e) {
 			e.printStackTrace();
