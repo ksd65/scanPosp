@@ -35,7 +35,7 @@ public class BindCardResultNotifyService {
 		StringBuilder srcStr = new StringBuilder();
 		//商户号
 		payNoticeJson.put("memberCode", payResultNotice.getMemberCode());
-		srcStr.append("&memberCode="+payResultNotice.getMemberCode());
+		srcStr.append("memberCode="+payResultNotice.getMemberCode());
 		//第三方平台订单号
 		payNoticeJson.put("orderNum", payResultNotice.getOrderNumOuter());
 		srcStr.append("&orderNum="+payResultNotice.getOrderNumOuter());

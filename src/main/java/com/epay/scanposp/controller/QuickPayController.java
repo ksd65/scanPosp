@@ -4801,9 +4801,18 @@ public class QuickPayController {
 			String certNbr  = respObj.getString("id_card");
 			cardNo = AesTool.decrypt(cardNo, aesKey);
 			certNbr = AesTool.decrypt(certNbr, aesKey);
+			
+			MemberBindAccDtlExample memberBindAccDtlExample = new MemberBindAccDtlExample();
+			memberBindAccDtlExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TLKJ_ROUTE_CODE).andAccEqualTo(cardNo).andCertNbrEqualTo(certNbr).andRespCodeEqualTo("2").andDelFlagEqualTo("0");
+			List<MemberBindAccDtl> slist = memberBindAccDtlService.selectByExample(memberBindAccDtlExample);
+			if(slist!=null&&slist.size()>0){
+				response.getWriter().write("SUCCESS");
+        		return;
+			}
+			
 			String status = respObj.getString("status");
 			if("2".equals(status)||"6".equals(status)){
-				MemberBindAccDtlExample memberBindAccDtlExample = new MemberBindAccDtlExample();
+				memberBindAccDtlExample = new MemberBindAccDtlExample();
 				memberBindAccDtlExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TLKJ_ROUTE_CODE).andAccEqualTo(cardNo).andCertNbrEqualTo(certNbr).andRespCodeEqualTo("0").andDelFlagEqualTo("0");
 				memberBindAccDtlExample.setOrderByClause(" create_date desc ");
 				List<MemberBindAccDtl> list = memberBindAccDtlService.selectByExample(memberBindAccDtlExample);
