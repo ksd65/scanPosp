@@ -340,5 +340,38 @@
   	<select id="moveToHis" statementType="CALLABLE" parameterType="java.util.Map" resultType="java.lang.Integer">
   		{call pro_tradeHis()}
   	</select>
+  	
+  	
+  	<select id="countMemberProfitMoneyByCondition" parameterType="java.util.Map" resultType="java.lang.Double">
+      	SELECT
+		SUM(money*(member_trade_rate-#{memberRate})) transactionCount
+		FROM
+		(
+			SELECT
+			<include refid="bu_trade_detail"></include>
+			FROM
+				`bu_trade_detail` `a`
+			WHERE 1=1 
+			<if test="memberId != null" >
+				AND a.member_id = #{memberId,jdbcType=INTEGER} 
+			</if>
+			<if test="startDate != null" >
+	        	AND a.txn_date &gt;= #{startDate}
+	      	</if>
+			<if test="endDate != null" >
+	        	AND a.txn_date &lt;= #{endDate}
+	      	</if>
+	      	<if test="txnType != null" >
+	        	AND a.txn_type = #{txnType}
+	      	</if>
+	      	<if test="settleType != null" >
+	        	AND a.settle_type = #{settleType}
+	      	</if>
+	      	<if test="routeId != null" >
+	        	AND a.route_id = #{routeId}
+	      	</if>
+			
+   		) `t`
+  	</select>
   	 
 </mapper>

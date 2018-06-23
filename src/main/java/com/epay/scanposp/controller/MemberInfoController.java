@@ -43,6 +43,7 @@ import com.epay.scanposp.common.utils.SignUtil;
 import com.epay.scanposp.common.utils.StringUtil;
 import com.epay.scanposp.common.utils.WxMessageUtil;
 import com.epay.scanposp.common.utils.XmlUtil;
+import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.common.utils.constant.SysCommonConfigConstant;
 import com.epay.scanposp.entity.Account;
@@ -66,6 +67,8 @@ import com.epay.scanposp.entity.MemberMerchantCode;
 import com.epay.scanposp.entity.MemberMerchantCodeExample;
 import com.epay.scanposp.entity.MemberOpenid;
 import com.epay.scanposp.entity.MemberOpenidExample;
+import com.epay.scanposp.entity.MemberPayType;
+import com.epay.scanposp.entity.MemberPayTypeExample;
 import com.epay.scanposp.entity.MemberQuickPay;
 import com.epay.scanposp.entity.MlTradeDetail;
 import com.epay.scanposp.entity.MlTradeDetailAll;
@@ -101,6 +104,7 @@ import com.epay.scanposp.service.MemberInfoMoreService;
 import com.epay.scanposp.service.MemberInfoService;
 import com.epay.scanposp.service.MemberMerchantCodeService;
 import com.epay.scanposp.service.MemberOpenidService;
+import com.epay.scanposp.service.MemberPayTypeService;
 import com.epay.scanposp.service.MlTradeDetailAllService;
 import com.epay.scanposp.service.MlTradeDetailService;
 import com.epay.scanposp.service.MlTradeResNoticeService;
@@ -200,6 +204,9 @@ public class MemberInfoController {
 	
 	@Autowired
 	private MemberDrawRouteService memberDrawRouteService;
+	
+	@Autowired
+	private MemberPayTypeService memberPayTypeService;
 	
 	@Resource
 	ThreadPoolTaskExecutor threadPoolTaskExecutor;
@@ -401,6 +408,9 @@ public class MemberInfoController {
 			paramMap.put("memberId", memberId);
 			paramMap.put("respType", "S");
 			paramMap.put("routeCode", routeCode);
+			if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+				paramMap.put("drawType", "1");
+			}
 			//已成功提现总额
 			Double drawMoneyCountAll = commonService.countDrawMoneyByCondition(paramMap);
 			drawMoneyCountAll = drawMoneyCountAll == null ? 0 : drawMoneyCountAll;
@@ -414,6 +424,9 @@ public class MemberInfoController {
 			//待审核提现金额
 			paramMap.put("auditStatus", "1");
 			paramMap.put("routeCode", routeCode);
+			if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+				paramMap.put("drawType", "1");
+			}
 			Double waitAuditMoneyCountAll = commonService.countMoneyByCondition(paramMap);
 			waitAuditMoneyCountAll = waitAuditMoneyCountAll == null ? 0 : waitAuditMoneyCountAll;
 			//提现中的金额
@@ -617,12 +630,34 @@ public class MemberInfoController {
 					drawFee = drawRoute.getDrawFee().doubleValue();
 				}
 				paramMap = new HashMap<String, Object>();
-				paramMap.put("memberId", reqDataJson.getInt("memberId"));
-				paramMap.put("routeId", routeCode);
-				paramMap.put("startDate", df.format(begin));
-				paramMap.put("endDate", df.format(end));
-				paramMap.put("settleType", "0");//D0
-				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
+				Double balanceToday = 0d;
+				if(!RouteCodeConstant.TLKJ_ROUTE_CODE.equals(routeCode)){
+					paramMap.put("memberId", reqDataJson.getInt("memberId"));
+					paramMap.put("routeId", routeCode);
+					paramMap.put("startDate", df.format(begin));
+					paramMap.put("endDate", df.format(end));
+					paramMap.put("settleType", "0");//D0
+					balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
+				}else{
+					MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+					memberPayTypeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_YL).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_KJ).andDelFlagEqualTo("0");
+					List<MemberPayType> memberPayTypeList =  memberPayTypeService.selectByExample(memberPayTypeExample);
+					if(memberPayTypeList==null || memberPayTypeList.size()==0){
+						result.put("returnCode", "0008");
+						result.put("returnMsg", "对不起，该商户未开通快捷支付的权限");
+						return result.toString();
+					}
+					MemberPayType memberPayType = memberPayTypeList.get(0);
+					
+					paramMap.put("memberId", reqDataJson.getInt("memberId"));
+					paramMap.put("routeId", routeCode);
+					paramMap.put("startDate", df.format(begin));
+					paramMap.put("endDate", df.format(end));
+					paramMap.put("settleType", "0");//D0
+					paramMap.put("memberRate", memberPayType.getT0TradeRate());
+					balanceToday = commonService.countMemberProfitMoneyByCondition(paramMap);
+				}
+				
 				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
 				
 				//Double canDrawToday = balanceToday;//当天可提现的金额
@@ -934,6 +969,9 @@ public class MemberInfoController {
 			paramMap.put("routeCode", routeCode);
 			//当天成功提现金额
 			paramMap.put("respDate", df.format(new Date()));
+			if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+				paramMap.put("drawType", "1");
+			}
 			Double drawMoneyCountToday = commonService.countDrawMoneyByCondition(paramMap);
 			drawMoneyCountToday = drawMoneyCountToday == null ? 0 : drawMoneyCountToday;
 			
@@ -942,6 +980,9 @@ public class MemberInfoController {
 			//待审核提现金额
 			paramMap.put("auditStatus", "1");
 			paramMap.put("routeCode", routeCode);
+			if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+				paramMap.put("drawType", "1");
+			}
 			Double waitAuditMoneyCountAll = commonService.countMoneyByCondition(paramMap);
 			waitAuditMoneyCountAll = waitAuditMoneyCountAll == null ? 0 : waitAuditMoneyCountAll;
 			//提现中的金额
@@ -1000,7 +1041,24 @@ public class MemberInfoController {
 				}else{
 					paramMap.put("settleType", "0");//D0
 				}
-				Double balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
+				Double balanceToday = 0d;
+				
+				if(!routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+					balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
+				}else{
+					MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+					memberPayTypeExample.createCriteria().andMemberIdEqualTo(memberInfo.getId()).andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_YL).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_KJ).andDelFlagEqualTo("0");
+					List<MemberPayType> memberPayTypeList =  memberPayTypeService.selectByExample(memberPayTypeExample);
+					if(memberPayTypeList==null || memberPayTypeList.size()==0){
+						result.put("returnCode", "0008");
+						result.put("returnMsg", "对不起，该商户未开通快捷支付的权限");
+						return result.toString();
+					}
+					MemberPayType memberPayType = memberPayTypeList.get(0);
+					paramMap.put("memberRate", memberPayType.getT0TradeRate());
+					balanceToday = commonService.countMemberProfitMoneyByCondition(paramMap);
+				}
+				
 				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
 				Double canDrawToday = balanceToday;//当天可提现的金额
 				if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.CJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESK_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.ESKWG_ROUTE_CODE.equals(routeCode)){

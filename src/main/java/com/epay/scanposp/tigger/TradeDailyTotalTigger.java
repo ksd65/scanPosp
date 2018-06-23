@@ -12,14 +12,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.epay.scanposp.common.utils.DateUtil;
+import com.epay.scanposp.common.utils.constant.PayTypeConstant;
 import com.epay.scanposp.common.utils.constant.RouteCodeConstant;
 import com.epay.scanposp.entity.JobRun;
 import com.epay.scanposp.entity.MemberInfo;
 import com.epay.scanposp.entity.MemberInfoExample;
+import com.epay.scanposp.entity.MemberPayType;
+import com.epay.scanposp.entity.MemberPayTypeExample;
 import com.epay.scanposp.entity.TradeDailyTotal;
 import com.epay.scanposp.service.CommonService;
 import com.epay.scanposp.service.JobRunService;
 import com.epay.scanposp.service.MemberInfoService;
+import com.epay.scanposp.service.MemberPayTypeService;
 import com.epay.scanposp.service.TradeDailyTotalService;
 
 public class TradeDailyTotalTigger {
@@ -37,6 +41,9 @@ public class TradeDailyTotalTigger {
 	
 	@Autowired
 	private TradeDailyTotalService tradeDailyTotalService;
+	
+	@Autowired
+	private MemberPayTypeService memberPayTypeService;
 	
 	public void tradeDailyTotal(){
 		
@@ -61,6 +68,7 @@ public class TradeDailyTotalTigger {
 				routeList.add(RouteCodeConstant.ESKKJ_ROUTE_CODE);
 				routeList.add(RouteCodeConstant.ESKWG_ROUTE_CODE);
 				routeList.add(RouteCodeConstant.ESKWGD0_ROUTE_CODE);
+				routeList.add(RouteCodeConstant.TLKJ_ROUTE_CODE);
 				
 				if(routeList!=null && routeList.size()>0){
 					for(String routeCode:routeList){
@@ -72,11 +80,25 @@ public class TradeDailyTotalTigger {
 							paramMap.put("routeId", routeCode);
 							paramMap.put("startDate", yesterday);
 							paramMap.put("endDate", yesterday);
-							Double settleMoney = commonService.countTransactionRealMoneyByCondition(paramMap);
-							settleMoney = settleMoney == null ? 0 : settleMoney;
 							
 							Double tradeMoney = commonService.countTransactionMoneyByCondition(paramMap);
 							tradeMoney = tradeMoney == null ? 0 : tradeMoney;
+							
+							Double settleMoney = 0d;
+							if(!routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+								settleMoney = commonService.countTransactionRealMoneyByCondition(paramMap);
+							}else{
+								MemberPayTypeExample memberPayTypeExample = new MemberPayTypeExample();
+								memberPayTypeExample.createCriteria().andMemberIdEqualTo(memberId).andPayMethodEqualTo(PayTypeConstant.PAY_METHOD_YL).andPayTypeEqualTo(PayTypeConstant.PAY_TYPE_KJ).andDelFlagEqualTo("0");
+								List<MemberPayType> memberPayTypeList =  memberPayTypeService.selectByExample(memberPayTypeExample);
+								if(memberPayTypeList==null || memberPayTypeList.size()==0){
+									continue;
+								}
+								MemberPayType memberPayType = memberPayTypeList.get(0);
+								paramMap.put("memberRate", memberPayType.getT0TradeRate());
+								settleMoney = commonService.countMemberProfitMoneyByCondition(paramMap);
+							}
+							settleMoney = settleMoney == null ? 0 : settleMoney;
 						
 							if(settleMoney!=0||tradeMoney!=0){
 								TradeDailyTotal tradeDailyTotal = new TradeDailyTotal();

@@ -54,4 +54,9 @@ public class CommonService {
 	public Double countMlDrawMoneyByCondition(Map<String, Object> paramMap) {
 		return commonServiceMapper.countMlDrawMoneyByCondition(paramMap);
 	}
+	
+	public Double countMemberProfitMoneyByCondition(Map<String, Object> paramMap){
+		return commonServiceMapper.countMemberProfitMoneyByCondition(paramMap);
+	}
+	
 }
