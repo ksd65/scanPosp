@@ -25,6 +25,8 @@ public class PayResultNotice {
     private String platformType;
 
     private String interfaceType;
+    
+    private String noticeType;
 
     private String status;
 
@@ -213,4 +215,14 @@ public class PayResultNotice {
     public void setDelFlag(String delFlag) {
         this.delFlag = delFlag == null ? null : delFlag.trim();
     }
+
+	public String getNoticeType() {
+		return noticeType;
+	}
+
+	public void setNoticeType(String noticeType) {
+		this.noticeType = noticeType;
+	}
+    
+    
 }

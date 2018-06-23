@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+
 public class PayResultNoticeExample {
     protected String orderByClause;
 
@@ -255,6 +256,79 @@ public class PayResultNoticeExample {
             addCriterion("member_code not between", value1, value2, "memberCode");
             return (Criteria) this;
         }
+        
+        
+        public Criteria andNoticeTypeIsNull() {
+            addCriterion("notice_type is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeIsNotNull() {
+            addCriterion("notice_type is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeEqualTo(String value) {
+            addCriterion("notice_type =", value, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeNotEqualTo(String value) {
+            addCriterion("notice_type <>", value, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeGreaterThan(String value) {
+            addCriterion("notice_type >", value, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeGreaterThanOrEqualTo(String value) {
+            addCriterion("notice_type >=", value, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeLessThan(String value) {
+            addCriterion("notice_type <", value, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeLessThanOrEqualTo(String value) {
+            addCriterion("notice_type <=", value, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeLike(String value) {
+            addCriterion("notice_type like", value, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeNotLike(String value) {
+            addCriterion("notice_type not like", value, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeIn(List<String> values) {
+            addCriterion("notice_type in", values, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeNotIn(List<String> values) {
+            addCriterion("notice_type not in", values, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeBetween(String value1, String value2) {
+            addCriterion("notice_type between", value1, value2, "noticeType");
+            return (Criteria) this;
+        }
+
+        public Criteria andNoticeTypeNotBetween(String value1, String value2) {
+            addCriterion("notice_type not between", value1, value2, "noticeType");
+            return (Criteria) this;
+        }
+        
+        
 
         public Criteria andPayMoneyIsNull() {
             addCriterion("pay_money is null");

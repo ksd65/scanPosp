@@ -13,6 +13,7 @@
     <result column="pay_time" jdbcType="VARCHAR" property="payTime" />
     <result column="platform_type" jdbcType="CHAR" property="platformType" />
     <result column="interface_type" jdbcType="CHAR" property="interfaceType" />
+    <result column="notice_type" jdbcType="CHAR" property="noticeType" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="resp_type" jdbcType="CHAR" property="respType" />
     <result column="result_code" jdbcType="CHAR" property="resultCode" />
@@ -84,7 +85,7 @@
   </sql>
   <sql id="Base_Column_List">
     id, member_code, pay_money, order_code, order_num_outer, return_url, counts, pay_type, 
-    pay_time, platform_type, interface_type, status, resp_type, result_code, result_message, 
+    pay_time, platform_type, interface_type,notice_type, status, resp_type, result_code, result_message, 
     create_by, create_date, update_by, update_date, remarks, del_flag
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.PayResultNoticeExample" resultMap="BaseResultMap">
@@ -175,6 +176,9 @@
       <if test="interfaceType != null">
         interface_type,
       </if>
+      <if test="noticeType != null">
+        notice_type,
+      </if>
       <if test="status != null">
         status,
       </if>
@@ -236,6 +240,9 @@
       </if>
       <if test="interfaceType != null">
         #{interfaceType,jdbcType=CHAR},
+      </if>
+      <if test="noticeType != null">
+        #{noticeType,jdbcType=CHAR},
       </if>
       <if test="status != null">
         #{status,jdbcType=CHAR},

@@ -11,6 +11,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import com.epay.scanposp.controller.DebitNoteController;
 import com.epay.scanposp.entity.PayResultNotice;
 import com.epay.scanposp.entity.PayResultNoticeExample;
+import com.epay.scanposp.service.BindCardResultNotifyService;
 import com.epay.scanposp.service.PayResultNoticeLogService;
 import com.epay.scanposp.service.PayResultNoticeService;
 import com.epay.scanposp.service.PayResultNotifyService;
@@ -31,6 +32,9 @@ public class PayResultNoticeTigger {
 	private PayResultNotifyService payResultNotifyService;
 	
 	@Resource
+	private BindCardResultNotifyService bindCardResultNotifyService;
+	
+	@Resource
 	private SysOfficeExtendService sysOfficeExtendService;
 	
 	@Resource
@@ -39,7 +43,7 @@ public class PayResultNoticeTigger {
 	public void dealPayResultNotice(){
 		logger.info("回调通知定时开始执行");
 		PayResultNoticeExample payResultNoticeExample = new PayResultNoticeExample();
-		payResultNoticeExample.or().andStatusEqualTo("2").andCountsLessThan(3);
+		payResultNoticeExample.or().andStatusEqualTo("2").andNoticeTypeEqualTo("1").andCountsLessThan(3);
 		payResultNoticeExample.setOrderByClause(" id asc ");
 		List<PayResultNotice> payResultNoticeList = payResultNoticeService.selectByExample(payResultNoticeExample);
 		if(payResultNoticeList!=null){
@@ -47,6 +51,21 @@ public class PayResultNoticeTigger {
 		}
 		for(PayResultNotice payResultNotice : payResultNoticeList){
 			payResultNotifyService.notify(payResultNotice);
+			/*PayResultNoticeThread payResultNoticeThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice,payResultNoticeLogService);
+			threadPoolTaskExecutor.execute(payResultNoticeThread);
+			//new Thread(payResultNoticeThread).start();
+			 */
+		}
+		//绑卡通知
+		payResultNoticeExample = new PayResultNoticeExample();
+		payResultNoticeExample.or().andStatusEqualTo("2").andNoticeTypeEqualTo("2").andCountsLessThan(3);
+		payResultNoticeExample.setOrderByClause(" id asc ");
+		payResultNoticeList = payResultNoticeService.selectByExample(payResultNoticeExample);
+		if(payResultNoticeList!=null){
+			logger.info("绑卡通知定时查询个数："+payResultNoticeList.size());
+		}
+		for(PayResultNotice payResultNotice : payResultNoticeList){
+			bindCardResultNotifyService.notify(payResultNotice);
 			/*PayResultNoticeThread payResultNoticeThread = new PayResultNoticeThread(payResultNoticeService, sysOfficeExtendService, payResultNotice,payResultNoticeLogService);
 			threadPoolTaskExecutor.execute(payResultNoticeThread);
 			//new Thread(payResultNoticeThread).start();
