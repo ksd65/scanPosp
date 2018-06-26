@@ -427,6 +427,10 @@ public class MemberInfoController {
 			paramMap.put("respDate", df.format(new Date()));
 			Double drawMoneyCountToday = commonService.countDrawMoneyByCondition(paramMap);
 			drawMoneyCountToday = drawMoneyCountToday == null ? 0 : drawMoneyCountToday;
+			//当天代付利润
+			paramMap.remove("drawType");
+			Double drawProfitToday = commonService.countMemberDrawProfitByCondition(paramMap);
+			drawProfitToday = drawProfitToday == null ? 0 : drawProfitToday;
 			
 			paramMap = new HashMap<String, Object>();
 			paramMap.put("memberId", memberId);
@@ -686,10 +690,10 @@ public class MemberInfoController {
 					balanceT1 = account.getT1Balance().doubleValue();
 				}
 				
-				Double balance = balanceHis + balanceT1 + balanceToday - drawMoneyCountToday;//总账户余额
+				Double balance = balanceHis + balanceT1 + balanceToday + drawProfitToday - drawMoneyCountToday;//总账户余额
 				
 				//可提现总额
-				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
+				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday + drawProfitToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
 				
 				resData.put("balance", new DecimalFormat("0.00").format(balance));
 				resData.put("drawMoneyCountAll", new DecimalFormat("0.00").format(drawMoneyCountAll));
@@ -987,6 +991,11 @@ public class MemberInfoController {
 			Double drawMoneyCountToday = commonService.countDrawMoneyByCondition(paramMap);
 			drawMoneyCountToday = drawMoneyCountToday == null ? 0 : drawMoneyCountToday;
 			
+			//当天代付利润
+			paramMap.remove("drawType");
+			Double drawProfitToday = commonService.countMemberDrawProfitByCondition(paramMap);
+			drawProfitToday = drawProfitToday == null ? 0 : drawProfitToday;
+			
 			paramMap = new HashMap<String, Object>();
 			paramMap.put("memberId", memberId);
 			//待审核提现金额
@@ -1094,6 +1103,7 @@ public class MemberInfoController {
 						result.put("returnMsg", "提现金额必须大于手续费");
 						return result.toString();
 					}
+					drawFee = drawFee + bindCardFee;
 					
 				}
 				
@@ -1118,7 +1128,7 @@ public class MemberInfoController {
 				
 				
 				//可提现总额
-				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
+				Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("#.00").format(balanceHis + canDrawToday + drawProfitToday - drawMoneyCountToday - waitAuditMoneyCountAll - ingMoneyCountAll));
 				
 				if(Double.parseDouble(drawMoney)>canDrawMoneyCount){
 					result.put("returnCode", "4004");
@@ -1181,6 +1191,7 @@ public class MemberInfoController {
 					memberBindCardDraw.setDrawId(routewayDraw.getId());
 					memberBindCardDraw.setMemberId(memberId);
 					memberBindCardDraw.setAccDtlId((Integer)bind.get("id"));
+					memberBindCardDraw.setCreateDate(new Date());
 					memberBindCardDrawService.insertSelective(memberBindCardDraw);
 					
 				}

@@ -99,6 +99,17 @@ public class TradeDailyTotalTigger {
 								settleMoney = commonService.countMemberProfitMoneyByCondition(paramMap);
 							}
 							settleMoney = settleMoney == null ? 0 : settleMoney;
+							
+							paramMap = new HashMap<String, Object>();
+							paramMap.put("memberId", memberId);
+							paramMap.put("routeCode", routeCode);
+							paramMap.put("respType", "S");
+							paramMap.put("respDate", yesterday);
+							//前一天代付利润
+							Double drawProfitYesterDay = commonService.countMemberDrawProfitByCondition(paramMap);
+							drawProfitYesterDay = drawProfitYesterDay == null ? 0 : drawProfitYesterDay;
+							
+							settleMoney = (new BigDecimal(settleMoney).add(new BigDecimal(drawProfitYesterDay))).doubleValue();
 						
 							if(settleMoney!=0||tradeMoney!=0){
 								TradeDailyTotal tradeDailyTotal = new TradeDailyTotal();

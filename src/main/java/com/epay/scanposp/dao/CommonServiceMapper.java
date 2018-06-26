@@ -17,4 +17,6 @@ public interface CommonServiceMapper {
 	public Double countMlDrawMoneyByCondition(Map<String, Object> paramMap);
 	
 	public Double countMemberProfitMoneyByCondition(Map<String, Object> paramMap);
+	
+	public Double countMemberDrawProfitByCondition(Map<String, Object> paramMap);
 }

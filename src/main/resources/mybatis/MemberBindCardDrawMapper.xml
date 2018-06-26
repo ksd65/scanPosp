@@ -175,7 +175,7 @@
   	SELECT t.id,t.acc,t.member_id FROM bu_member_bind_acc_dtl t where t.member_id=#{memberId,jdbcType=INTEGER} and t.route_code=#{routeCode,jdbcType=VARCHAR} and t.resp_code='2'
 	and NOT EXISTS(
 	SELECT 1 FROM bu_member_bind_card_draw d,bu_routeway_draw r where r.id=d.draw_id
-	and r.member_id=#{memberId,jdbcType=INTEGER} and r.route_code=#{routeCode,jdbcType=VARCHAR} and (r.audit_date='1' or (r.audit_date='2' and (r.resp_type='S' or r.resp_type='R')))
+	and r.member_id=#{memberId,jdbcType=INTEGER} and r.route_code=#{routeCode,jdbcType=VARCHAR} and (r.audit_status='1' or (r.audit_status='2' and (r.resp_type='S' or r.resp_type='R')))
 	AND d.acc_dtl_id=t.id)
   
   </select>

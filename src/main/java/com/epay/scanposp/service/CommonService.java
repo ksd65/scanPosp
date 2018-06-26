@@ -59,4 +59,8 @@ public class CommonService {
 		return commonServiceMapper.countMemberProfitMoneyByCondition(paramMap);
 	}
 	
+	public Double countMemberDrawProfitByCondition(Map<String, Object> paramMap){
+		return commonServiceMapper.countMemberDrawProfitByCondition(paramMap);
+	}
+	
 }

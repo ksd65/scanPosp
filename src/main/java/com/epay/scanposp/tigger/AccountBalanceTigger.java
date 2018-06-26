@@ -1183,8 +1183,12 @@ public class AccountBalanceTigger {
 					paramMap.put("memberId", memberId);
 					paramMap.put("routeCode", routeCode);
 					paramMap.put("respType", "S");
-					//前一天成功提现金额（包含代付）
 					paramMap.put("respDate", yesterday);
+					//前一天代付利润
+					Double drawProfitYesterDay = commonService.countMemberDrawProfitByCondition(paramMap);
+					drawProfitYesterDay = drawProfitYesterDay == null ? 0 : drawProfitYesterDay;
+					
+					//前一天成功提现金额（包含代付）
 					paramMap.put("drawType", "1");
 					Double drawMoneyCountYesterDay = commonService.countDrawMoneyByCondition(paramMap);
 					drawMoneyCountYesterDay = drawMoneyCountYesterDay == null ? 0 : drawMoneyCountYesterDay;
@@ -1192,13 +1196,13 @@ public class AccountBalanceTigger {
 					Double drawPercent = new BigDecimal(1).subtract(drawRoute.getT1Percent()).doubleValue();
 					int week = DateUtil.getWeek();
 					if(week == 6 || week == 0){//周六凌晨跑 周天凌晨跑
-						balanceHis = balanceHis + tradeMoneyBalance * drawPercent - drawMoneyCountYesterDay;
-						balanceT1 = balanceT1 + tradeMoneyBalance * (drawRoute.getT1Percent().doubleValue());
+						balanceHis = balanceHis + (tradeMoneyBalance + drawProfitYesterDay) * drawPercent - drawMoneyCountYesterDay;
+						balanceT1 = balanceT1 + (tradeMoneyBalance + drawProfitYesterDay)* (drawRoute.getT1Percent().doubleValue());
 					}else if(week == 1){//周一凌晨跑
-						balanceHis = balanceHis + balanceT1 + tradeMoneyBalance - drawMoneyCountYesterDay;
+						balanceHis = balanceHis + balanceT1 + tradeMoneyBalance + drawProfitYesterDay - drawMoneyCountYesterDay;
 						balanceT1 = 0d;
 					}else{
-						balanceHis = balanceHis + tradeMoneyBalance - drawMoneyCountYesterDay;
+						balanceHis = balanceHis + tradeMoneyBalance + drawProfitYesterDay - drawMoneyCountYesterDay;
 					}
 					
 					//Double balance = balanceHis + tradeMoneyBalance - drawMoneyCountYesterDay;

@@ -373,5 +373,35 @@
 			
    		) `t`
   	</select>
+  	
+  	
+  	<select id="countMemberDrawProfitByCondition" parameterType="java.util.Map" resultType="java.lang.Double">
+  		SELECT SUM(memberDrawProfit) drawCount FROM bu_routeway_draw 
+		WHERE 1=1 
+		<if test="memberId != null" >
+			AND member_id = #{memberId,jdbcType=INTEGER} 
+		</if>
+		<if test="startDate != null" >
+        	AND create_date &gt;= #{startDate}
+      	</if>
+		<if test="endDate != null" >
+        	AND create_date &lt;= #{endDate}
+      	</if>
+		<if test="wxOrZfb != null" >
+        	AND member_code like #{wxOrZfb}
+      	</if>
+      	<if test="respType != null" >
+        	AND resp_type = #{respType}
+      	</if>
+      	<if test="routeCode != null" >
+        	AND route_code = #{routeCode}
+      	</if>
+      	<if test="drawType != null" >
+        	AND draw_type = #{drawType}
+      	</if>
+      	<if test="respDate != null" >
+        	AND LEFT(resp_date,8)= #{respDate}
+      	</if>
+  	</select>
   	 
 </mapper>

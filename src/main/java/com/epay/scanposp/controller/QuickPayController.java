@@ -88,6 +88,7 @@ import com.epay.scanposp.entity.DebitNote;
 import com.epay.scanposp.entity.DebitNoteExample;
 import com.epay.scanposp.entity.EpayCode;
 import com.epay.scanposp.entity.EpayCodeExample;
+import com.epay.scanposp.entity.EskNotice;
 import com.epay.scanposp.entity.MemberBindAccDtl;
 import com.epay.scanposp.entity.MemberBindAccDtlExample;
 import com.epay.scanposp.entity.MemberInfo;
@@ -120,6 +121,7 @@ import com.epay.scanposp.service.CommonUtilService;
 import com.epay.scanposp.service.DebitNoteIpService;
 import com.epay.scanposp.service.DebitNoteService;
 import com.epay.scanposp.service.EpayCodeService;
+import com.epay.scanposp.service.EskNoticeService;
 import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberBindAccDtlService;
 import com.epay.scanposp.service.MemberInfoService;
@@ -220,6 +222,9 @@ public class QuickPayController {
 	
 	@Autowired
 	private BindCardResultNotifyService bindCardResultNotifyService;
+	
+	@Autowired
+	private EskNoticeService eskNoticeService;
 	
 	/**
 	 * 快捷支付短信发送接口
@@ -4802,6 +4807,15 @@ public class QuickPayController {
 			cardNo = AesTool.decrypt(cardNo, aesKey);
 			certNbr = AesTool.decrypt(certNbr, aesKey);
 			
+			try{
+				EskNotice eskNotice = new EskNotice();
+				eskNotice.setNoticeData(respStr.length()>1000?respStr.substring(0, 1000):respStr);
+				eskNotice.setOrderNumber(certNbr+";"+cardNo);
+				eskNoticeService.insertNotice(eskNotice);
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+			
 			MemberBindAccDtlExample memberBindAccDtlExample = new MemberBindAccDtlExample();
 			memberBindAccDtlExample.createCriteria().andRouteCodeEqualTo(RouteCodeConstant.TLKJ_ROUTE_CODE).andAccEqualTo(cardNo).andCertNbrEqualTo(certNbr).andRespCodeEqualTo("2").andDelFlagEqualTo("0");
 			List<MemberBindAccDtl> slist = memberBindAccDtlService.selectByExample(memberBindAccDtlExample);
@@ -4926,4 +4940,6 @@ public class QuickPayController {
 		}
 		
 	}
+	
+	
 }

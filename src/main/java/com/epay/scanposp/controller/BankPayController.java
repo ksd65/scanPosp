@@ -67,6 +67,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 
 
+
 import com.alibaba.fastjson.JSON;
 import com.epay.scanposp.common.constant.CJConfig;
 import com.epay.scanposp.common.constant.ESKConfig;
@@ -5220,6 +5221,11 @@ public class BankPayController {
 			Double drawMoneyCountToday = commonService.countDrawMoneyByCondition(paramMap);
 			drawMoneyCountToday = drawMoneyCountToday == null ? 0 : drawMoneyCountToday;
 			
+			//当天代付利润
+			paramMap.remove("drawType");
+			Double drawProfitToday = commonService.countMemberDrawProfitByCondition(paramMap);
+			drawProfitToday = drawProfitToday == null ? 0 : drawProfitToday;
+			
 			paramMap = new HashMap<String, Object>();
 			paramMap.put("memberId", memberId);
 			//待审核提现金额
@@ -5272,7 +5278,7 @@ public class BankPayController {
 			}
 			
 			//可提现总额
-			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("0.00").format(balanceHis + canDrawToday - drawMoneyCountToday - ingMoneyCountAll));
+			Double canDrawMoneyCount = Double.valueOf(new DecimalFormat("0.00").format(balanceHis + canDrawToday + drawProfitToday - drawMoneyCountToday - ingMoneyCountAll));
 			
 			if(draw.getMoney().doubleValue()>canDrawMoneyCount){
 				result.put("returnCode", "4004");
