@@ -43,6 +43,8 @@ public class RoutewayDraw {
     private BigDecimal tradefee;
     
     private BigDecimal drawProfit;
+    
+    private BigDecimal memberDrawProfit;
 
     private String settleDate;
 
@@ -433,6 +435,14 @@ public class RoutewayDraw {
 
 	public void setDrawProfit(BigDecimal drawProfit) {
 		this.drawProfit = drawProfit;
+	}
+
+	public BigDecimal getMemberDrawProfit() {
+		return memberDrawProfit;
+	}
+
+	public void setMemberDrawProfit(BigDecimal memberDrawProfit) {
+		this.memberDrawProfit = memberDrawProfit;
 	}
     
 	

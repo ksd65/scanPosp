@@ -814,13 +814,13 @@ public class AgentPayController {
 			result.put("returnMsg", "缺少签名信息");
 			return signReturn(result);
 		}
-		result = validMemberInfoForSameAgentPay(memberCode, orderNum, payMoney,bankAccount,"","",srcStr.toString(), signStr);
+		result = validMemberInfoForSameAgentPay(memberCode, orderNum, payMoney,bankAccount,"","","",srcStr.toString(), signStr);
 		
 		return signReturn(result);
 	}
 	
 	
-	public JSONObject validMemberInfoForSameAgentPay(String memberCode,String orderNum,String payMoney,String bankAccount,String accountName,String bankCode,String signOrginalStr,String signedStr){
+	public JSONObject validMemberInfoForSameAgentPay(String memberCode,String orderNum,String payMoney,String bankAccount,String accountName,String bankCode,String settleFeeStr,String signOrginalStr,String signedStr){
 		JSONObject result = new JSONObject();
 		try{
 			MemberInfoExample memberInfoExample = new MemberInfoExample();
@@ -868,6 +868,14 @@ public class AgentPayController {
 			
 			MemberMerchantCode merchantCode = merchantCodes.get(0);
 			String merCode = merchantCode.getKjMerchantCode();
+			
+			if(routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+				if(settleFeeStr==null || "".equals(settleFeeStr)){
+					result.put("returnCode", "0007");
+					result.put("returnMsg", "缺少代付手续费");
+					return result;
+				}
+			}
 			
 			SysOfficeExample sysOfficeExample = new SysOfficeExample();
 			sysOfficeExample.or().andIdEqualTo(epayCodeList.get(0).getOfficeId()).andAgtTypeEqualTo("3");
@@ -923,11 +931,19 @@ public class AgentPayController {
 			platDrawFee = sysCommonConfig.get(0).getValue();
 			
 			double  drawFee = 0 ;
+			double memberDrawFee = 0;
+			double settleFee = 0;
 			if("0".equals(memberInfo.getSettleType())){
-				drawFee = merchantCode.getKjT0DrawFee().doubleValue();
+				memberDrawFee = merchantCode.getKjT0DrawFee().doubleValue();
 			}else{
-				drawFee = merchantCode.getKjT1DrawFee().doubleValue();
+				memberDrawFee = merchantCode.getKjT1DrawFee().doubleValue();
 			}
+			if(!"".equals(settleFeeStr)){
+				settleFee = Double.parseDouble(settleFeeStr);
+			}else{
+				settleFee = memberDrawFee;
+			}
+			drawFee = settleFee;
 			
 			String orderCode = CommonUtil.getOrderCode();
 			String reqDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
@@ -959,7 +975,8 @@ public class AgentPayController {
 			routewayDraw.setAccountName(accountName);
 			routewayDraw.setCertNo("");
 			routewayDraw.setTel("");
-			routewayDraw.setDrawProfit(new BigDecimal(drawFee).subtract(new BigDecimal(platDrawFee)));
+			routewayDraw.setDrawProfit(new BigDecimal(memberDrawFee).subtract(new BigDecimal(platDrawFee)));
+			routewayDraw.setMemberDrawProfit(new BigDecimal(drawFee).subtract(new BigDecimal(memberDrawFee)));
 			routewayDrawService.insertSelective(routewayDraw);
 			
 			routeWayDrawExample = new RoutewayDrawExample();
@@ -970,6 +987,16 @@ public class AgentPayController {
 				result.put("returnMsg", "订单录入异常");
 			}
 			RoutewayDraw draw = drawList.get(0);
+			
+			if(settleFee < memberDrawFee){
+				result.put("returnCode", "0005");
+				result.put("returnMsg", "代付手续费必须大等于商户最低费用");
+				draw.setRespType("E");
+				draw.setRespMsg("代付手续费必须大等于商户最低费用");
+				draw.setUpdateDate(new Date());
+				routewayDrawService.updateByPrimaryKey(draw);
+				return result;
+			}
 			
 			if(Double.parseDouble(payMoney)<=drawFee){
 				result.put("returnCode", "0005");
@@ -2153,6 +2180,7 @@ public class AgentPayController {
 		String payMoney = request.getParameter("payMoney");
 		String bankCode = request.getParameter("bankCode");
 		String accountName = request.getParameter("accountName");
+		String settleFee = request.getParameter("settleFee");
 		String signStr = request.getParameter("signStr");
 		
 		StringBuilder srcStr = new StringBuilder();
@@ -2205,12 +2233,21 @@ public class AgentPayController {
 		}
 		srcStr.append("&payMoney="+payMoney);
 		
+		if(settleFee!=null && !"".equals(settleFee)){
+			if(!ValidateUtil.isDoubleT(settleFee) || Double.parseDouble(settleFee)<=0){
+				result.put("returnCode", "0007");
+				result.put("returnMsg", "代付手续费输入不正确");
+				return signReturn(result);
+			}
+			srcStr.append("&settleFee="+settleFee);
+		}
+		
 		if(signStr == null || "".equals(signStr)){ 
 			result.put("returnCode", "0007");
 			result.put("returnMsg", "缺少签名信息");
 			return signReturn(result);
 		}
-		result = validMemberInfoForSameAgentPay(memberCode, orderNum, payMoney,bankAccount,accountName,bankCode, srcStr.toString(), signStr);
+		result = validMemberInfoForSameAgentPay(memberCode, orderNum, payMoney,bankAccount,accountName,bankCode,settleFee, srcStr.toString(), signStr);
 		
 		return signReturn(result);
 	}
@@ -2493,6 +2530,7 @@ public class AgentPayController {
 	        reqMap.put("settleMode", "2");
 	        reqMap.put("reqMethod", "0651000101");
 	        reqMap.put("amount", payMoney);
+	        reqMap.put("dfFee", String.valueOf(draw.getDrawfee().multiply(new BigDecimal(100)).intValue()));
 	        reqMap.put("cardNo", bankAccount);
 	        reqMap.put("acctName", accountName);
 	        reqMap.put("shopNo", merCode);

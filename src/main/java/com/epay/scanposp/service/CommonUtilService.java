@@ -94,6 +94,9 @@ public class CommonUtilService {
 	@Resource
 	private SubMerchantTotalService subMerchantTotalService;
 	
+	@Resource
+	private MemberBindCardDrawService memberBindCardDrawService;
+	
 	public JSONObject checkLimitMoney(String configName, BigDecimal tradeMoney){
 		
 		JSONObject result = new JSONObject();
@@ -1012,6 +1015,30 @@ public class CommonUtilService {
 		}
 		
 		return null;
+	}
+	
+	//取绑卡费用
+	public Double getBindCardFee(Integer memberId ,String routeCode){
+		Double amount = 0d;
+		String configName = "BIND_ACC_FEE_"+routeCode;
+		String value = "";
+		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
+		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+		List<SysCommonConfig> sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+		if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+			value = sysCommonConfig.get(0).getValue();
+		}
+		if(!"".equals(value)){
+			Map<String,Object> param = new HashMap<String, Object>();
+			param.put("memberId", memberId);
+			param.put("routeCode", routeCode);
+			List<Map<String,Object>> list = memberBindCardDrawService.getMemberNotBindCard(param);
+			if(list!=null&&list.size()>0){
+				amount = (new BigDecimal(value)).multiply(new BigDecimal(list.size())).doubleValue();
+			}
+		}
+		
+		return amount;
 	}
 	
 	

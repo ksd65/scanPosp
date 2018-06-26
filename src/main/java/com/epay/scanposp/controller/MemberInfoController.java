@@ -58,6 +58,7 @@ import com.epay.scanposp.entity.MemberBankExample;
 import com.epay.scanposp.entity.MemberBindAcc;
 import com.epay.scanposp.entity.MemberBindAccDtl;
 import com.epay.scanposp.entity.MemberBindAccExample;
+import com.epay.scanposp.entity.MemberBindCardDraw;
 import com.epay.scanposp.entity.MemberDrawRoute;
 import com.epay.scanposp.entity.MemberDrawRouteExample;
 import com.epay.scanposp.entity.MemberInfo;
@@ -95,10 +96,12 @@ import com.epay.scanposp.service.AccountService;
 import com.epay.scanposp.service.BankNameService;
 import com.epay.scanposp.service.BankService;
 import com.epay.scanposp.service.CommonService;
+import com.epay.scanposp.service.CommonUtilService;
 import com.epay.scanposp.service.EpayCodeService;
 import com.epay.scanposp.service.MemberBankService;
 import com.epay.scanposp.service.MemberBindAccDtlService;
 import com.epay.scanposp.service.MemberBindAccService;
+import com.epay.scanposp.service.MemberBindCardDrawService;
 import com.epay.scanposp.service.MemberDrawRouteService;
 import com.epay.scanposp.service.MemberInfoMoreService;
 import com.epay.scanposp.service.MemberInfoService;
@@ -207,6 +210,12 @@ public class MemberInfoController {
 	
 	@Autowired
 	private MemberPayTypeService memberPayTypeService;
+	
+	@Autowired
+	private CommonUtilService commonUtilService;
+	
+	@Autowired
+	private MemberBindCardDrawService memberBindCardDrawService;
 	
 	@Resource
 	ThreadPoolTaskExecutor threadPoolTaskExecutor;
@@ -656,6 +665,9 @@ public class MemberInfoController {
 					paramMap.put("settleType", "0");//D0
 					paramMap.put("memberRate", memberPayType.getT0TradeRate());
 					balanceToday = commonService.countMemberProfitMoneyByCondition(paramMap);
+					Double bindCardFee = commonUtilService.getBindCardFee(memberId, routeCode);
+					resData.put("bindCardFee", new DecimalFormat("0.00").format(bindCardFee));
+					
 				}
 				
 				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
@@ -996,7 +1008,8 @@ public class MemberInfoController {
 			paramMap.put("respDate", df.format(new Date()));
 			Double drawFailMoneyCountToday = commonService.countMoneyByCondition(paramMap);
 			drawFailMoneyCountToday = drawFailMoneyCountToday == null ? 0 : drawFailMoneyCountToday;
-	        
+			
+			List<Map<String,Object>> bindList = null; 
 			if(RouteCodeConstant.SLF_ROUTE_CODE.equals(routeCode)){
 				Double drawPercent = 0.7;//D0 70%
 				
@@ -1042,6 +1055,7 @@ public class MemberInfoController {
 					paramMap.put("settleType", "0");//D0
 				}
 				Double balanceToday = 0d;
+				Double bindCardFee = 0d;//绑卡费用
 				
 				if(!routeCode.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
 					balanceToday = commonService.countTransactionRealMoneyByCondition(paramMap);
@@ -1057,6 +1071,30 @@ public class MemberInfoController {
 					MemberPayType memberPayType = memberPayTypeList.get(0);
 					paramMap.put("memberRate", memberPayType.getT0TradeRate());
 					balanceToday = commonService.countMemberProfitMoneyByCondition(paramMap);
+					
+					configName = "BIND_ACC_FEE_"+routeCode;
+					String value = "";
+					sysCommonConfigExample = new SysCommonConfigExample();
+					sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
+					sysCommonConfig = sysCommonConfigService.selectByExample(sysCommonConfigExample);
+					if (sysCommonConfig != null && sysCommonConfig.size() > 0) {
+						value = sysCommonConfig.get(0).getValue();
+					}
+					if(!"".equals(value)){
+						Map<String,Object> param = new HashMap<String, Object>();
+						param.put("memberId", memberId);
+						param.put("routeCode", routeCode);
+						bindList = memberBindCardDrawService.getMemberNotBindCard(param);
+						if(bindList!=null&&bindList.size()>0){
+							bindCardFee = (new BigDecimal(value)).multiply(new BigDecimal(bindList.size())).doubleValue();
+						}
+					}
+					if(Double.parseDouble(drawMoney)<=drawFee+bindCardFee){
+						result.put("returnCode", "4004");
+						result.put("returnMsg", "提现金额必须大于手续费");
+						return result.toString();
+					}
+					
 				}
 				
 				balanceToday = balanceToday == null ? 0 : balanceToday;//当天交易账户余额
@@ -1136,6 +1174,17 @@ public class MemberInfoController {
 			}
 			routewayDraw.setDrawProfit(new BigDecimal(drawFee).subtract(new BigDecimal(platDrawFee)));
 			routewayDrawService.insertSelective(routewayDraw);
+			
+			if(bindList!=null&&bindList.size()>0){
+				for(Map<String,Object> bind:bindList){
+					MemberBindCardDraw memberBindCardDraw = new MemberBindCardDraw();
+					memberBindCardDraw.setDrawId(routewayDraw.getId());
+					memberBindCardDraw.setMemberId(memberId);
+					memberBindCardDraw.setAccDtlId((Integer)bind.get("id"));
+					memberBindCardDrawService.insertSelective(memberBindCardDraw);
+					
+				}
+			}
 			result.put("returnCode", "0000");
 			result.put("returnMsg", "提交成功");
 			result.put("drawFee", new DecimalFormat("#.00").format(drawFee));
