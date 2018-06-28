@@ -5183,6 +5183,9 @@ public class CashierDeskController {
 						result.put("oriRespType", "E");
 						result.put("oriRespCode", "000002");
 						result.put("oriRespMsg", "支付失败");
+						if(!StringUtil.isEmpty(debitNote.getRespMsg())){
+							result.put("oriRespMsg", "支付失败："+debitNote.getRespMsg());
+						}
 					}
 				}
 		    }else if(RouteCodeConstant.HLB_ROUTE_CODE.equals(routeCode)){

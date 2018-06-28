@@ -4657,6 +4657,9 @@ public class QuickPayController {
 			
         	
         	String result_message = "";
+        	if(obj.containsKey("pay_info")){
+        		result_message = obj.getString("pay_info");
+        	}
         	MsResultNoticeExample msResultNoticeExample = new MsResultNoticeExample();
 			msResultNoticeExample.or().andOrderCodeEqualTo(reqMsgId);
 			List<MsResultNotice> msResultNoticeList = msResultNoticeService.selectByExample(msResultNoticeExample);
