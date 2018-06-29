@@ -107,6 +107,9 @@ public class TradeProfitTigger {
 							if(txnMethod.equals(PayTypeConstant.PAY_METHOD_H5)&&"2".equals(txnType)){
 								realPlatFee = platFee.add(new BigDecimal(0.012));
 							}
+						}else if(routeId.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
+							realPlatFee = platFee.add(agentFee.subtract(platFee).divide(new BigDecimal(2)));
+							memberCost = tradeMoney.multiply(memberFee);
 						}
 					}
 					
@@ -218,7 +221,7 @@ public class TradeProfitTigger {
 					
 				}
 			}
-			
+		
 		}catch(Exception e){
 			logger.error(e.getMessage());
 		}
