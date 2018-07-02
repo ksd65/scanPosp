@@ -3047,7 +3047,7 @@ public class BankPayController {
 						if(Integer.parseInt(status)>=6){
 							draw.setRespType("S");
 							draw.setRespCode("000");
-						}else if("3".equals(result_code)||"0".equals(result_code)){
+						}else if("3".equals(status)||"0".equals(status)){
 							draw.setRespType("R");
 						}else{
 							draw.setRespType("E");
