@@ -5501,8 +5501,15 @@ public class BankPayController {
 				logger.info("代付更新日志异常", e);
 			}
 			
-	        JSONObject resultObj = JSONObject.fromObject(respStr);
+	        JSONObject resultObj = new JSONObject();
 	        
+	        try{
+	        	resultObj = JSONObject.fromObject(respStr);
+	        }catch(Exception e){
+	        	logger.info("接口返回解析异常", e);
+	        	resultObj.put("respCode", "00");//先当做调用接口成功，不确定去查询订单
+	        	resultObj.put("status", "3");
+	        }
 	        String result_code = resultObj.getString("respCode");
 			String result_message = "";
 			boolean flag = false;

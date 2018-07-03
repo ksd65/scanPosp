@@ -2577,7 +2577,15 @@ public class AgentPayController {
 				logger.info("代付更新日志异常", e);
 			}
 			
-			JSONObject resObj = JSONObject.fromObject(respStr);
+			JSONObject resObj = new JSONObject();
+	        
+	        try{
+	        	resObj = JSONObject.fromObject(respStr);
+	        }catch(Exception e){
+	        	logger.info("接口返回解析异常", e);
+	        	resObj.put("respCode", "00");//先当做调用接口成功，不确定去查询订单
+	        	resObj.put("status", "3");
+	        }
             
         	String code = resObj.getString("respCode");
 			String resultMsg = "";
