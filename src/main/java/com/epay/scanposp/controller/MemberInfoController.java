@@ -1081,7 +1081,7 @@ public class MemberInfoController {
 					paramMap.put("memberRate", memberPayType.getT0TradeRate());
 					balanceToday = commonService.countMemberProfitMoneyByCondition(paramMap);
 					
-					configName = "BIND_ACC_FEE_"+routeCode;
+					configName = "BIND_ACC_FEE_"+routeCode+"_"+memberId;
 					String value = "";
 					sysCommonConfigExample = new SysCommonConfigExample();
 					sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");

@@ -1020,7 +1020,7 @@ public class CommonUtilService {
 	//取绑卡费用
 	public Double getBindCardFee(Integer memberId ,String routeCode){
 		Double amount = 0d;
-		String configName = "BIND_ACC_FEE_"+routeCode;
+		String configName = "BIND_ACC_FEE_"+routeCode+"_"+memberId;
 		String value = "";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
 		sysCommonConfigExample.or().andNameEqualTo(configName).andDelFlagEqualTo("0");
