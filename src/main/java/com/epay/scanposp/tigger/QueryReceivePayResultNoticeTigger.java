@@ -951,6 +951,9 @@ public class QueryReceivePayResultNoticeTigger {
 							if(resultObj.containsKey("respMsg")){
 								draw.setRespMsg(resultObj.getString("respMsg"));
 							}
+							if(resultObj.containsKey("origRespMsg")){
+								draw.setRespMsg(resultObj.getString("origRespMsg"));
+							}
 							draw.setRespDate(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 							draw.setUpdateDate(new Date());
 							routewayDrawService.updateByPrimaryKey(draw);
