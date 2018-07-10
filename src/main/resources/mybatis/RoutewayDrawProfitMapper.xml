@@ -228,8 +228,12 @@
   </update>
   
   <select id="getDrawList" parameterType="java.util.Map" resultType="java.util.Map">
+  	<![CDATA[
   	SELECT  t.member_id,t.route_code,SUM(t.money) money,SUM(t.drawProfit) drawProfit FROM bu_routeway_draw t 
-  	where t.audit_status='2' and t.resp_type='S' AND LEFT(resp_date,8)=#{txnDate} GROUP  BY t.member_id,t.route_code	
+  	where t.audit_status='2' and t.resp_type='S' AND LEFT(resp_date,8)=#{txnDate} 
+  	and ((t.route_code='1038' and t.draw_type='1') or(t.route_code<>'1038' and (t.draw_type='1' or t.draw_type='2')))
+  	GROUP  BY t.member_id,t.route_code	
+  	]]>
   </select>
   
 </mapper>
