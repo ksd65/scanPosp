@@ -4443,21 +4443,27 @@ public class QuickPayController {
 			
 			JSONObject resObj = JSONObject.fromObject(respStr);
             
-            	
-			String code = resObj.getString("status");//状态：0、新申请，2、绑卡失败；3、绑卡中；6、绑卡成功
-			if("6".equals(code)){
-				result.put("returnCode", "0000");
-				result.put("returnMsg", "绑卡成功");
-			}else if("3".equals(code)){
-				result.put("returnCode", "0010");
-				result.put("returnMsg", "绑卡中");
-			}else if("0".equals(code)){
-				result.put("returnCode", "0011");
-				result.put("returnMsg", "新申请");
-			}else{
-				result.put("returnCode", "0012");
-				result.put("returnMsg", "绑卡失败");
-			}
+            String rspcode = resObj.getString("rspcode");
+            if("00".equals(rspcode)){
+            	String code = resObj.getString("status");//状态：0、新申请，2、绑卡失败；3、绑卡中；6、绑卡成功
+    			if("6".equals(code)){
+    				result.put("returnCode", "0000");
+    				result.put("returnMsg", "绑卡成功");
+    			}else if("3".equals(code)){
+    				result.put("returnCode", "0010");
+    				result.put("returnMsg", "绑卡中");
+    			}else if("0".equals(code)){
+    				result.put("returnCode", "0011");
+    				result.put("returnMsg", "新申请");
+    			}else{
+    				result.put("returnCode", "0012");
+    				result.put("returnMsg", "绑卡失败");
+    			}
+            }else{
+            	result.put("returnCode", "0012");
+				result.put("returnMsg", resObj.getString("rspmsg"));
+            }
+			
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			result.put("returnCode", "0096");
