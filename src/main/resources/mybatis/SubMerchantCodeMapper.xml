@@ -126,22 +126,24 @@
 		
 			SELECT mp.id,mp.sub_merchant_code,mp.`name` FROM(
 				SELECT m.id, m.sub_merchant_code,m.name,IFNULL(cs.total_money,0) total_moneys FROM bu_sub_merchant_code m 
-				LEFT JOIN bu_sub_merchant_counts cs ON m.sub_merchant_code= cs.sub_merchant_code AND cs.trade_date=#{tradeDate,jdbcType=VARCHAR} 
+				LEFT JOIN bu_sub_merchant_counts cs ON m.sub_merchant_code= cs.sub_merchant_code AND cs.route_id=#{routeCode,jdbcType=VARCHAR} AND cs.trade_date=#{tradeDate,jdbcType=VARCHAR} 
 				where m.del_flag='0' and m.route_code=#{routeCode,jdbcType=VARCHAR} 
 				and m.begin_time<=#{nowTime,jdbcType=VARCHAR} and m.end_time>=#{nowTime,jdbcType=VARCHAR} 
 			)mp WHERE mp.total_moneys<=#{totalMoney,jdbcType=DECIMAL}
 			and NOT  EXISTS(
-				SELECT 1 FROM bu_debit_note_sub t where t.sub_merchant_code=mp.sub_merchant_code and  t.create_date >= DATE_SUB(
+				SELECT 1 FROM bu_debit_note_sub t where t.sub_merchant_code=mp.sub_merchant_code and t.route_id=#{routeCode,jdbcType=VARCHAR} and  t.create_date >= DATE_SUB(
 				SYSDATE(),INTERVAL #{seconds,jdbcType=INTEGER}   SECOND
 			)) AND NOT EXISTS(
-				SELECT  1 FROM bu_sub_merchant_black_list sb where sb.sub_merchant_code=mp.sub_merchant_code AND ((sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.black_type='1') OR sb.black_type='2') AND sb.del_flag='0'
+				SELECT  1 FROM bu_sub_merchant_black_list sb where sb.sub_merchant_code=mp.sub_merchant_code and sb.route_code=#{routeCode,jdbcType=VARCHAR} AND ((sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.black_type='1') OR sb.black_type='2') AND sb.del_flag='0'
 			)
 			
 		) c 
-		LEFT JOIN bu_sub_merchant_counts s ON c.sub_merchant_code=s.sub_merchant_code AND s.trade_date=#{tradeDate,jdbcType=VARCHAR} 
-	)k ORDER BY k.counts1 ASC,k.successper DESC
-  	
+		LEFT JOIN bu_sub_merchant_counts s ON c.sub_merchant_code=s.sub_merchant_code and s.route_id=#{routeCode,jdbcType=VARCHAR} AND s.trade_date=#{tradeDate,jdbcType=VARCHAR} 
+	)k ORDER BY k.counts1 ASC
   ]]>
+  <if test="orderBySuccess != null">
+  	,k.successper DESC
+  </if>
   </select>
   
   

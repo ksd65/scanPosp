@@ -3,6 +3,7 @@
 <mapper namespace="com.epay.scanposp.dao.SubMerchantCodeTempMapper">
   <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.SubMerchantCodeTemp">
     <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="route_code" jdbcType="VARCHAR" property="routeCode" />
     <result column="sub_merchant_code" jdbcType="VARCHAR" property="subMerchantCode" />
     <result column="create_by" jdbcType="VARCHAR" property="createBy" />
     <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
@@ -69,7 +70,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, sub_merchant_code, create_by, create_date, update_by, update_date,del_flag 
+    id, sub_merchant_code, route_code,create_by, create_date, update_by, update_date,del_flag 
   </sql>
   <select id="selectByExample" parameterType="com.epay.scanposp.entity.SubMerchantCodeTempExample" resultMap="BaseResultMap">
     select
@@ -122,6 +123,9 @@
       <if test="subMerchantCode != null">
         sub_merchant_code,
       </if>
+      <if test="routeCode != null" >
+        route_code,
+      </if>
       <if test="createBy != null">
         create_by,
       </if>
@@ -139,6 +143,9 @@
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="subMerchantCode != null">
         #{subMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="routeCode != null" >
+        #{routeCode,jdbcType=VARCHAR},
       </if>
       <if test="createBy != null">
         #{createBy,jdbcType=VARCHAR},
@@ -164,7 +171,7 @@
   
   <delete id="delete" parameterType="com.epay.scanposp.entity.SubMerchantCodeTemp">
 		DELETE FROM bu_sub_merchant_code_temp 
-		WHERE sub_merchant_code = #{subMerchantCode}
+		WHERE sub_merchant_code = #{subMerchantCode} AND route_code=#{routeCode}
 	</delete>
   
 </mapper>

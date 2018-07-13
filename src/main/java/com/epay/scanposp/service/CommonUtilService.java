@@ -586,7 +586,7 @@ public class CommonUtilService {
 	}
 	
 	
-	public List<SubMerchantCode> getSubMerchantCodeList( String routeCode,BigDecimal tradeMoney){
+	public List<SubMerchantCode> getSubMerchantCodeList( String routeCode,BigDecimal tradeMoney,String payType){
 		
 		String value = "60";
 		SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
@@ -613,6 +613,9 @@ public class CommonUtilService {
 			param.put("tradeDate", tradeDate);
 			param.put("seconds", value);
 			param.put("totalMoney", new BigDecimal(limitMoney).subtract(tradeMoney));
+			if(!"8".equals(payType)){//非银联
+				param.put("orderBySuccess", "1");
+			}
 			List<SubMerchantCode> list = subMerchantCodeService.selectByMap(param);
 			return list;
 		}
@@ -719,6 +722,7 @@ public class CommonUtilService {
 			Map<String,Object> param1 = new HashMap<String, Object>();
 			param1.put("subMerchantCode", subMerchantCode);
 			param1.put("tradeDate", DateUtil.getDateFormat(new Date(), "yyyyMMdd"));
+			param1.put("routeCode", routeCode);
 			int counts = subMerchantBlackListService.getSubMerchantBlackCount(param1);
 			if(counts>0){//在商户黑名单中，重新取
 				return null;
@@ -737,11 +741,11 @@ public class CommonUtilService {
 		return null;
 	}
 	//判断子商户黑名单
-	public JSONObject checkSubMerchantBlackList(String subMerchantCode){
+	public JSONObject checkSubMerchantBlackList(String subMerchantCode,String routeCode){
 		JSONObject result = new JSONObject();
 		
 		SubMerchantBlackListExample subMerchantBlackListExample = new SubMerchantBlackListExample();
-		subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("2").andSubMerchantCodeEqualTo(subMerchantCode).andDelFlagEqualTo("0");
+		subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("2").andRouteCodeEqualTo(routeCode).andSubMerchantCodeEqualTo(subMerchantCode).andDelFlagEqualTo("0");
 		List<SubMerchantBlackList> bllist = subMerchantBlackListService.selectByExample(subMerchantBlackListExample);
 		if(bllist !=null && bllist.size()>0){//商户永久黑名单
 			result.put("returnCode", "4001");
@@ -750,7 +754,7 @@ public class CommonUtilService {
 		}
 		
 		subMerchantBlackListExample = new SubMerchantBlackListExample();
-		subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("1").andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(new SimpleDateFormat("yyyyMMdd").format(new Date())).andDelFlagEqualTo("0");
+		subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("1").andRouteCodeEqualTo(routeCode).andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(new SimpleDateFormat("yyyyMMdd").format(new Date())).andDelFlagEqualTo("0");
 		bllist = subMerchantBlackListService.selectByExample(subMerchantBlackListExample);
 		if(bllist !=null && bllist.size()>0){//商户临时黑名单
 			result.put("returnCode", "4002");
@@ -773,7 +777,7 @@ public class CommonUtilService {
 		
 		if(!"".equals(limitMoney)){
 			SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
-			subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(new SimpleDateFormat("yyyyMMdd").format(new Date())).andDelFlagEqualTo("0");
+			subMerchantTotalExample.createCriteria().andRouteIdEqualTo(routeCode).andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(new SimpleDateFormat("yyyyMMdd").format(new Date())).andDelFlagEqualTo("0");
 			List<SubMerchantTotal> totalList = subMerchantTotalService.selectByExample(subMerchantTotalExample);
 			if(totalList!=null&&totalList.size()>0){
 				if(totalList.get(0).getTotalMoney().add(new BigDecimal(tradeMoney)).compareTo(new BigDecimal(limitMoney))>0){

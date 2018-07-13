@@ -77,4 +77,6 @@ public class RouteCodeConstant {
 	public static String ESKWGD0_ROUTE_CODE = "1037";//易收款网关D0
 	
 	public static String TLKJ_ROUTE_CODE = "1038";//通联快捷
+	
+	public static String TLYL_ROUTE_CODE = "1039";//通联银联
 }

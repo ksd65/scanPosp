@@ -335,6 +335,75 @@ public class SubMerchantTotalExample {
             return (Criteria) this;
         }
         
+        public Criteria andRouteIdIsNull() {
+            addCriterion("route_id is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdIsNotNull() {
+            addCriterion("route_id is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdEqualTo(String value) {
+            addCriterion("route_id =", value, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdNotEqualTo(String value) {
+            addCriterion("route_id <>", value, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdGreaterThan(String value) {
+            addCriterion("route_id >", value, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdGreaterThanOrEqualTo(String value) {
+            addCriterion("route_id >=", value, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdLessThan(String value) {
+            addCriterion("route_id <", value, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdLessThanOrEqualTo(String value) {
+            addCriterion("route_id <=", value, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdLike(String value) {
+            addCriterion("route_id like", value, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdNotLike(String value) {
+            addCriterion("route_id not like", value, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdIn(List<String> values) {
+            addCriterion("route_id in", values, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdNotIn(List<String> values) {
+            addCriterion("route_id not in", values, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdBetween(String value1, String value2) {
+            addCriterion("route_id between", value1, value2, "routeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andRouteIdNotBetween(String value1, String value2) {
+            addCriterion("route_id not between", value1, value2, "routeId");
+            return (Criteria) this;
+        }
                 
         public Criteria andTradeDateIsNull() {
             addCriterion("trade_date is null");

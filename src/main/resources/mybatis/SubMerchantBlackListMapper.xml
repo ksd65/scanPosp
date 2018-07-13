@@ -4,6 +4,7 @@
   <resultMap id="BaseResultMap" type="com.epay.scanposp.entity.SubMerchantBlackList" >
     <id column="id" property="id" jdbcType="INTEGER" />
     <result column="sub_merchant_code" property="subMerchantCode" jdbcType="VARCHAR" />
+    <result column="route_code" jdbcType="VARCHAR" property="routeCode" />
     <result column="black_type" property="blackType" jdbcType="VARCHAR" />
     <result column="trade_date" property="tradeDate" jdbcType="VARCHAR" />
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
@@ -71,7 +72,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, sub_merchant_code, black_type,trade_date, create_by, create_date, update_by, 
+    id, sub_merchant_code,route_code, black_type,trade_date, create_by, create_date, update_by, 
     update_date, del_flag
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.epay.scanposp.entity.SubMerchantBlackListExample" >
@@ -130,6 +131,9 @@
      <if test="subMerchantCode != null" >
         sub_merchant_code,
       </if>
+      <if test="routeCode != null" >
+        route_code,
+      </if>
       <if test="blackType != null" >
         black_type,
       </if>
@@ -155,6 +159,9 @@
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="subMerchantCode != null" >
         #{subMerchantCode,jdbcType=VARCHAR},
+      </if>
+      <if test="routeCode != null" >
+        #{routeCode,jdbcType=VARCHAR},
       </if>
       <if test="blackType != null" >
         #{blackType,jdbcType=VARCHAR},
@@ -193,7 +200,7 @@
   		WHERE t.`status`='0' and t.create_date>=#{createDate,jdbcType=VARCHAR} AND t.route_id=#{routeCode,jdbcType=VARCHAR} AND t.create_date<DATE_SUB(SYSDATE(),INTERVAL 60  SECOND)
  	GROUP BY t.sub_merchant_code) s 
  	WHERE s.counts>=#{COUNTS,jdbcType=INTEGER}
-	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list b where b.sub_merchant_code=s.sub_merchant_code AND b.del_flag='0' AND ((b.trade_date=#{tradeDate,jdbcType=VARCHAR} AND b.black_type='1') OR b.black_type='2'))
+	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list b where b.sub_merchant_code=s.sub_merchant_code AND b.route_code=#{routeCode,jdbcType=VARCHAR} AND b.del_flag='0' AND ((b.trade_date=#{tradeDate,jdbcType=VARCHAR} AND b.black_type='1') OR b.black_type='2'))
  	]]>
   </select>
   
@@ -201,15 +208,15 @@
   	SELECT 
   	<include refid="Base_Column_List" /> 
   	FROM bu_sub_merchant_black_list sb 
-  	where sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.black_type='1' and sb.del_flag='0'
-	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list s where s.sub_merchant_code=sb.sub_merchant_code and s.black_type='2' and s.del_flag='0')
+  	where sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.route_code=#{routeCode,jdbcType=VARCHAR} AND sb.black_type='1' and sb.del_flag='0'
+	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list s where s.sub_merchant_code=sb.sub_merchant_code AND s.route_code=#{routeCode,jdbcType=VARCHAR} and s.black_type='2' and s.del_flag='0')
   </select>
   
   <select id="getSubMerchantBlackCount" parameterType="java.util.Map" resultType="java.lang.Integer">
   	<![CDATA[
   	SELECT COUNT(1) FROM 
  	bu_sub_merchant_black_list sb 
-  	where sb.sub_merchant_code=#{subMerchantCode,jdbcType=VARCHAR} AND ((sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.black_type='1') OR sb.black_type='2') and sb.del_flag='0'
+  	where sb.sub_merchant_code=#{subMerchantCode,jdbcType=VARCHAR} AND sb.route_code=#{routeCode,jdbcType=VARCHAR} AND ((sb.trade_date=#{tradeDate,jdbcType=VARCHAR} AND sb.black_type='1') OR sb.black_type='2') and sb.del_flag='0'
 	]]>
   </select>
   
@@ -220,7 +227,7 @@
   		WHERE t.`status`='0' and t.create_date>=#{createDate,jdbcType=VARCHAR} AND t.route_id=#{routeCode,jdbcType=VARCHAR} AND t.create_date<DATE_SUB(SYSDATE(),INTERVAL 60  SECOND)
  		GROUP BY t.sub_merchant_code)s
  	WHERE s.counts>=#{COUNTS,jdbcType=INTEGER}
- 	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list b where b.sub_merchant_code=s.sub_merchant_code AND b.del_flag='0' AND ((b.trade_date=#{tradeDate,jdbcType=VARCHAR} AND b.black_type='1') OR b.black_type='2'))
+ 	AND NOT EXISTS (SELECT 1 FROM bu_sub_merchant_black_list b where b.sub_merchant_code=s.sub_merchant_code AND b.route_code=#{routeCode,jdbcType=VARCHAR} AND b.del_flag='0' AND ((b.trade_date=#{tradeDate,jdbcType=VARCHAR} AND b.black_type='1') OR b.black_type='2'))
  	
   	]]>
   </select>

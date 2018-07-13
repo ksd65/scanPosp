@@ -6,6 +6,8 @@ public class SubMerchantBlackList {
 	
 	private Integer id;
 	
+	private String routeCode;
+	
 	private String subMerchantCode;
 	
 	private String blackType;
@@ -93,6 +95,14 @@ public class SubMerchantBlackList {
 
 	public void setTradeDate(String tradeDate) {
 		this.tradeDate = tradeDate;
+	}
+
+	public String getRouteCode() {
+		return routeCode;
+	}
+
+	public void setRouteCode(String routeCode) {
+		this.routeCode = routeCode;
 	}
 
 	

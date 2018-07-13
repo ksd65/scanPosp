@@ -47,6 +47,7 @@ public class SubMerchantBlackListTigger {
 			logger.info("子商户黑名单额更新定时。。。");
 			Date time = new Date(); 
 			String date = DateUtil.getDateFormat(time, "yyyy-MM-dd");
+			String routeCode = RouteCodeConstant.TLWD_ROUTE_CODE;
 			
 			String value = "";
 			SysCommonConfigExample sysCommonConfigExample = new SysCommonConfigExample();
@@ -68,7 +69,7 @@ public class SubMerchantBlackListTigger {
 				
 				Map<String,Object> paramMap = new HashMap<String, Object>();
 				paramMap.put("createDate", date);
-				paramMap.put("routeCode", RouteCodeConstant.TLWD_ROUTE_CODE);
+				paramMap.put("routeCode", routeCode);
 				paramMap.put("COUNTS", value);
 				paramMap.put("tradeDate", DateUtil.getDateFormat(time, "yyyyMMdd"));
 				List<Map<String,Object>> list = null;
@@ -84,6 +85,7 @@ public class SubMerchantBlackListTigger {
 						
 						SubMerchantBlackList subMerchantBlackList = new SubMerchantBlackList();
 						subMerchantBlackList.setBlackType("1");
+						subMerchantBlackList.setRouteCode(routeCode);
 						subMerchantBlackList.setSubMerchantCode(subMerchantCode);
 						subMerchantBlackList.setTradeDate(DateUtil.getDateFormat(time, "yyyyMMdd"));
 						subMerchantBlackList.setCreateDate(new Date());
@@ -104,6 +106,7 @@ public class SubMerchantBlackListTigger {
 			if(!"".equals(continueCount)){
 				Map<String,Object> paramMap = new HashMap<String, Object>();
 				paramMap.put("tradeDate", DateUtil.getDateFormat(time, "yyyyMMdd"));
+				paramMap.put("routeCode", routeCode);
 				List<SubMerchantBlackList> bllist = subMerchantBlackListService.getSubMerchantBlackToday(paramMap);
 				if(bllist!=null&&bllist.size()>0){
 					for(SubMerchantBlackList black:bllist){
@@ -111,7 +114,7 @@ public class SubMerchantBlackListTigger {
 						boolean flag = true;
 						for(int i=1;i<Integer.parseInt(continueCount);i++){
 							SubMerchantBlackListExample subMerchantBlackListExample = new SubMerchantBlackListExample();
-							subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("1").andSubMerchantCodeEqualTo(black.getSubMerchantCode()).andTradeDateEqualTo(DateUtil.getBeforeDate(i, "yyyyMMdd")).andDelFlagEqualTo("0");
+							subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("1").andRouteCodeEqualTo(routeCode).andSubMerchantCodeEqualTo(black.getSubMerchantCode()).andTradeDateEqualTo(DateUtil.getBeforeDate(i, "yyyyMMdd")).andDelFlagEqualTo("0");
 							List<SubMerchantBlackList> list_1 = subMerchantBlackListService.selectByExample(subMerchantBlackListExample);
 						//	System.out.println(list_1.size());
 							if(list_1==null||list_1.size()==0){
@@ -121,11 +124,12 @@ public class SubMerchantBlackListTigger {
 						}
 						if(flag){
 							SubMerchantBlackListExample subMerchantBlackListExample = new SubMerchantBlackListExample();
-							subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("2").andSubMerchantCodeEqualTo(black.getSubMerchantCode()).andDelFlagEqualTo("0");
+							subMerchantBlackListExample.createCriteria().andBlackTypeEqualTo("2").andRouteCodeEqualTo(routeCode).andSubMerchantCodeEqualTo(black.getSubMerchantCode()).andDelFlagEqualTo("0");
 							List<SubMerchantBlackList> bllist1 = subMerchantBlackListService.selectByExample(subMerchantBlackListExample);
 							if(bllist1 ==null || bllist1.size()==0){
 								SubMerchantBlackList subMerchantBlackList = new SubMerchantBlackList();
 								subMerchantBlackList.setBlackType("2");
+								subMerchantBlackList.setRouteCode(routeCode);
 								subMerchantBlackList.setSubMerchantCode(black.getSubMerchantCode());
 								subMerchantBlackList.setCreateDate(new Date());
 								subMerchantBlackListService.insertSelective(subMerchantBlackList);

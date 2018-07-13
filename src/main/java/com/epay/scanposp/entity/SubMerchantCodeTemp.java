@@ -6,7 +6,9 @@ public class SubMerchantCodeTemp {
 	
 	private Integer id;
 	
-	private String  subMerchantCode;	
+	private String routeCode;
+	
+	private String subMerchantCode;	
 	
 	private String delFlag;
 	
@@ -84,6 +86,14 @@ public class SubMerchantCodeTemp {
 
 	public void setRemarks(String remarks) {
 		this.remarks = remarks;
+	}
+
+	public String getRouteCode() {
+		return routeCode;
+	}
+
+	public void setRouteCode(String routeCode) {
+		this.routeCode = routeCode;
 	}
     
 	

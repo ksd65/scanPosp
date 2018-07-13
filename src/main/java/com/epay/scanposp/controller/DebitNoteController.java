@@ -9316,7 +9316,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			
 			
 			if("".equals(subMerchantCode)){
-				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode,new BigDecimal(payMoney));
+				List<SubMerchantCode> subMerchantCodeList = commonUtilService.getSubMerchantCodeList(routeCode,new BigDecimal(payMoney),payType);
 				if(subMerchantCodeList==null||subMerchantCodeList.size()==0){
 					result.put("returnCode", "4004");
 					result.put("returnMsg", "交易权限不足");
@@ -9330,6 +9330,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 						SubMerchantCodeTemp subMerchantCodeTemp = new SubMerchantCodeTemp();
 						subMerchantCodeTemp.setSubMerchantCode(smCode.getSubMerchantCode());
 						subMerchantCodeTemp.setCreateDate(new Date());
+						subMerchantCodeTemp.setRouteCode(routeCode);
 						subMerchantCodeTempService.insertSelective(subMerchantCodeTemp);
 						subMerchantCode = smCode.getSubMerchantCode();
 						subMerchantName = smCode.getName();
@@ -9346,7 +9347,7 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 					return smlResult;
 				}
 				
-				JSONObject mbResult = commonUtilService.checkSubMerchantBlackList(subMerchantCode);
+				JSONObject mbResult = commonUtilService.checkSubMerchantBlackList(subMerchantCode,routeCode);
 				if(null != mbResult){
 					if("4001".equals(mbResult.getString("returnCode"))){
 						debitNote.setStatus("15");//子商户永久黑名单
@@ -9500,11 +9501,12 @@ public JSONObject testRegisterMsAccount(String payWay ,String bankType ,String b
 			try{
 				SubMerchantCodeTemp smTemp = new SubMerchantCodeTemp();
 				smTemp.setSubMerchantCode(subMerchantCode);
+				smTemp.setRouteCode(routeCode);
 				subMerchantCodeTempService.delete(smTemp);
 				
 				String tradeDate  = new SimpleDateFormat("yyyyMMdd").format(new Date());
 				SubMerchantTotalExample subMerchantTotalExample = new SubMerchantTotalExample();
-				subMerchantTotalExample.createCriteria().andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(tradeDate).andDelFlagEqualTo("0");
+				subMerchantTotalExample.createCriteria().andRouteIdEqualTo(routeCode).andSubMerchantCodeEqualTo(subMerchantCode).andTradeDateEqualTo(tradeDate).andDelFlagEqualTo("0");
 	            List<SubMerchantTotal> mtList = subMerchantTotalService.selectByExample(subMerchantTotalExample);
 	            if(mtList==null||mtList.size()==0){
 	            	SubMerchantTotal subMerchantTotal = new SubMerchantTotal();
