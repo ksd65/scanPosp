@@ -1738,7 +1738,7 @@ public class AgentPayController {
 			paramMap.put("routeId", routeCode);
 			paramMap.put("startDate", df.format(begin));
 			paramMap.put("endDate", df.format(end));
-			if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||routeCode.equals(RouteCodeConstant.TLH5_ROUTE_CODE)||routeCode.equals(RouteCodeConstant.TLWD_ROUTE_CODE)){
+			if(RouteCodeConstant.TL_ROUTE_CODE.equals(routeCode)||routeCode.equals(RouteCodeConstant.TLH5_ROUTE_CODE)||routeCode.equals(RouteCodeConstant.TLWD_ROUTE_CODE)||routeCode.equals(RouteCodeConstant.TLYL_ROUTE_CODE)){
 				paramMap.put("settleType", "0");//D0
 			}else{
 				paramMap.put("settleType", "1");//D1
@@ -1760,6 +1760,15 @@ public class AgentPayController {
 			if(Double.parseDouble(payMoney)>canDrawMoneyCount){
 				result.put("returnCode", "4004");
 				result.put("returnMsg", "代付金额大于可代付金额，无法代付");
+				try{
+					RoutewayDrawTemp routewayDrawTemp1 = new RoutewayDrawTemp();
+					routewayDrawTemp1.setMemberId(memberId);
+					routewayDrawTemp1.setRouteCode(routeCode);
+					routewayDrawTemp1.setTxnDate(df.format(new Date()));
+					routewayDrawTempService.deleteRoutewayDrawTemp(routewayDrawTemp1);
+				}catch(Exception e){
+					e.printStackTrace();
+				}
 				return result;
 			}
 			

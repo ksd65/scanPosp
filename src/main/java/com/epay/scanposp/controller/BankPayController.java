@@ -1321,6 +1321,8 @@ public class BankPayController {
 				obj = receivePaySM(memberId, String.valueOf(draw.getMoney()), draw);
 			}else if(RouteCodeConstant.TLKJ_ROUTE_CODE.equals(routeCode)){
 				obj = receivePayTlKj(memberId, String.valueOf(draw.getMoney()), draw);
+			}else if(RouteCodeConstant.TLYL_ROUTE_CODE.equals(routeCode)){
+				obj = receivePayTLWd(memberId, String.valueOf(draw.getMoney()), draw);
 			}
 			
 			if("0000".equals(obj.getString("returnCode"))){
@@ -2793,7 +2795,7 @@ public class BankPayController {
 					}else{
 						logger.info(resultObj.getString("MESSAGE"));
 					}
-				}else if(RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)){
+				}else if(RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLYL_ROUTE_CODE.equals(routeCode)){
 			    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 			        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
 			        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
@@ -4456,7 +4458,9 @@ public class BankPayController {
 			if(StringUtil.isEmpty(merCode)){
 				merCode = merchantCode.getZfbMerchantCode();
 			}
-			
+			if(RouteCodeConstant.TLYL_ROUTE_CODE.equals(draw.getRouteCode())){
+				merCode = merchantCode.getWyMerchantCode();
+			}
 			MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 	        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(draw.getRouteCode()).andMerchantCodeEqualTo(merCode).andDelFlagEqualTo("0");
 	        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);

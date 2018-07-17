@@ -5180,7 +5180,7 @@ public class CashierDeskController {
 		        	result.put("returnCode", "0012");
 					result.put("returnMsg", result_msg);
 		        }
-		    }else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.GRSM_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLKJ_ROUTE_CODE.equals(routeCode)){
+		    }else if(RouteCodeConstant.HX_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.GRSM_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLKJ_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLYL_ROUTE_CODE.equals(routeCode)){
 
 		    	TradeDetailExample tradeDetailExample = new TradeDetailExample();
 				tradeDetailExample.createCriteria().andOrderCodeEqualTo(debitNote.getOrderCode());

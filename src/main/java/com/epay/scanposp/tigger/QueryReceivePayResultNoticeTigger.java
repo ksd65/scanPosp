@@ -699,7 +699,7 @@ public class QueryReceivePayResultNoticeTigger {
 						}else{
 							logger.info(resultObj.getString("MESSAGE"));
 						}
-					}else if(RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)){
+					}else if(RouteCodeConstant.TLWD_ROUTE_CODE.equals(routeCode)||RouteCodeConstant.TLYL_ROUTE_CODE.equals(routeCode)){
 						MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 				        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
 				        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
