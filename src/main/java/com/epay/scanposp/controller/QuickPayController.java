@@ -4559,11 +4559,11 @@ public class QuickPayController {
 			jsonObject1.put("sign", com.epay.scanposp.common.utils.tlkj.MD5Util.getSign(jsonObject1, merchantKey.getPrivateKey(),1));
 			
 			
-			logger.info("通联快捷支付参数[{}]",jsonObject1.toString() );
+			logger.info(orderCode+"通联快捷支付参数[{}]",jsonObject1.toString() );
 			
 			String respStr = HttpUtil.sendPostRequest(serverUrl, jsonObject1.toString());
 			
-			logger.info("通联快捷支付返回报文[{}]", new Object[] { respStr });
+			logger.info(orderCode+"通联快捷支付返回报文[{}]", new Object[] { respStr });
 			
 			JSONObject resObj = JSONObject.fromObject(respStr);
             
@@ -4616,7 +4616,7 @@ public class QuickPayController {
 		try {
 			
 			String respStr = HttpUtil.getPostString(request);
-			
+			 
 			logger.info("tlkjPayNotify回调返回报文[{}]",  respStr);
 			com.alibaba.fastjson.JSONObject obj = com.alibaba.fastjson.JSONObject.parseObject(respStr);
 			String orderId = obj.getString("orderno");
