@@ -2510,7 +2510,7 @@ public class AgentPayController {
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			result.put("returnCode", "0096");
-			result.put("returnMsg", e.getMessage());
+			result.put("returnMsg", "余额接口调用异常");
 			return result;
 		}
 		return result;
