@@ -108,7 +108,8 @@ public class TradeProfitTigger {
 								realPlatFee = platFee.add(new BigDecimal(0.012));
 							}
 						}else if(routeId.equals(RouteCodeConstant.TLKJ_ROUTE_CODE)){
-							realPlatFee = platFee.add(agentFee.subtract(platFee).divide(new BigDecimal(2)));
+							//realPlatFee = platFee.add(agentFee.subtract(platFee).divide(new BigDecimal(2)));
+							realPlatFee = platFee.add(new BigDecimal(0.0001));
 							memberCost = tradeMoney.multiply(memberFee);
 						}
 					}
