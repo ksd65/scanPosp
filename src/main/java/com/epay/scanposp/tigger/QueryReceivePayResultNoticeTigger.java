@@ -100,6 +100,7 @@ public class QueryReceivePayResultNoticeTigger {
 			logger.info("代付结果定时查询。。。");
 			RoutewayDrawExample routewayDrawExample = new RoutewayDrawExample();
 			routewayDrawExample.createCriteria().andRespTypeEqualTo("R").andDelFlagEqualTo("0");
+			routewayDrawExample.setOrderByClause(" create_date asc ");
 			List<RoutewayDraw> drawlist = routewayDrawService.selectByExample(routewayDrawExample);
 			if(drawlist != null && drawlist.size()>0){
 				for(RoutewayDraw draw:drawlist){
@@ -959,6 +960,11 @@ public class QueryReceivePayResultNoticeTigger {
 							routewayDrawService.updateByPrimaryKey(draw);
 						}else{
 							result_message = resultObj.getString("respMsg");
+							draw.setRespType("E");
+							draw.setRespCode(result_code);
+							draw.setRespMsg(result_message);
+							draw.setUpdateDate(new Date());
+							routewayDrawService.updateByPrimaryKey(draw);
 							logger.info(result_message);
 						}
 				    }

@@ -3012,7 +3012,7 @@ public class BankPayController {
 						logger.info(result_message);
 					}
 			    }else if(RouteCodeConstant.TLKJ_ROUTE_CODE.equals(routeCode)){
-			    	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
+			    /*	MemberMerchantKeyExample memberMerchantKeyExample = new MemberMerchantKeyExample();
 			        memberMerchantKeyExample.createCriteria().andRouteCodeEqualTo(routeCode).andMerchantCodeEqualTo(draw.getMerchantCode()).andDelFlagEqualTo("0");
 			        List<MemberMerchantKey> keyList = memberMerchantKeyService.selectByExample(memberMerchantKeyExample);
 			        if(keyList == null || keyList.size()!=1){
@@ -3067,7 +3067,7 @@ public class BankPayController {
 					}else{
 						result_message = resultObj.getString("respMsg");
 						logger.info(result_message);
-					}
+					}*/
 			    }
 			}
 			result.put("orderCode", draw.getOrderCode());
